@@ -1,11 +1,5 @@
-def add(a, b):
-    return a + b
-
-def subtract(a, b):
-    return a - b
-
-def multiply(a, b):
-    return a * b
-
-def divide(a, b):
-    return a / b
+print("Calculator Basic")
+a = int(input("Moi ban nhap so a: "))
+b = int(input("Moi ban nhap so b: "))
+c = a + b
+print("c = %d + %d = %d" % (a, b, c))
