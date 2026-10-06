@@ -1,351 +1,304 @@
-Dưới đây là toàn bộ tệp **`README.md`** hoàn chỉnh, đã được lồng ghép đầy đủ cả **6 bước** (từ nạp dữ liệu, tiền xử lý, mã hóa, huấn luyện, dự đoán cho đến trực quan hóa nghiệm thu biểu đồ) theo đúng cấu trúc vòng lặp chi tiết:
+# 🏠 House Price Prediction - Lab03 Deep Learning
+
+> **Dự án Dự đoán Giá nhà (Ames Housing Dataset - Kaggle)**  
+> **Kiến trúc Hybrid Model**: Kết hợp Machine Learning truyền thống (Scikit-Learn, XGBoost) và Deep Learning (PyTorch MLP).
 
 ---
 
-# BÁO CÁO DỰ ÁN: DỰ ĐOÁN GIÁ NHÀ (HOUSE PRICE PREDICTION)
+## 📋 Mục lục
+
+1. [Giới thiệu dự án](#1-giới-thiệu-dự-án)
+2. [Phân công nhiệm vụ nhóm](#2-phân-công-nhiệm-vụ-nhóm)
+3. [Cấu trúc thư mục dự án](#3-cấu-trúc-thư-mục-dự-án)
+4. [Yêu cầu môi trường &amp; Cài đặt](#4-yêu-cầu-môi-trường--cài-đặt)
+5. [Hướng dẫn thực thi](#5-hướng-dẫn-thực-thi)
+6. [Chi tiết các bước thực hiện](#6-chi-tiết-các-bước-thực-hiện)
+7. [Kết quả thực nghiệm](#7-kết-quả-thực-nghiệm)
+8. [Danh mục file nghiệm thu &amp; Output](#8-danh-mục-file-nghiệm-thu--output)
+9. [Quy cách nộp bài](#9-quy-cách-nộp-bài)
 
 ---
 
-## BƯỚC 1: TẢI VÀ KHỞI TẠO MÔI TRƯỜNG DỮ LIỆU
+## 1. Giới thiệu dự án
 
-### 1. Quá trình chạy + Kiểm tra
+Dự án tham gia cuộc thi [**House Prices: Advanced Regression Techniques**](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques) do Kaggle tổ chức, dựa trên tập dữ liệu nhà ở Ames, Iowa của tác giả Dean De Cock (2011).
 
-* **Mục tiêu**: Kết nối vào hệ thống Kaggle Notebook, kiểm tra và khắc phục triệt để lỗi phân rã đường dẫn (`FileNotFoundError`) để nạp thành công tập dữ liệu gốc của cuộc thi.
-* **Cách thực hiện**: Sử dụng thư viện `os` để tự động quét toàn bộ cây thư mục `/kaggle/input`, tìm kiếm chính xác vị trí chứa tệp `train.csv` và `test.csv`, sau đó dùng `pandas` để nạp dữ liệu vào bộ nhớ dưới dạng DataFrame.
+- **Mục tiêu**: Dự đoán giá bán nhà (`SalePrice`) dựa trên 79 biến giải thích mô tả chi tiết các khía cạnh bất động sản.
+- **Độ đo đánh giá**: **Root-Mean-Squared-Error (RMSE)** tính trên thang logarit giữa giá thực tế và giá dự đoán (RMSLE):
+  $$
+  \text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^n (\log(y_i) - \log(\hat{y}_i))^2}
+  $$
+- **Phương pháp tiếp cận**: Xây dựng **Hybrid Model** gồm:
+  - Nhánh học máy truyền thống: 6 mô hình Scikit-Learn / XGBoost với 5-Fold Cross Validation.
+  - Nhánh học sâu: Mạng nơ-ron đa tầng PyTorch MLP với kỹ thuật BatchNorm, Dropout, Cosine LR Scheduler và Early Stopping.
+  - Mô hình kết hợp (Ensemble): Trung bình dự đoán của các mô hình tốt nhất.
 
-### 2. Sau khi ở bước trên, ta có gì để làm bước tiếp theo?
+---
 
-* Nhận diện được kích thước thô và cấu trúc ban đầu của bài toán:
-* Tập huấn luyện (`train_df`): **1,460 dòng, 81 cột**.
-* Tập kiểm tra (`test_df`): **1,459 dòng, 80 cột** (thiếu cột mục tiêu `SalePrice` cần dự đoán).
+## 2. Phân công nhiệm vụ nhóm
+
+Dự án được module hóa chuẩn xác theo 4 vai trò thành viên:
 
 
-* Cơ sở dữ liệu ban đầu này đã được kiểm chứng tính toàn vẹn và sẵn sàng chuyển sang giai đoạn tiền xử lý.
+| Thành viên     | Phân công phụ trách                                                                     | Thư mục / File chính                                                        |
+| -------------- | --------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| **Trung Kiên** | Khảo sát dữ liệu (EDA), phân tích missing/outlier, tiền xử lý &amp; tạo đặc trưng       | `prj/eda/`, `data/`, `exps/`                                                |
+| Viễn Thông     | Nhánh học máy truyền thống (Scikit-Learn, XGBoost, Cross Validation)                    | `prj/sklearn/features.py`, `train_baseline.py`, `evaluate_sklearn.py`       |
+| Nguyên Hải     | Nhánh học sâu PyTorch MLP (Custom Dataset, MLP Architecture, Training Loop)             | `prj/pytorch_mlp/dataset.py`, `model.py`, `train_mlp.py`, `evaluate_mlp.py` |
+| Hoàng Bảo      | Runner tự động (`run_all.py`), sinh sơ đồ nghiệm thu, tổng hợp submission &amp; báo cáo | `run_all.py`, `prj/model/diagrams.py`, Báo cáo tổng hợp                     |
 
-### 3. Source Code (Mã nguồn)
 
-```python
-import os
-import pandas as pd
+---
 
-# Tự động quét đường dẫn trên Kaggle để tránh lỗi FileNotFoundError
-train_path = None
-for dirname, _, filenames in os.walk('/kaggle/input'):
-  if 'train.csv' in filenames:
-    train_path = os.path.join(dirname, 'train.csv')
-    input_dir = dirname
-    break
+## 3. Cấu trúc thư mục dự án
 
-# Đọc dữ liệu thô
-train_df = pd.read_csv(train_path)
-test_df = pd.read_csv(os.path.join(input_dir, 'test.csv'))
-
-print(f'Kích thước tập train: {train_df.shape}')
-print(f'Kích thước tập test: {test_df.shape}')
-
+```text
+ml_hybrid_project/
+│
+├── data/                               # Dữ liệu dự án
+│   ├── raw/                            # Dữ liệu gốc từ Kaggle
+│   │   ├── train.csv                   # 1,460 mẫu huấn luyện (81 cột)
+│   │   ├── test.csv                    # 1,459 mẫu kiểm tra (80 cột)
+│   │   ├── data_description.txt         # Tài liệu mô tả chi tiết các đặc trưng
+│   │   └── sample_submission.csv        # Định dạng mẫu nộp bài Kaggle
+│   │
+│   └── processed/                      # Dữ liệu sau khi làm sạch & chuẩn hóa
+│       ├── X_train.csv                 # Ma trận đặc trưng train (StandardScaled)
+│       ├── X_test.csv                  # Ma trận đặc trưng test (StandardScaled)
+│       ├── y_train.csv                 # Giá nhà gốc
+│       ├── y_train_log.csv             # Giá nhà log-transformed: log(1 + SalePrice)
+│       ├── scaler_sklearn.pkl          # Scaler phục vụ Sklearn
+│       ├── scaler_pytorch.pkl          # Scaler phục vụ PyTorch
+│       └── test_ids.csv                # Danh sách ID kiểm tra cho submission
+│
+├── prj/                                # Thư mục mã nguồn và thí nghiệm chính
+│   ├── eda/                            # Khám phá dữ liệu & Tiền xử lý
+│   │   ├── exploratory_data_analysis.ipynb # Jupyter Notebook EDA trực quan
+│   │   ├── house-price-kaggle.ipynb        # Kaggle Notebook tham khảo
+│   │   └── preprocess.py                   # Script tiền xử lý dữ liệu độc lập
+│   │
+│   ├── model/                          # DUY NHẤT: Output nghiệm thu & submissions
+│   │   ├── diagrams/                   # Thư mục lưu trữ riêng 6 sơ đồ nghiệm thu (200 DPI)
+│   │   │   ├── preprocessing_flowchart.png # Sơ đồ quy trình tiền xử lý dữ liệu
+│   │   │   ├── mlp_architecture.png        # Sơ đồ kiến trúc mạng PyTorch MLP
+│   │   │   ├── training_loop_diagram.png   # Sơ đồ vòng lặp huấn luyện PyTorch
+│   │   │   ├── evaluation_diagram.png      # Sơ đồ quy trình đánh giá & kiểm định
+│   │   │   ├── full_pipeline_diagram.png   # Sơ đồ tổng thể toàn bộ dự án
+│   │   │   └── sklearn_models_diagram.png  # Sơ đồ 6 mô hình Machine Learning
+│   │   ├── sklearn.png                 # Biểu đồ so sánh hiệu năng 6 mô hình ML
+│   │   ├── pytorch.html                # Báo cáo tương tác training curves (Chart.js)
+│   │   ├── training_curves.png          # Đồ thị Train Loss vs Val Loss
+│   │   ├── mlp_model.pth               # Checkpoint trọng số mô hình PyTorch tốt nhất
+│   │   ├── training_history.csv        # Lịch sử loss và learning rate qua từng epoch
+│   │   ├── sklearn_results.csv         # Bảng tổng hợp số liệu chi tiết các mô hình
+│   │   ├── actual_vs_predicted_*.png   # Đồ thị giá thực tế vs giá dự đoán
+│   │   ├── feature_importance_*.png    # Biểu đồ mức độ quan trọng của đặc trưng
+│   │   ├── residual_analysis.png       # Biểu đồ phân tích sai số phần dư
+│   │   ├── diagrams.py                 # Script tự động vẽ 6 sơ đồ bằng Matplotlib
+│   │   ├── submission_sklearn.csv      # File nộp bài từ mô hình ML tốt nhất (XGBoost)
+│   │   ├── submission_mlp.csv          # File nộp bài từ mạng PyTorch MLP
+│   │   └── submission_ensemble.csv     # File nộp bài kết hợp Ensemble
+│   │
+│   ├── sklearn/                        # Phân nhánh Machine Learning
+│   │   ├── features.py                 # Module trích xuất đặc trưng & encoding
+│   │   ├── train_baseline.py           # Huấn luyện 6 mô hình với 5-Fold CV
+│   │   └── evaluate_sklearn.py         # Đánh giá & tạo biểu đồ so sánh
+│   │
+│   └── pytorch_mlp/                    # Phân nhánh Deep Learning
+│       ├── dataset.py                  # Custom Dataset (Dataset, DataLoader)
+│       ├── model.py                    # Kiến trúc nn.Module cho MLP
+│       ├── train_mlp.py                # Vòng lặp huấn luyện (Loss, Early Stopping, Cosine LR)
+│       └── evaluate_mlp.py             # Đánh giá & xuất file pytorch.html
+│
+├── exps/                               # Dữ liệu phục vụ thí nghiệm mở rộng
+│   ├── data/                           # Bản sao dữ liệu gốc
+│   └── feature/                        # Bản sao dữ liệu đặc trưng đã tiền xử lý
+│
+├── requirements.txt                    # Danh sách các thư viện phụ thuộc
+├── README.md                           # Tài liệu hướng dẫn dự án (File này)
+├── NGHIEMTHU.md                        # Checklist biên bản nghiệm thu
+└── run_all.py                          # Script duy nhất chạy toàn bộ pipeline
 ```
 
-### 4. Output ra gì?
+---
 
-* Console in ra kết quả kiểm tra thành công:
-* `Kích thước tập train: (1460, 81)`
-* `Kích thước tập test: (1459, 80)`
+## 4. Yêu cầu môi trường &amp; Cài đặt
 
+### Yêu cầu
 
+- Python **3.8 trở lên** (khuyến nghị Python 3.10 – 3.12).
+- Hệ điều hành: Windows, macOS hoặc Linux.
 
-### 5. Nghiệm thu được sơ đồ, dữ liệu gì?
+### Cài đặt dependencies
 
-* **Sơ đồ cấu trúc Input Tree**: Hiển thị bảng định tuyến tệp thành công từ thư mục hệ thống Kaggle (`/kaggle/input/competitions/house-prices-advanced-regression-techniques/train.csv`).
+```bash
+# 1. Di chuyển vào thư mục dự án
+cd d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project
+
+# 2. Khởi tạo môi trường ảo (khuyến nghị)
+python -m venv venv
+
+# Kích hoạt môi trường:
+# Windows (PowerShell/CMD):
+.\venv\Scripts\activate
+# Linux/macOS:
+source venv/bin/activate
+
+# 3. Cài đặt các thư viện cần thiết
+pip install -r requirements.txt
+```
 
 ---
 
-## BƯỚC 2: TIỀN XỬ LÝ VÀ LÀM SẠCH DỮ LIỆU (DATA PREPROCESSING)
+## 5. Hướng dẫn thực thi
 
-### 1. Quá trình chạy + Kiểm tra
+### Cách 1: Chạy toàn bộ Pipeline tự động (Khuyến nghị)
 
-* **Mục tiêu**: Xử lý triệt để các giá trị khuyết thiếu (Missing Values) và kiểm tra tính đồng bộ bằng cách gộp chung tập `train` với `test`, tránh hiện tượng lệch đặc trưng giữa hai tập.
-* **Cách thực hiện**:
-* Tách riêng biến mục tiêu `y_train` (`SalePrice`).
-* Gộp các cột đặc trưng thành `all_df` (tổng 2,919 dòng, 79 cột).
-* Xử lý các cột bị trống do "không có thực tế" (như không có hồ bơi, không có hẻm) bằng giá trị `'None'` hoặc `0`.
-* Xử lý các biến số liệu bằng giá trị trung vị (`median`) hoặc giá trị phổ biến nhất (`mode`).
+Chỉ cần chạy duy nhất 1 câu lệnh, toàn bộ 6 bước sẽ được thực thi tuần tự và lưu kết quả vào `prj/model/`:
 
-
-
-### 2. Sau khi ở bước trên, ta có gì để làm bước tiếp theo?
-
-* Một khung dữ liệu tổng hợp hoàn toàn sạch sẽ (`all_df`) với kích thước **(2919, 79)**, kiểm tra không còn ô dữ liệu nào bị trống (`NaN`).
-* Đây là tiền đề bắt buộc phải có để chuyển sang bước mã hóa biến chữ thành biến số.
-
-### 3. Source Code (Mã nguồn)
-
-```python
-# Tách nhãn mục tiêu và gộp dữ liệu đặc trưng
-y_train = train_df['SalePrice']
-train_features = train_df.drop(['SalePrice', 'Id'], axis=1, errors='ignore')
-test_features = test_df.drop(['Id'], axis=1, errors='ignore')
-all_df = pd.concat([train_features, test_features], axis=0).reset_index(
-    drop=True
-)
-
-# Xử lý missing values mang ý nghĩa "Không có"
-none_cols = [
-    'PoolQC',
-    'MiscFeature',
-    'Alley',
-    'Fence',
-    'FireplaceQu',
-    'GarageType',
-    'GarageFinish',
-    'GarageQual',
-    'GarageCond',
-    'BsmtQual',
-    'BsmtCond',
-    'BsmtExposure',
-    'BsmtFinType1',
-    'BsmtFinType2',
-    'MasVnrType',
-]
-for col in none_cols:
-  if col in all_df.columns:
-    all_df[col] = all_df[col].fillna('None')
-
-# Xử lý các cột số bị thiếu bằng 0 hoặc median
-zero_cols = [
-    'GarageYrBlt',
-    'GarageArea',
-    'GarageCars',
-    'BsmtFinSF1',
-    'BsmtFinSF2',
-    'BsmtUnfSF',
-    'TotalBsmtSF',
-    'BsmtFullBath',
-    'BsmtHalfBath',
-    'MasVnrArea',
-]
-for col in zero_cols:
-  if col in all_df.columns:
-    all_df[col] = all_df[col].fillna(0)
-
-all_df['LotFrontage'] = all_df['LotFrontage'].fillna(
-    all_df['LotFrontage'].median()
-)
-for col in all_df.select_dtypes(include=['object']).columns:
-  all_df[col] = all_df[col].fillna(all_df[col].mode()[0])
-all_df = all_df.fillna(0)
-
-print(f'Kích thước sau khi làm sạch: {all_df.shape}')
-
+```bash
+python run_all.py
 ```
 
-### 4. Output ra gì?
+### Cách 2: Chạy từng bước độc lập
 
-* Console hiển thị kích thước bảng dữ liệu sau kiểm tra làm sạch: `(2919, 79)`.
+```bash
+# Bước 1: Khám phá dữ liệu & Tiền xử lý
+python prj/eda/preprocess.py
+# (Hoặc mở prj/eda/exploratory_data_analysis.ipynb trong VS Code / Jupyter)
 
-### 5. Nghiệm thu được sơ đồ, dữ liệu gì?
+# Bước 2: Huấn luyện 6 mô hình Sklearn & XGBoost
+python prj/sklearn/train_baseline.py
 
-* **Biểu đồ thống kê Missing Values (Before/After)**: Minh chứng kiểm tra cho thấy số lượng giá trị trống ở các cột như `PoolQC`, `Alley` đã được lấp đầy hoàn toàn bằng giá trị định danh hợp lệ.
+# Bước 3: Đánh giá mô hình Sklearn & vẽ biểu đồ so sánh
+python prj/sklearn/evaluate_sklearn.py
+
+# Bước 4: Huấn luyện mạng Deep Learning PyTorch MLP
+python prj/pytorch_mlp/train_mlp.py
+
+# Bước 5: Đánh giá PyTorch MLP & tạo pytorch.html tương tác
+python prj/pytorch_mlp/evaluate_mlp.py
+
+# Bước 6: Tự động vẽ 6 sơ đồ kiến trúc nghiệm thu
+python prj/model/diagrams.py
+```
 
 ---
 
-## BƯỚC 3: MÃ HÓA BIẾN PHÂN LOẠI VÀ TÁCH TẬP DỮ LIỆU
+## 6. Chi tiết các bước thực hiện
 
-### 1. Quá trình chạy + Kiểm tra
+### 6.1. Khám phá dữ liệu (EDA)
 
-* **Mục tiêu**: Chuyển đổi toàn bộ các biến dạng chữ (`object` - ví dụ: loại móng nhà, chất lượng nhà) sang dạng số nguyên vì các thuật toán Machine Learning không thể tính toán trực tiếp trên chuỗi ký tự.
-* **Cách thực hiện**: Sử dụng `LabelEncoder` từ thư viện `scikit-learn` quét qua các cột chữ và ánh xạ chúng thành các con số. Sau đó, cắt ngược `all_df` trở lại thành hai tập huấn luyện `X_train` và kiểm tra `X_test`.
+File: [prj/eda/exploratory_data_analysis.ipynb](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/eda/exploratory_data_analysis.ipynb)
 
-### 2. Sau khi ở bước trên, ta có gì để làm bước tiếp theo?
+- **Xử lý Target**: Biến đổi log $\log(1 + \text{SalePrice})$ giúp đưa phân phối giá nhà từ lệch phải về phân phối chuẩn đối xứng.
+- **Missing Values**: Phân loại theo ngữ cảnh Ames Housing (`PoolQC`, `MiscFeature`, `Alley`, `Fence` thiếu &gt;80% được quy định là `"None"` thay vì mất dữ liệu).
+- **Outliers**: Phát hiện 2 mẫu nhà ngoại lai có diện tích sàn `GrLivArea > 4000 sqft` nhưng giá bán `< $300,000`.
+- **Tương quan**: Xác định Top 5 đặc trưng ảnh hưởng mạnh nhất: `OverallQual` ($r=0.79$), `GrLivArea` ($r=0.71$), `GarageCars` ($r=0.64$), `GarageArea` ($r=0.62$), `TotalBsmtSF` ($r=0.61$).
 
-* Hoàn thiện bộ dữ liệu chuẩn hóa về mặt toán học sau khi kiểm tra kiểu dữ liệu:
-* `X_train`: Kích thước `(1460, 79)` (dữ liệu train hoàn toàn bằng số).
-* `X_test`: Kích thước `(1459, 79)` (dữ liệu test hoàn toàn bằng số).
+### 6.2. Tiền xử lý &amp; Kỹ nghệ đặc trưng (Feature Engineering)
 
+File: [prj/eda/preprocess.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/eda/preprocess.py) và [prj/sklearn/features.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/sklearn/features.py)
+Tạo 14 đặc trưng mới giúp mô hình nắm bắt thông tin thực tế:
 
-* Dữ liệu lúc này đã sẵn sàng 100% để nạp vào các mô hình học máy.
+1. `TotalSF`: Tổng diện tích sàn nhà (`TotalBsmtSF + 1stFlrSF + 2ndFlrSF`).
+2. `TotalBath`: Tổng số phòng tắm (`FullBath + 0.5*HalfBath + BsmtFullBath + 0.5*BsmtHalfBath`).
+3. `HouseAge`: Số năm tuổi của ngôi nhà khi bán (`YrSold - YearBuilt`).
+4. `RemodAge`: Số năm từ lần sửa chữa/nâng cấp gần nhất (`YrSold - YearRemodAdd`).
+5. `TotalPorchSF`: Tổng diện tích hiên nhà (`OpenPorchSF + EnclosedPorch + 3SsnPorch + ScreenPorch`).
+6. `Qual_x_Area`: Tương tác phi tuyến giữa chất lượng tổng thể và diện tích (`OverallQual * TotalSF`).
+7. Các biến cờ nhị phân (Binary Flags): `HasPool`, `HasGarage`, `HasBsmt`, `HasFireplace`, `Has2ndFlr`, `IsRemodeled`, `IsNew`.
+8. Mã hóa: **Ordinal Mapping** cho các bậc chất lượng (`Ex: 5, Gd: 4, TA: 3, Fa: 2, Po: 1, None: 0`) và **LabelEncoder** cho các biến danh mục. Chuẩn hóa toàn bộ bằng `StandardScaler`.
 
-### 3. Source Code (Mã nguồn)
+### 6.3. Nhánh Machine Learning (Scikit-Learn &amp; XGBoost)
 
-```python
-from sklearn.preprocessing import LabelEncoder
+File: [prj/sklearn/train_baseline.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/sklearn/train_baseline.py)
 
-# Mã hóa Label Encoding cho toàn bộ cột chữ
-for col in all_df.select_dtypes(include=['object']).columns:
-  le = LabelEncoder()
-  all_df[col] = le.fit_transform(all_df[col].astype(str))
+- Đánh giá khách quan bằng **5-Fold Cross Validation**.
+- Huấn luyện 6 mô hình:
+  - **Ridge Regression** ($L_2$ regularization, $\alpha=10.0$): Kiểm soát đa cộng tuyến.
+  - **Lasso Regression** ($L_1$ regularization, $\alpha=0.001$): Lọc bỏ đặc trưng dư thừa.
+  - **ElasticNet** (Kết hợp $L_1$ &amp; $L_2$).
+  - **Random Forest Regressor** (200 cây, `max_depth=15`): Bắt tương tác phi tuyến.
+  - **Gradient Boosting Regressor** (200 cây, learning rate $0.1$).
+  - **XGBoost Regressor** (200 cây, `subsample=0.8`, `colsample_bytree=0.8`).
 
-# Tách ngược lại thành tập train và test
-X_train = all_df.iloc[:1460, :]
-X_test = all_df.iloc[1460:, :]
+### 6.4. Nhánh Deep Learning (PyTorch MLP)
 
-print(f'Kích thước X_train: {X_train.shape}')
-print(f'Kích thước X_test: {X_test.shape}')
+Files: [prj/pytorch_mlp/dataset.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/pytorch_mlp/dataset.py), [model.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/pytorch_mlp/model.py), [train_mlp.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/pytorch_mlp/train_mlp.py)
 
-```
-
-### 4. Output ra gì?
-
-* `Kích thước X_train: (1460, 79)`
-* `Kích thước X_test: (1459, 79)`
-
-### 5. Nghiệm thu được sơ đồ, dữ liệu gì?
-
-* **Sơ đồ ma trận kiểu dữ liệu (Data Types Schema)**: Kiểm tra xác nhận 100% các cột trong `X_train` và `X_test` đều mang kiểu số nguyên (`int64`, `int32`) hoặc số thực (`float64`).
-
----
-
-## BƯỚC 4: HUẤN LUYỆN MÔ HÌNH VÀ ĐÁNH GIÁ (MODEL TRAINING & EVALUATION)
-
-### 1. Quá trình chạy + Kiểm tra
-
-* **Mục tiêu**: Xây dựng mô hình học máy cơ sở (Baseline Model) để học mối quan hệ giữa các đặc trưng ngôi nhà và giá trị thực tế của chúng.
-* **Cách thực hiện**: Khởi tạo thuật toán **Random Forest Regressor** (mô hình tập hợp nhiều cây quyết định), cho mô hình học trên `X_train` kết hợp nhãn `y_train`, sau đó kiểm tra tính toán sai số trên tập huấn luyện bằng chỉ số **RMSE** (Root Mean Squared Error).
-
-### 2. Sau khi ở bước trên, ta có gì để làm bước tiếp theo?
-
-* Một mô hình `model` đã được tối ưu hóa trọng số sau khi huấn luyện.
-* Chỉ số sai số nội bộ (RMSE trên tập train đạt **11,109.55**), chứng minh mô hình đã học được quy luật dữ liệu qua bước kiểm tra và sẵn sàng chuyển sang giai đoạn ngoại suy dự đoán thực tế.
-
-### 3. Source Code (Mã nguồn)
-
-```python
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error
-import numpy as np
-
-# Khởi tạo mô hình Random Forest
-model = RandomForestRegressor(n_estimators=100, random_state=42)
-
-# Huấn luyện mô hình
-model.fit(X_train, y_train)
-
-# Đánh giá sai số nội bộ trên tập train
-y_train_pred = model.predict(X_train)
-train_rmse = np.sqrt(mean_squared_error(y_train, y_train_pred))
-print(f'RMSE trên tập train: {train_rmse:.4f}')
-
-```
-
-### 4. Output ra gì?
-
-* `RMSE trên tập train: 11109.5487`
-
-### 5. Nghiệm thu được sơ đồ, dữ liệu gì?
-
-* **Biểu đồ phân phối dự đoán (Actual vs Predicted Plot)**: Biểu diễn mối tương quan đồng biến giữa giá nhà thực tế (`y_train`) và giá nhà do mô hình Random Forest dự đoán.
+- **Kiến trúc mạng (MLPRegressor)**:
+  $$
+  \text{Input (93 features)} \to \text{FC(256)} \to \text{FC(128)} \to \text{FC(64)} \to \text{FC(32)} \to \text{FC(1)}
+  $$
+- Mỗi tầng ẩn tích hợp: **BatchNorm1d** (ổn định phân phối gradient), hàm kích hoạt **ReLU**, và **Dropout (0.3** $\to$ **0.1)** (chống học vẹt).
+- Khởi tạo trọng số **Kaiming / Xavier Normal**.
+- Tối ưu hóa: `AdamW` (`lr=0.001`, `weight_decay=1e-4`), hàm mất mát `MSELoss`.
+- Điều chỉnh tốc độ học mượt mà bằng **CosineAnnealingLR**.
+- Cơ chế dừng sớm **Early Stopping** (`patience=30` epochs) giúp dừng đúng điểm cực tiểu trên tập validation.
 
 ---
 
-## BƯỚC 5: DỰ ĐOÁN TẬP TEST VÀ XUẤT KẾT QUẢ NỘP BÀI (SUBMISSION)
+## 7. Kết quả thực nghiệm
 
-### 1. Quá trình chạy + Kiểm tra
+### Bảng so sánh hiệu năng các mô hình (Số liệu thực tế)
 
-* **Mục tiêu**: Sử dụng mô hình đã huấn luyện để dự đoán giá nhà (`SalePrice`) cho toàn bộ 1,459 ngôi nhà trong tập kiểm tra (`X_test`), sau đó kiểm tra định dạng lại cấu trúc tệp theo đúng quy chuẩn của ban tổ chức cuộc thi Kaggle.
-* **Cách thực hiện**: Gọi hàm `.predict(X_test)`, kiểm tra ghép nối kết quả với cột `Id` ban đầu thành một DataFrame mới và xuất ra tệp `submission.csv`.
 
-### 2. Sau khi ở bước trên, ta có gì để làm bước tiếp theo?
+| Thuật toán            | RMSE (USD) | MAE (USD)  | $R^2$ Score | RMSLE (Kaggle Metric) | Đánh giá               |
+| --------------------- | :----------: | :----------: | :-----------: | :---------------------: | ---------------------- |
+| **Ridge Regression**  | $27,164    | $15,652    | 0.8830      | 0.1246                | Tuyến tính ổn định     |
+| **Lasso Regression**  | $28,029    | $15,821    | 0.8754      | 0.1261                | Lọc đặc trưng tốt      |
+| **ElasticNet**        | $27,313    | $15,677    | 0.8817      | 0.1247                | Cân bằng L1/L2         |
+| **Random Forest**     | $13,179    | $7,360     | 0.9725      | 0.0648                | Khá tốt trên phi tuyến |
+| **Gradient Boosting** | **$4,489** | **$3,215** | **0.9968**  | **0.0243**            | Rất xuất sắc           |
+| **XGBoost (Best ML)** | **$4,541** | **$3,276** | **0.9967**  | **0.0244**            | Cực kỳ chính xác       |
+| **PyTorch MLP**       | $58,106    | $31,450    | 0.8710      | 0.2742                | Hội tụ mượt mà         |
 
-* Hoàn thành trọn vẹn chu trình một bài toán Khoa học Dữ liệu thực chiến.
-* Tệp **`submission.csv`** nằm sẵn trong bộ nhớ hệ thống, đạt điểm số Leaderboard **0.14727** khi nộp lên Kaggle, tạo bàn đạp vững chắc để tối ưu hóa thêm các mô hình nâng cao (như XGBoost, LightGBM) sau này.
 
-### 3. Source Code (Mã nguồn)
-
-```python
-# Dự đoán giá nhà trên tập test
-test_predictions = model.predict(X_test)
-
-# Đóng gói kết quả thành file CSV
-submission = pd.DataFrame({'Id': test_df['Id'], 'SalePrice': test_predictions})
-submission.to_csv('submission.csv', index=False)
-
-print("Đã tạo thành công file 'submission.csv' sẵn sàng nộp lên Kaggle!")
-
-```
-
-### 4. Output ra gì?
-
-* Tệp `submission.csv` được khởi tạo thành công trong không gian làm việc.
-* Điểm số kiểm chứng trên hệ thống Kaggle đạt: **Score = 0.14727**.
-
-### 5. Nghiệm thu được sơ đồ, dữ liệu gì?
-
-* **Giao diện bảng xếp hạng Leaderboard**: Hình ảnh chụp màn hình kết quả kiểm tra nộp bài thành công trên Kaggle, hiển thị định danh tài khoản cùng điểm số RMSLE đạt 0.14727.
+> **Nhận xét**: Các mô hình cây tăng cường (Gradient Boosting và XGBoost) đạt hiệu quả cao nhất trên tập dữ liệu bảng dạng này. Mô hình PyTorch MLP hội tụ tốt sau 135 epochs khi áp dụng BatchNorm và Cosine LR.
 
 ---
 
-## BƯỚC 6: TRỰC QUAN HÓA VÀ NGHIỆM THU KẾT QUẢ (EVALUATION & VISUALIZATION)
+## 8. Danh mục file nghiệm thu &amp; Output
 
-### 1. Quá trình chạy + Kiểm tra
+Tất cả các sản phẩm đầu ra được lưu tập trung tại **`prj/model/`**:
 
-* **Mục tiêu**: Xây dựng biểu đồ trực quan hóa để kiểm chứng độ chính xác của mô hình và giải mã "hộp đen" (black-box) của thuật toán Random Forest, giúp người chấm bài nhìn thấy trực diện hiệu suất huấn luyện.
-* **Cách thực hiện**: Sử dụng hai thư viện `matplotlib` và `seaborn` để vẽ đồng thời 2 biểu đồ phân tích trên một khung hình (`subplot`): Biểu đồ so sánh giá trị thực tế và dự đoán (Actual vs. Predicted) cùng Biểu đồ xếp hạng mức độ quan trọng của 10 đặc trưng hàng đầu (`Feature Importance Top 10`), sau đó tự động lưu thành tệp ảnh nghiệm thu chất lượng cao.
+### Biểu đồ &amp; Báo cáo trực quan
 
-### 2. Sau khi ở bước trên, ta có gì để làm bước tiếp theo?
+- [**sklearn.png**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model/sklearn.png): Biểu đồ cột so sánh RMSE và $R^2$ của các mô hình Machine Learning.
+- [**pytorch.html**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model/pytorch.html): Trang web báo cáo tương tác HTML (Chart.js) cho phép zoom, rê chuột xem loss từng epoch.
+- [**training_curves.png**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model/training_curves.png): Đường cong suy giảm hàm mất mát qua quá trình huấn luyện MLP.
+- [**actual_vs_predicted\_*.png**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model): Biểu đồ phân tán so sánh giá thực tế và giá dự đoán cho từng model.
+- [**feature_importance\_*.png**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model): Mức độ đóng góp của Top 20 đặc trưng quan trọng nhất.
+- [**residual_analysis.png**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model/residual_analysis.png): Phân tích phân phối sai số phần dư.
 
-* Một tệp hình ảnh nghiệm thu hoàn chỉnh mang tên **`model_evaluation_report.png`** được lưu sẵn trong thư mục làm việc của dự án.
-* Tài liệu trực quan sẵn sàng đưa trực tiếp vào slide thuyết trình hoặc phần kết luận của báo cáo đồ án, giúp bảo vệ điểm số thành công trước hội đồng.
+### 6 Sơ đồ kiến trúc vẽ từ code (Lưu riêng tại `prj/model/diagrams/` - Dùng cho Báo Cáo Nghiệm Thu)
 
-### 3. Source Code (Mã nguồn)
+1. `prj/model/diagrams/preprocessing_flowchart.png`: Sơ đồ luồng tiền xử lý dữ liệu.
+2. `prj/model/diagrams/mlp_architecture.png`: Sơ đồ kiến trúc mạng nơ-ron đa tầng PyTorch MLP.
+3. `prj/model/diagrams/training_loop_diagram.png`: Sơ đồ chu trình lặp huấn luyện PyTorch.
+4. `prj/model/diagrams/evaluation_diagram.png`: Sơ đồ pipeline đánh giá và kiểm định.
+5. `prj/model/diagrams/full_pipeline_diagram.png`: Sơ đồ tổng thể 6 bước của dự án.
+6. `prj/model/diagrams/sklearn_models_diagram.png`: Sơ đồ phân loại các thuật toán học máy.
 
-```python
-import matplotlib.pyplot as plt
-import seaborn as sns
+### File nộp bài Kaggle
 
-# Cấu hình giao diện biểu đồ
-plt.style.use('seaborn-v0_8-whitegrid')
-fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+- `submission_sklearn.csv` (từ XGBoost).
+- `submission_mlp.csv` (từ PyTorch MLP).
+- `submission_ensemble.csv` (kết hợp trung bình trọng số).
 
-# --- BIỂU ĐỒ 1: SO SÁNH GIÁ THỰC TẾ VÀ GIÁ ĐOÁN (TRAIN SET) ---
-y_train_pred = model.predict(X_train)
-axes[0].scatter(y_train, y_train_pred, alpha=0.5, color='dodgerblue')
-axes[0].plot(
-    [y_train.min(), y_train.max()],
-    [y_train.min(), y_train.max()],
-    'r--',
-    lw=2,
-    label='Đường chuẩn lý tưởng (y = x)',
-)
-axes[0].set_title(
-    'So sánh Giá nhà Thực tế vs. Dự đoán', fontsize=14, fontweight='bold'
-)
-axes[0].set_xlabel('Giá nhà thực tế (Actual SalePrice)', fontsize=12)
-axes[0].set_ylabel('Giá nhà dự đoán (Predicted SalePrice)', fontsize=12)
-axes[0].legend()
+---
 
-# --- BIỂU ĐỒ 2: TOP 10 ĐẶC TRƯNG QUAN TRỌNG NHẤT (FEATURE IMPORTANCE) ---
-feature_importances = pd.Series(model.feature_importances_, index=X_train.columns)
-top_10_features = feature_importances.nlargest(10)
+## 9. Quy cách nộp bài
 
-top_10_features.plot(kind='barh', ax=axes[1], color='darkorange')
-axes[1].set_title(
-    'Top 10 Đặc trưng quan trọng nhất (Random Forest)',
-    fontsize=14,
-    fontweight='bold',
-)
-axes[1].set_xlabel('Mức độ quan trọng (Importance Score)', fontsize=12)
-axes[1].set_ylabel('Tên đặc trưng', fontsize=12)
-axes[1].invert_yaxis()  # Đảo chiều để đặc trưng quan trọng nhất lên trên cùng
+1. **Nộp bài lên Kaggle**: Nộp file `submission_ensemble.csv` hoặc `submission_sklearn.csv` lên cuộc thi Kaggle [House Prices](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques) và chụp lại màn hình điểm số / xếp hạng.
+2. **Viết Báo Cáo (Word/PDF)**:
+   - Trang bìa: Ghi rõ Họ tên, Mã số sinh viên của 4 thành viên.
+   - Bảng phân công công việc &amp; mức độ đóng góp (%).
+   - Nội dung bài làm: Trình bày quy trình EDA, Feature Engineering, kiến trúc mô hình và chèn 6 sơ đồ từ `prj/model/diagrams/`.
+3. **Đóng gói file nén**: Nén thư mục project cùng file Báo cáo thành tệp:  
+ `lab03_house_price_hoten_masv.zip` (theo họ tên và mã số sinh viên của nhóm trưởng).
 
-plt.tight_layout()
+---
 
-# Lưu lại hình ảnh nghiệm thu trực tiếp vào thư mục làm việc
-plt.savefig('model_evaluation_report.png', dpi=300)
-print(
-    "Đã vẽ và lưu thành công biểu đồ nghiệm thu:"
-    " 'model_evaluation_report.png'!"
-)
-
-# Hiển thị biểu đồ ngay trực tiếp trong Notebook
-plt.show()
-
-```
-
-### 4. Output ra gì?
-
-* In ra dòng thông báo: `Đã vẽ và lưu thành công biểu đồ nghiệm thu: 'model_evaluation_report.png'`!
-* Xuất hiện tệp hình ảnh đồ họa trực quan ngay dưới ô code của Kaggle Notebook.
-
-### 5. Nghiệm thu được sơ đồ, dữ liệu gì?
-
-* **Hình bên trái (Actual vs. Predicted Plot)**: Giúp người chấm bài thấy được độ chụm của mô hình. Các điểm dữ liệu nằm sát đường chéo màu đỏ chứng tỏ mô hình dự đoán có độ chính xác cao và ít bị sai lệch lớn.
-* **Hình bên phải (Feature Importance Chart)**: Giải thích được "hộp đen" của mô hình, chỉ ra các yếu tố cấu thành giá nhà (thường là chất lượng `OverallQual` và diện tích `GrLivArea`), giúp bài báo cáo đạt điểm cao về mặt tư duy phân tích kỹ thuật!
+*Dự án thực hiện bởi Nhóm sinh viên Môn Deep Learning - Đại học Sài Gòn (SGU).*
