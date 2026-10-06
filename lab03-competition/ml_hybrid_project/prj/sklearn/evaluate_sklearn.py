@@ -1,31 +1,48 @@
 """
 =================================================================
-EVALUATE SKLEARN MODELS
+EVALUATE SKLEARN & XGBOOST MODELS - ĐÁNH GIÁ THỰC TẾ 100% TỪ DATA
 =================================================================
-Module đánh giá và trực quan hóa kết quả các mô hình sklearn.
+Module đánh giá và trực quan hóa kết quả các mô hình học máy:
+    - 100% số liệu tính toán động từ dữ liệu train.csv (1,460 mẫu)
+    - 5-Fold Cross Validation Out-Of-Fold (OOF) trung thực, không data leakage
+    - Không gán cứng (hardcode) bất kỳ điểm số nào
 
 Output visualizations:
-    1. sklearn.png - So sanh cac moi hinh (bar chart RMSE/R²)
-    2. actual_vs_predicted.png - Actual vs Predicted plot
-    3. feature_importance.png - Top 20 feature importance
-    4. residual_analysis.png - Residual distribution
+    1. sklearn.png - So sánh 6 mô hình (RMSE, RMSLE, R²)
+    2. actual_vs_predicted_{model}.png - Đồ thị thực tế vs dự đoán OOF
+    3. feature_importance_{model}.png - Top 20 đặc trưng quan trọng nhất
+    4. residual_analysis.png - Phân tích phần dư của mô hình tốt nhất
+    5. sklearn_results.csv - Bảng tổng hợp số liệu đo lường thực tế
 
-Author: Thanh vien 2 (sklearn pipeline)
+Author: SGU Deep Learning Group
 """
 
 import os
+import sys
 import pickle
+import warnings
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import warnings
+
 warnings.filterwarnings('ignore')
 
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
+from sklearn.model_selection import KFold
+from sklearn.linear_model import Ridge, Lasso, ElasticNet
+from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+
+# Thiết lập UTF-8 trên Windows
+if sys.platform.startswith('win'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8')
+        sys.stderr.reconfigure(encoding='utf-8')
+    except Exception:
+        pass
 
 # ─────────────────────────────────────────────
-# CAU HINH DUONG DAN
+# CẤU HÌNH ĐƯỜNG DẪN
 # ─────────────────────────────────────────────
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 DATA_RAW_DIR = os.path.join(BASE_DIR, "data", "raw")
@@ -34,304 +51,361 @@ MODEL_DIR = os.path.join(BASE_DIR, "prj", "model")
 
 os.makedirs(MODEL_DIR, exist_ok=True)
 
+# Thêm đường dẫn prj/sklearn vào sys.path để import
+SKLEARN_DIR = os.path.dirname(os.path.abspath(__file__))
+if SKLEARN_DIR not in sys.path:
+    sys.path.insert(0, SKLEARN_DIR)
+
+from train_baseline import load_and_preprocess, calculate_rmsle
+
 
 def load_trained_models():
-    """Load tat ca cac moi hinh da train"""
+    """Load tất cả các mô hình đã huấn luyện từ data/processed/"""
     models = {}
-
     model_files = [
-        'model_ridge.pkl', 'model_lasso.pkl', 'model_elastic.pkl',
-        'model_rf.pkl', 'model_gb.pkl', 'model_xgb.pkl'
+        ('xgb', 'model_xgb.pkl'),
+        ('gb', 'model_gb.pkl'),
+        ('rf', 'model_rf.pkl'),
+        ('ridge', 'model_ridge.pkl'),
+        ('lasso', 'model_lasso.pkl'),
+        ('elastic', 'model_elastic.pkl')
     ]
 
-    for fname in model_files:
+    for name, fname in model_files:
         path = os.path.join(DATA_PROCESSED_DIR, fname)
         if os.path.exists(path):
-            name = fname.replace('model_', '').replace('.pkl', '')
             with open(path, 'rb') as f:
                 models[name] = pickle.load(f)
-            print(f"Loaded: {name}")
+            print(f"✓ Đã tải mô hình: {name.upper()}")
+        else:
+            print(f"⚠️ Chưa tìm thấy: {fname}")
 
     return models
 
 
-def load_train_data():
-    """Load du lieu train goc"""
-    train_df = pd.read_csv(os.path.join(DATA_RAW_DIR, "train.csv"))
-    return train_df
+def load_feature_names():
+    """Tải danh sách tên các đặc trưng từ file lưu trữ"""
+    fname_path = os.path.join(DATA_PROCESSED_DIR, "feature_names.pkl")
+    if os.path.exists(fname_path):
+        with open(fname_path, 'rb') as f:
+            return pickle.load(f)
+    return None
 
 
-def load_and_preprocess_data():
-    """Load va preprocess data cung nhu luc train"""
-    from sklearn.preprocessing import StandardScaler, LabelEncoder
-    from features import create_all_features, handle_missing_for_sklearn
-
-    # Load train data
-    train_df = load_train_data()
-    y_train_original = train_df['SalePrice']
-    y_train_log = np.log1p(y_train_original)
-
-    # Preprocess cung nhu luc train
-    train_features = train_df.drop(['SalePrice', 'Id'], axis=1)
-    all_df = handle_missing_for_sklearn(train_features)
-    all_df = create_all_features(all_df)
-
-    # Nominal encoding
-    for col in all_df.select_dtypes(include=['object']).columns:
-        le = LabelEncoder()
-        all_df[col] = le.fit_transform(all_df[col].astype(str))
-
-    # Scale
-    scaler = StandardScaler()
-    X_train = pd.DataFrame(scaler.fit_transform(all_df), columns=all_df.columns)
-
-    return X_train, y_train_log, y_train_original
-
-
-def evaluate_all_models(models, X_train, y_train_log, y_train_original):
+def evaluate_models_cross_validation(X, y_log, y_original, n_splits=5):
     """
-    Danh gia tat ca cac moi hinh tren tap train.
+    Đánh giá 5-Fold Cross Validation chuẩn xác với Out-Of-Fold (OOF) predictions.
+    100% TÍNH TOÁN ĐỘNG TỪ DỮ LIỆU ĐẦU VÀO:
+    Mỗi mẫu được dự đoán bởi mô hình huấn luyện trên 4 fold còn lại.
     """
+    kfold = KFold(n_splits=n_splits, shuffle=True, random_state=42)
+
+    # Khởi tạo mô hình mới cùng siêu tham số để kiểm định chéo K-Fold
+    models_factory = {
+        'ridge': lambda: Ridge(alpha=10.0, random_state=42),
+        'lasso': lambda: Lasso(alpha=0.001, random_state=42, max_iter=10000),
+        'elastic': lambda: ElasticNet(alpha=0.001, l1_ratio=0.5, random_state=42, max_iter=10000),
+        'rf': lambda: RandomForestRegressor(n_estimators=200, max_depth=15, min_samples_split=5,
+                                            min_samples_leaf=2, random_state=42, n_jobs=-1),
+        'gb': lambda: GradientBoostingRegressor(n_estimators=200, max_depth=5, learning_rate=0.1,
+                                                min_samples_split=5, min_samples_leaf=2, random_state=42),
+    }
+
+    try:
+        from xgboost import XGBRegressor
+        models_factory['xgb'] = lambda: XGBRegressor(
+            n_estimators=200, max_depth=5, learning_rate=0.1,
+            subsample=0.8, colsample_bytree=0.8,
+            random_state=42, verbosity=0
+        )
+    except ImportError:
+        pass
+
     results = []
+    oof_predictions = {}
 
-    for name, model in models.items():
-        # Du doan (log scale)
-        y_pred_log = model.predict(X_train)
+    print("\n" + "=" * 80)
+    print("TIẾN HÀNH ĐÁNH GIÁ 5-FOLD CROSS VALIDATION (TÍNH TOÁN TRỰC TIẾP TỪ DỮ LIỆU)")
+    print("=" * 80)
+    print(f"{'Mô hình':<10} | {'RMSLE CV (Mean ± Std)':<24} | {'RMSE OOF ($)':<14} | {'MAE OOF ($)':<12} | {'R² OOF':<8}")
+    print("-" * 80)
 
-        # Chuyen ve original scale
-        y_pred = np.expm1(y_pred_log)
+    for name, factory_fn in models_factory.items():
+        oof_pred = np.zeros(len(y_original))
+        fold_rmsles = []
 
-        # Tinh metrics (tren original scale)
-        rmse = np.sqrt(mean_squared_error(y_train_original, y_pred))
-        mae = mean_absolute_error(y_train_original, y_pred)
-        r2 = r2_score(y_train_original, y_pred)
+        for train_idx, val_idx in kfold.split(X):
+            X_tr, X_val = X[train_idx], X[val_idx]
+            y_tr, y_val_log = y_log[train_idx], y_log[val_idx]
+            y_val_orig = y_original[val_idx]
 
-        # Tinh RMSLE (Kaggle metric)
-        rmsle = np.sqrt(mean_squared_error(
-            np.log1p(y_train_original),
-            np.log1p(np.maximum(y_pred, 1))
-        ))
+            m = factory_fn()
+            m.fit(X_tr, y_tr)
+
+            pred_log = m.predict(X_val)
+            pred_orig = np.expm1(pred_log)
+            oof_pred[val_idx] = pred_orig
+
+            fold_rmsle = calculate_rmsle(y_val_orig, pred_orig)
+            fold_rmsles.append(fold_rmsle)
+
+        oof_predictions[name] = oof_pred
+
+        rmsle_mean = float(np.mean(fold_rmsles))
+        rmsle_std = float(np.std(fold_rmsles))
+        rmse_val = float(np.sqrt(mean_squared_error(y_original, oof_pred)))
+        mae_val = float(mean_absolute_error(y_original, oof_pred))
+        r2_val = float(r2_score(y_original, oof_pred))
 
         results.append({
             'Model': name.upper(),
-            'RMSE': rmse,
-            'MAE': mae,
-            'R2': r2,
-            'RMSLE': rmsle
+            'RMSLE_CV': rmsle_mean,
+            'RMSLE_Std': rmsle_std,
+            'RMSE_CV': rmse_val,
+            'MAE_CV': mae_val,
+            'R2_CV': r2_val,
+            # Tương thích ngược với các hàm cần cột _Val
+            'RMSE_Val': rmse_val,
+            'RMSLE_Val': rmsle_mean,
+            'R2_Val': r2_val,
         })
 
-        print(f"{name.upper():15} | RMSE: ${rmse:,.0f} | R2: {r2:.4f}")
+        print(f"{name.upper():<10} | {rmsle_mean:.4f} ± {rmsle_std:.4f}             | ${rmse_val:>11,.0f} | ${mae_val:>10,.0f} | {r2_val:>7.4f}")
 
-    return pd.DataFrame(results)
+    # Tự động xếp hạng động theo kết quả tính toán thực tế (RMSLE thấp nhất lên đầu)
+    results_df = pd.DataFrame(results).sort_values('RMSLE_CV').reset_index(drop=True)
+    results_df['Rank'] = range(1, len(results_df) + 1)
+
+    return results_df, oof_predictions
 
 
 def plot_model_comparison(results_df, save_path):
-    """Ve bieu do so sanh cac moi hinh"""
-    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
+    """Vẽ biểu đồ so sánh các mô hình với số liệu đo lường thực tế"""
+    fig, axes = plt.subplots(1, 3, figsize=(18, 6))
 
-    # Sap xep theo RMSE
-    results_df = results_df.sort_values('RMSE')
+    results_df_sorted = results_df.sort_values('RMSLE_CV', ascending=True).copy()
+    models = results_df_sorted['Model'].tolist()
+    n_models = len(models)
+    colors = plt.cm.viridis(np.linspace(0.2, 0.85, n_models))
 
-    colors = plt.cm.viridis(np.linspace(0, 0.8, len(results_df)))
-
-    # Bar chart RMSE
+    # 1. Bar chart RMSE
     ax1 = axes[0]
-    bars1 = ax1.barh(results_df['Model'], results_df['RMSE'], color=colors)
-    ax1.set_xlabel('RMSE ($)', fontsize=12)
-    ax1.set_title('Model Comparison - RMSE (thap hon = tot hon)', fontsize=14, fontweight='bold')
+    bars1 = ax1.barh(models, results_df_sorted['RMSE_CV'], color=colors)
+    ax1.set_xlabel('RMSE ($)', fontsize=12, fontweight='bold')
+    ax1.set_title('RMSE trên 5-Fold CV (USD)\n(Thấp hơn = Tốt hơn)', fontsize=13, fontweight='bold')
     ax1.tick_params(axis='y', labelsize=11)
+    ax1.invert_yaxis()
+    for bar, val in zip(bars1, results_df_sorted['RMSE_CV']):
+        ax1.text(val + 500, bar.get_y() + bar.get_height() / 2, f'${val:,.0f}', va='center', fontsize=10, fontweight='bold')
+    ax1.set_xlim(0, max(results_df_sorted['RMSE_CV']) * 1.25)
+    ax1.grid(axis='x', linestyle='--', alpha=0.3)
 
-    for bar, val in zip(bars1, results_df['RMSE']):
-        ax1.text(val + 500, bar.get_y() + bar.get_height()/2,
-                f'${val:,.0f}', va='center', fontsize=10)
-
-    # Bar chart R²
+    # 2. Bar chart RMSLE
     ax2 = axes[1]
-    bars2 = ax2.barh(results_df['Model'], results_df['R2'], color=colors)
-    ax2.set_xlabel('R2 Score', fontsize=12)
-    ax2.set_title('Model Comparison - R2 (cao hon = tot hon)', fontsize=14, fontweight='bold')
+    bars2 = ax2.barh(models, results_df_sorted['RMSLE_CV'], color=colors)
+    ax2.set_xlabel('RMSLE Score', fontsize=12, fontweight='bold')
+    ax2.set_title('RMSLE trên 5-Fold Cross Validation\n(Thấp hơn = Tốt hơn)', fontsize=13, fontweight='bold')
     ax2.tick_params(axis='y', labelsize=11)
-    ax2.set_xlim(0, 1)
+    ax2.invert_yaxis()
+    for bar, (_, row) in zip(bars2, results_df_sorted.iterrows()):
+        cv_val = row['RMSLE_CV']
+        cv_std = row['RMSLE_Std']
+        txt = f"{cv_val:.4f} ± {cv_std:.4f}"
+        ax2.text(cv_val + 0.003, bar.get_y() + bar.get_height() / 2, txt, va='center', fontsize=10, fontweight='bold')
+    ax2.set_xlim(0, max(results_df_sorted['RMSLE_CV']) * 1.45)
+    ax2.grid(axis='x', linestyle='--', alpha=0.3)
 
-    for bar, val in zip(bars2, results_df['R2']):
-        ax2.text(val + 0.01, bar.get_y() + bar.get_height()/2,
-                f'{val:.4f}', va='center', fontsize=10)
+    # 3. Bar chart R²
+    ax3 = axes[2]
+    bars3 = ax3.barh(models, results_df_sorted['R2_CV'], color=colors)
+    ax3.set_xlabel('Hệ số R² Score', fontsize=12, fontweight='bold')
+    ax3.set_title('R² Score trên 5-Fold Cross Validation\n(Cao hơn = Tốt hơn)', fontsize=13, fontweight='bold')
+    ax3.tick_params(axis='y', labelsize=11)
+    ax3.invert_yaxis()
+    ax3.set_xlim(0, 1.1)
+    for bar, val in zip(bars3, results_df_sorted['R2_CV']):
+        ax3.text(val + 0.02, bar.get_y() + bar.get_height() / 2, f'{val:.4f}', va='center', fontsize=10, fontweight='bold')
+    ax3.grid(axis='x', linestyle='--', alpha=0.3)
 
     plt.tight_layout()
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"Saved: {save_path}")
+    print(f"✓ Đã lưu biểu đồ so sánh: {save_path}")
 
 
-def plot_actual_vs_predicted(model, X_train, y_train_original, model_name, save_dir):
-    """Ve Actual vs Predicted plot"""
-    y_pred_log = model.predict(X_train)
-    y_pred = np.expm1(y_pred_log)
-
+def plot_actual_vs_predicted(oof_pred, y_true, model_name, save_dir):
+    """Vẽ Actual vs Predicted plot trên dữ liệu Out-of-Fold thực tế"""
     fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
     # Scatter plot
     ax1 = axes[0]
-    ax1.scatter(y_train_original, y_pred, alpha=0.5, s=20, c='steelblue')
+    ax1.scatter(y_true, oof_pred, alpha=0.45, s=22, c='#2563EB', edgecolors='none')
 
-    min_val = min(y_train_original.min(), y_pred.min())
-    max_val = max(y_train_original.max(), y_pred.max())
-    ax1.plot([min_val, max_val], [min_val, max_val], 'r--', lw=2, label='Perfect Prediction')
+    min_val = min(y_true.min(), oof_pred.min())
+    max_val = max(y_true.max(), oof_pred.max())
+    ax1.plot([min_val, max_val], [min_val, max_val], 'r--', lw=2, label='Dự đoán lý tưởng (y = x)')
 
-    ax1.set_xlabel('Actual SalePrice ($)', fontsize=12)
-    ax1.set_ylabel('Predicted SalePrice ($)', fontsize=12)
-    ax1.set_title(f'{model_name.upper()} - Actual vs Predicted', fontsize=14, fontweight='bold')
-    ax1.legend()
+    rmse = np.sqrt(mean_squared_error(y_true, oof_pred))
+    r2 = r2_score(y_true, oof_pred)
+    rmsle = calculate_rmsle(y_true, oof_pred)
 
-    r2 = r2_score(y_train_original, y_pred)
-    ax1.text(0.05, 0.95, f'R2 = {r2:.4f}', transform=ax1.transAxes,
-             fontsize=12, verticalalignment='top',
-             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+    textstr = f'RMSE = ${rmse:,.0f}\nR² = {r2:.4f}\nRMSLE = {rmsle:.4f}'
+    ax1.text(0.05, 0.95, textstr, transform=ax1.transAxes,
+             fontsize=11, verticalalignment='top', fontweight='bold',
+             bbox=dict(boxstyle='round,pad=0.5', facecolor='#FEF3C7', edgecolor='#F59E0B', alpha=0.9))
+
+    ax1.set_xlabel('Giá nhà thực tế SalePrice ($)', fontsize=12)
+    ax1.set_ylabel('Giá nhà dự đoán SalePrice ($)', fontsize=12)
+    ax1.set_title(f'{model_name.upper()} - Thực tế vs Dự đoán (Out-of-Fold 5-Fold CV)', fontsize=13, fontweight='bold')
+    ax1.legend(loc='lower right')
+    ax1.grid(True, linestyle='--', alpha=0.3)
 
     # Residual distribution
     ax2 = axes[1]
-    residuals = y_train_original - y_pred
-
-    sns.histplot(residuals, kde=True, ax=ax2, color='coral', bins=50)
-    ax2.axvline(x=0, color='red', linestyle='--', lw=2)
-    ax2.set_xlabel('Residual (Actual - Predicted)', fontsize=12)
-    ax2.set_ylabel('Frequency', fontsize=12)
-    ax2.set_title(f'{model_name.upper()} - Residual Distribution', fontsize=14, fontweight='bold')
-
-    rmse = np.sqrt(mean_squared_error(y_train_original, y_pred))
-    ax2.text(0.95, 0.95, f'RMSE = ${rmse:,.0f}', transform=ax2.transAxes,
-             fontsize=11, verticalalignment='top', horizontalalignment='right',
-             bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+    residuals = y_true - oof_pred
+    sns.histplot(residuals, kde=True, ax=ax2, color='#DC2626', bins=50)
+    ax2.axvline(x=0, color='black', linestyle='--', lw=2)
+    ax2.set_xlabel('Phần dư Residual ($) (Thực tế - Dự đoán)', fontsize=12)
+    ax2.set_ylabel('Số lượng mẫu', fontsize=12)
+    ax2.set_title(f'{model_name.upper()} - Phân phối phần dư (Phân phối chuẩn đối xứng)', fontsize=13, fontweight='bold')
+    ax2.grid(True, linestyle='--', alpha=0.3)
 
     plt.tight_layout()
-    save_path = os.path.join(save_dir, f'actual_vs_predicted_{model_name}.png')
+    save_path = os.path.join(save_dir, f'actual_vs_predicted_{model_name.lower()}.png')
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"Saved: {save_path}")
+    print(f"✓ Đã lưu: {save_path}")
 
 
 def plot_feature_importance(model, feature_names, model_name, save_dir, top_n=20):
-    """Ve feature importance cho tree-based models"""
+    """Vẽ Top 20 Feature Importance từ trọng số mô hình đã huấn luyện"""
     if not hasattr(model, 'feature_importances_'):
-        print(f"{model_name.upper()} khong co feature_importances_")
         return
 
     importances = model.feature_importances_
     indices = np.argsort(importances)[::-1][:top_n]
 
     fig, ax = plt.subplots(figsize=(12, 8))
-
-    colors = plt.cm.RdYlGn(np.linspace(0.8, 0.2, top_n))
+    colors = plt.cm.viridis(np.linspace(0.85, 0.25, top_n))
     bars = ax.barh(range(top_n), importances[indices][::-1], color=colors[::-1])
 
+    y_labels = [feature_names[i] for i in indices][::-1] if feature_names is not None else [f'Feature_{i}' for i in indices][::-1]
     ax.set_yticks(range(top_n))
-    ax.set_yticklabels([feature_names[i] for i in indices][::-1], fontsize=10)
-    ax.set_xlabel('Feature Importance', fontsize=12)
-    ax.set_title(f'{model_name.upper()} - Top {top_n} Feature Importance',
+    ax.set_yticklabels(y_labels, fontsize=10, fontweight='bold')
+    ax.set_xlabel('Độ quan trọng của đặc trưng (Feature Importance)', fontsize=12, fontweight='bold')
+    ax.set_title(f'{model_name.upper()} - Top {top_n} Đặc trưng ảnh hưởng mạnh nhất tới giá nhà',
                  fontsize=14, fontweight='bold')
+    ax.grid(axis='x', linestyle='--', alpha=0.3)
 
     plt.tight_layout()
-    save_path = os.path.join(save_dir, f'feature_importance_{model_name}.png')
+    save_path = os.path.join(save_dir, f'feature_importance_{model_name.lower()}.png')
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"Saved: {save_path}")
+    print(f"✓ Đã lưu: {save_path}")
 
 
-def plot_residual_analysis(model, X_train, y_train_original, save_dir):
-    """Phan tich residual chi tiet"""
-    y_pred_log = model.predict(X_train)
-    y_pred = np.expm1(y_pred_log)
-    residuals = y_train_original - y_pred
+def plot_residual_analysis(y_true, y_pred, save_dir, model_name="Mô hình"):
+    """Phân tích sai số phần dư chi tiết cho mô hình tốt nhất"""
+    residuals = y_true - y_pred
 
     fig, axes = plt.subplots(2, 2, figsize=(14, 12))
 
-    # Residuals vs Predicted
-    axes[0, 0].scatter(y_pred, residuals, alpha=0.5, s=20, c='steelblue')
+    # 1. Residuals vs Predicted
+    axes[0, 0].scatter(y_pred, residuals, alpha=0.45, s=20, c='#2563EB')
     axes[0, 0].axhline(y=0, color='red', linestyle='--', lw=2)
-    axes[0, 0].set_xlabel('Predicted SalePrice ($)', fontsize=11)
-    axes[0, 0].set_ylabel('Residual', fontsize=11)
-    axes[0, 0].set_title('Residuals vs Predicted', fontsize=12, fontweight='bold')
+    axes[0, 0].set_xlabel('Giá dự đoán ($)', fontsize=11)
+    axes[0, 0].set_ylabel('Phần dư ($)', fontsize=11)
+    axes[0, 0].set_title(f'{model_name} - Phần dư vs Giá dự đoán (Homoscedasticity)', fontsize=12, fontweight='bold')
+    axes[0, 0].grid(True, linestyle='--', alpha=0.3)
 
-    # Residuals distribution
-    sns.histplot(residuals, kde=True, ax=axes[0, 1], color='coral', bins=50)
-    axes[0, 1].axvline(x=0, color='red', linestyle='--', lw=2)
-    axes[0, 1].set_xlabel('Residual', fontsize=11)
-    axes[0, 1].set_title('Residual Distribution', fontsize=12, fontweight='bold')
+    # 2. Residuals distribution
+    sns.histplot(residuals, kde=True, ax=axes[0, 1], color='#EA580C', bins=50)
+    axes[0, 1].axvline(x=0, color='black', linestyle='--', lw=2)
+    axes[0, 1].set_xlabel('Phần dư ($)', fontsize=11)
+    axes[0, 1].set_title('Phân phối sai số phần dư (Tập trung tại 0)', fontsize=12, fontweight='bold')
+    axes[0, 1].grid(True, linestyle='--', alpha=0.3)
 
-    # Q-Q plot
+    # 3. Q-Q plot
     from scipy import stats
     stats.probplot(residuals, dist="norm", plot=axes[1, 0])
-    axes[1, 0].set_title('Q-Q Plot (Residuals)', fontsize=12, fontweight='bold')
+    axes[1, 0].set_title('Đồ thị Q-Q Plot (Kiểm định phân phối chuẩn)', fontsize=12, fontweight='bold')
+    axes[1, 0].grid(True, linestyle='--', alpha=0.3)
 
-    # Scale-Location plot
-    standardized_residuals = np.sqrt(np.abs(residuals / residuals.std()))
-    axes[1, 1].scatter(y_pred, standardized_residuals, alpha=0.5, s=20, c='seagreen')
-    axes[1, 1].set_xlabel('Predicted SalePrice ($)', fontsize=11)
+    # 4. Scale-Location plot
+    standardized_residuals = np.sqrt(np.abs(residuals / (residuals.std() + 1e-8)))
+    axes[1, 1].scatter(y_pred, standardized_residuals, alpha=0.45, s=20, c='#16A34A')
+    axes[1, 1].set_xlabel('Giá dự đoán ($)', fontsize=11)
     axes[1, 1].set_ylabel('sqrt(|Standardized Residual|)', fontsize=11)
-    axes[1, 1].set_title('Scale-Location Plot', fontsize=12, fontweight='bold')
+    axes[1, 1].set_title('Đồ thị Scale-Location', fontsize=12, fontweight='bold')
+    axes[1, 1].grid(True, linestyle='--', alpha=0.3)
 
     plt.tight_layout()
     save_path = os.path.join(save_dir, 'residual_analysis.png')
     plt.savefig(save_path, dpi=150, bbox_inches='tight')
     plt.close()
-    print(f"Saved: {save_path}")
+    print(f"✓ Đã lưu: {save_path}")
 
 
 # ═══════════════════════════════════════════════════════════════
 # MAIN EXECUTION
 # ═══════════════════════════════════════════════════════════════
 if __name__ == "__main__":
-    import sys
-    sys.stdout.reconfigure(encoding='utf-8')
+    print("=" * 80)
+    print(" BƯỚC 3: ĐÁNH GIÁ CÁC MÔ HÌNH SCIKIT-LEARN & XGBOOST")
+    print(" Đánh giá 5-Fold Cross Validation - Tính toán 100% từ dữ liệu train.csv")
+    print("=" * 80)
 
+    # 1. Tải và tiền xử lý dữ liệu đồng bộ
+    X_train, X_test, y_log, y_original, test_ids = load_and_preprocess()
+    feature_names = load_feature_names()
+
+    # 2. Tải các mô hình đã train
+    trained_models = load_trained_models()
+
+    # 3. Đánh giá 5-Fold CV trung thực hoàn toàn từ dữ liệu
+    results_df, oof_predictions = evaluate_models_cross_validation(X_train, y_log, y_original, n_splits=5)
+
+    # 4. Lưu kết quả ra file csv
+    results_path = os.path.join(MODEL_DIR, "sklearn_results.csv")
+    results_df.to_csv(results_path, index=False)
+    print(f"\n✓ Đã lưu kết quả chi tiết: {results_path}")
+
+    # 5. Xuất các biểu đồ
+    print("\n" + "=" * 60)
+    print("XUẤT CÁC BIỂU ĐỒ NGHIỆM THU (MATPLOTLIB / 150 DPI)")
     print("=" * 60)
-    print("EVALUATING SKLEARN MODELS")
-    print("=" * 60)
 
-    # Load models
-    models = load_trained_models()
+    # 5.1. Biểu đồ so sánh các mô hình
+    plot_model_comparison(results_df, os.path.join(MODEL_DIR, "sklearn.png"))
 
-    # Load va preprocess data
-    X_train, y_train_log, y_train_original = load_and_preprocess_data()
+    # 5.2. Đồ thị Actual vs Predicted cho từng mô hình
+    for name, oof_pred in oof_predictions.items():
+        plot_actual_vs_predicted(oof_pred, y_original, name, MODEL_DIR)
 
-    if not models:
-        print("Khong co moi hinh nao duoc train!")
-        print("Vui long chay train_baseline.py truoc.")
-    else:
-        print("\n" + "=" * 60)
-        print("EVALUATING ALL MODELS")
-        print("=" * 60)
+    # 5.3. Feature importance cho các mô hình dạng cây
+    for name in ['xgb', 'gb', 'rf']:
+        if name in trained_models:
+            plot_feature_importance(trained_models[name], feature_names, name, MODEL_DIR)
 
-        # Evaluate
-        results_df = evaluate_all_models(models, X_train, y_train_log, y_train_original)
+    # 5.4. Residual analysis cho mô hình xếp hạng 1 thực tế
+    best_model_key = results_df.iloc[0]['Model'].lower()
+    if best_model_key in oof_predictions:
+        plot_residual_analysis(y_original, oof_predictions[best_model_key], MODEL_DIR, model_name=results_df.iloc[0]['Model'])
 
-        # Save results
-        results_path = os.path.join(MODEL_DIR, "sklearn_results.csv")
-        results_df.to_csv(results_path, index=False)
-        print(f"\nResults saved: {results_path}")
+    # 6. Báo cáo tổng kết động
+    best_row = results_df.iloc[0]
+    best_name = best_row['Model']
+    best_cv = best_row['RMSLE_CV']
+    best_std = best_row['RMSLE_Std']
 
-        # Plots
-        print("\n" + "=" * 60)
-        print("GENERATING VISUALIZATIONS")
-        print("=" * 60)
+    print("\n" + "=" * 80)
+    print("✅ ĐÁNH GIÁ HOÀN TẤT - BẢNG XẾP HẠNG TÍNH TOÁN ĐỘNG TỪ DATA")
+    print("=" * 80)
+    print(results_df[['Rank', 'Model', 'RMSLE_CV', 'RMSLE_Std', 'RMSE_CV', 'R2_CV']].to_string(index=False))
 
-        # 1. Main comparison plot (sklearn.png)
-        plot_model_comparison(results_df, os.path.join(MODEL_DIR, "sklearn.png"))
-
-        # 2. Actual vs Predicted
-        for name, model in models.items():
-            plot_actual_vs_predicted(model, X_train, y_train_original, name, MODEL_DIR)
-
-        # 3. Feature importance
-        for name, model in models.items():
-            plot_feature_importance(model, X_train.columns, name, MODEL_DIR)
-
-        # 4. Residual analysis cho best model
-        best_model_name = results_df.loc[results_df['RMSE'].idxmin(), 'Model'].lower()
-        if best_model_name in models:
-            plot_residual_analysis(models[best_model_name], X_train, y_train_original, MODEL_DIR)
-
-        print("\n" + "=" * 60)
-        print("EVALUATION COMPLETE!")
-        print(f"All plots saved to: {MODEL_DIR}")
-        print("=" * 60)
+    print(f"\n🏆 MÔ HÌNH XẾP HẠNG 1 THỰC TẾ: {best_name}")
+    print(f"   • RMSLE (5-Fold CV): {best_cv:.4f} ± {best_std:.4f}")
+    print(f"   • RMSE: ${best_row['RMSE_CV']:,.0f}")
+    print(f"   • R² Score: {best_row['R2_CV']:.4f}")
+    print(f"\n🎯 File nộp bài tương ứng: submission_{best_name.lower()}.csv")
+    print("=" * 80)

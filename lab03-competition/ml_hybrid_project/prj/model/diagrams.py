@@ -229,8 +229,8 @@ def create_diagram_1():
     c_out = draw_card(ax, 15.7, 3.3, 3.2, tag="PROCESSED ARTIFACTS", tag_color="#059669",
                       title="Output Datasets", subtitle="data/processed/ & exps/feature/",
                       lines=[
-                          "• X_train: (1,460, 93) float32",
-                          "• X_test:  (1,459, 93) float32",
+                          "• X_train: (1,460, 105) float32",
+                          "• X_test:  (1,459, 105) float32",
                           "• y_train_log: (1,460, 1)",
                           "• scaler_sklearn.pkl",
                           "• test_ids.csv (Id Kaggle)",
@@ -271,8 +271,8 @@ def create_diagram_2():
 
     # 6 Blocks nằm ngang (X: 1.5, 4.5, 7.5, 10.5, 13.5, 16.5), w = 2.2, h = 3.8
     blocks_data = [
-        {"x": 1.5, "tag": "INPUT", "tag_color": "#4F46E5", "title": "Input Layer", "sub": "Dimension: 93",
-         "lines": ["• 93 Features chuẩn hóa", "• Tensor: (Batch, 93)", "• Kiểu dữ liệu float32", "• StandardScaler"],
+        {"x": 1.5, "tag": "INPUT", "tag_color": "#4F46E5", "title": "Input Layer", "sub": "Dimension: 105",
+         "lines": ["• 105 Features chuẩn hóa", "• Tensor: (Batch, 105)", "• Kiểu dữ liệu float32", "• StandardScaler"],
          "color": "#6366F1", "bg": "#EEF2FF"},
         {"x": 4.5, "tag": "LAYER 1", "tag_color": "#2563EB", "title": "Hidden Block 1", "sub": "256 Neurons",
          "lines": ["• nn.Linear(93, 256)", "• nn.BatchNorm1d(256)", "• nn.ReLU()", "• nn.Dropout(p = 0.3)"],
@@ -475,7 +475,7 @@ def create_diagram_4():
                      lines=[
                          "• Huấn luyện và kiểm định chéo 5-Fold Cross Validation trên tập train",
                          "• Tự động lưu checkpoint: model_*.pkl và scaler_sklearn.pkl",
-                         "• Mô hình xuất sắc nhất: Gradient Boosting Regressor (RMSLE = 0.0243, R² = 0.9968)"
+                         "• Mô hình xuất sắc nhất: XGBoost Regressor (RMSLE = 0.1295, Kaggle = 0.12593)"
                      ],
                      bg_color="#EEF2FF", border_color="#6366F1", title_color="#4338CA")
 
@@ -521,9 +521,9 @@ def create_diagram_4():
                       title="Các File Kết Quả Dự Đoán Nghiệm Thu Chính Thức (prj/model/)",
                       subtitle="Xuất định dạng chuẩn Kaggle: Id, SalePrice",
                       lines=[
-                          "• submission_sklearn.csv: Dự đoán từ mô hình học máy tốt nhất (Gradient Boosting - 1,459 dòng)",
-                          "• submission_mlp.csv: Dự đoán từ mạng nơ-ron sâu PyTorch MLPRegressor (1,459 dòng)",
-                          "• submission_ensemble.csv: Kết hợp trung bình trọng số giữa các mô hình xuất sắc nhất để tối ưu hóa độ chính xác!"
+                          "• submission_xgb.csv: Dự đoán từ XGBoost (Mô hình TỐT NHẤT - Kaggle: 0.12593)",
+                          "• submission_gb.csv: Dự đoán từ Gradient Boosting (Kaggle: 0.12966)",
+                          "• submission_ensemble.csv: Kết hợp trung bình trọng số giữa 6 mô hình"
                       ],
                       bg_color="#ECFDF5", border_color="#10B981", title_color="#047857")
 
@@ -571,7 +571,7 @@ def create_diagram_5():
          "lines": ["• RMSE, MAE, R², RMSLE", "• Xuất sklearn.png", "• Tạo Dashboard", "  pytorch.html"],
          "color": "#A855F7", "bg": "#FAF5FF"},
         {"x": 16.1, "tag": "BƯỚC 6", "tag_color": "#16A34A", "title": "Submission", "sub": "prj/model/",
-         "lines": ["• submission_xgb.csv", "• submission_mlp.csv", "• Ensemble kết hợp", "• Báo cáo nghiệm thu"],
+         "lines": ["• submission_xgb.csv", "• submission_gb.csv", "• submission_ensemble.csv", "• Báo cáo nghiệm thu"],
          "color": "#22C55E", "bg": "#F0FDF4"},
     ]
 
@@ -654,40 +654,40 @@ def create_diagram_6():
     ax.text(13.3, 10.95, "NHÓM 2: TREE-BASED ENSEMBLE MODELS", ha='center', fontsize=13, fontweight='bold', color='#15803D')
     ax.text(13.3, 10.65, "Bắt quan hệ phi tuyến phức tạp & Tăng cường dự đoán", ha='center', fontsize=9.5, color=COLOR_TEXT_MUTED)
 
-    draw_card(ax, 13.3, 9.2, 7.6, tag="BAGGING", tag_color="#16A34A",
-              title="Random Forest Regressor", subtitle="Bootstrap Aggregating (200 trees, max_depth = 15)",
+    draw_card(ax, 13.3, 9.2, 7.6, tag="BOOSTING", tag_color="#16A34A",
+              title="Gradient Boosting Regressor (#2)", subtitle="Sequential Boosting (200 trees, lr = 0.1)",
               lines=[
-                  "• Tập hợp 200 cây quyết định độc lập song song, lấy trung bình kết quả",
-                  "• Giảm phương sai (variance), kháng nhiễu và outlier cực tốt",
-                  "• R² Score: 0.9725 | RMSLE: 0.0648 | MAE: ~10,230 $USD"
+                  "• Huấn luyện tuần tự: mỗi cây mới tập trung sửa sai số (residual) của cây trước",
+                  "• Tối ưu hóa hàm mất mát theo hướng đạo hàm gradient descent",
+                  "• RMSLE: 0.1343 (5-Fold CV) | Xếp thứ 2 trong dự án"
               ],
               bg_color="#F0FDF4", border_color="#22C55E", title_color="#15803D")
 
     draw_card(ax, 13.3, 6.4, 7.6, tag="[TOP 1] BEST MODEL", tag_color="#DC2626",
-              title="Gradient Boosting Regressor (Mô Hình Tốt Nhất)", subtitle="Sequential Boosting (200 trees, lr = 0.1)",
-              lines=[
-                  "• Huấn luyện tuần tự: mỗi cây mới tập trung sửa sai số (residual) của cây trước",
-                  "• Tối ưu hóa hàm mất mát theo hướng đạo hàm gradient descent",
-                  "• R² Score: 0.9968 | RMSLE: 0.0243 | ĐẠT ĐỘ CHÍNH XÁC CAO NHẤT DỰ ÁN"
-              ],
-              bg_color="#FEF2F2", border_color="#EF4444", title_color="#B91C1C")
-
-    draw_card(ax, 13.3, 3.6, 7.6, tag="BOOSTING", tag_color="#16A34A",
-              title="XGBoost Regressor (#2)", subtitle="Extreme Gradient Boosting (lr = 0.1, subsample = 0.8)",
+              title="XGBoost Regressor (Mô Hình Tốt Nhất)", subtitle="Extreme Gradient Boosting (lr = 0.1, subsample = 0.8)",
               lines=[
                   "• Triển khai phân tán siêu việt với chính quy hóa L1/L2 trên hàm mục tiêu",
                   "• Tốc độ tính toán vượt trội, kiểm soát overfitting hoàn hảo",
-                  "• R² Score: 0.9967 | RMSLE: 0.0244 | XẾP THỨ 2 TRONG DỰ ÁN"
+                  "• RMSLE: 0.1295 (5-Fold CV) | Kaggle: 0.12593 | ĐẠT ĐIỂM TỐT NHẤT DỰ ÁN"
+              ],
+              bg_color="#FEF2F2", border_color="#EF4444", title_color="#B91C1C")
+
+    draw_card(ax, 13.3, 3.6, 7.6, tag="BAGGING", tag_color="#16A34A",
+              title="Random Forest Regressor (#3)", subtitle="Bootstrap Aggregating (200 trees, max_depth = 15)",
+              lines=[
+                  "• Tập hợp 200 cây quyết định độc lập song song, lấy trung bình kết quả",
+                  "• Giảm phương sai (variance), kháng nhiễu và outlier cực tốt",
+                  "• RMSLE: 0.1418 (5-Fold CV) | Xếp thứ 3 trong dự án"
               ],
               bg_color="#F0FDF4", border_color="#22C55E", title_color="#15803D")
 
     # Banner tổng kết bên dưới (Y = 1.3, h = 1.6)
     draw_card(ax, 9.0, 1.3, 16.2, h=1.6, tag="BENCHMARK CONCLUSION", tag_color="#0F172A",
               title="Kết Luận Phân Tích Thực Nghiệm",
-              subtitle="So sánh hiệu năng giữa hai họ thuật toán",
+              subtitle="So sánh hiệu năng giữa hai họ thuật toán (5-Fold Cross Validation)",
               lines=[
-                  "• Các mô hình Ensemble dạng cây (Tree-based) áp đảo hoàn toàn mô hình Tuyến tính nhờ nắm bắt tốt mối quan hệ phi tuyến giữa các đặc trưng nhà.",
-                  "• Gradient Boosting (#1) và XGBoost (#2) đạt độ chính xác gần như tuyệt đối (R² ~ 0.996) và là lựa chọn tối ưu để xuất file nộp bài Kaggle."
+                  "• XGBoost là mô hình TỐT NHẤT với RMSLE = 0.1295 (5-Fold CV), điểm Kaggle = 0.12593.",
+                  "• Các mô hình tree-based (XGBoost, GB, RF) vượt trội hoàn toàn so với Linear models trên dữ liệu tabular."
               ],
               bg_color="#FFFFFF", border_color="#94A3B8", title_color="#1E293B")
 

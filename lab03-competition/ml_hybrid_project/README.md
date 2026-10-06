@@ -24,12 +24,12 @@
 Dự án tham gia cuộc thi [**House Prices: Advanced Regression Techniques**](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques) do Kaggle tổ chức, dựa trên tập dữ liệu nhà ở Ames, Iowa của tác giả Dean De Cock (2011).
 
 - **Mục tiêu**: Dự đoán giá bán nhà (`SalePrice`) dựa trên 79 biến giải thích mô tả chi tiết các khía cạnh bất động sản.
-- **Độ đo đánh giá**: **Root-Mean-Squared-Error (RMSE)** tính trên thang logarit giữa giá thực tế và giá dự đoán (RMSLE):
+- **Độ đo đánh giá**: **Root-Mean-Squared-Logarithmic-Error (RMSLE)**:
   $$
-  \text{RMSE} = \sqrt{\frac{1}{n} \sum_{i=1}^n (\log(y_i) - \log(\hat{y}_i))^2}
+  \text{RMSLE} = \sqrt{\frac{1}{n} \sum_{i=1}^n (\log(1+y_i) - \log(1+\hat{y}_i))^2}
   $$
 - **Phương pháp tiếp cận**: Xây dựng **Hybrid Model** gồm:
-  - Nhánh học máy truyền thống: 6 mô hình Scikit-Learn / XGBoost với 5-Fold Cross Validation.
+  - Nhánh học máy truyền thống: 6 mô hình Scikit-Learn / XGBoost với **5-Fold Cross Validation**.
   - Nhánh học sâu: Mạng nơ-ron đa tầng PyTorch MLP với kỹ thuật BatchNorm, Dropout, Cosine LR Scheduler và Early Stopping.
   - Mô hình kết hợp (Ensemble): Trung bình dự đoán của các mô hình tốt nhất.
 
@@ -95,9 +95,15 @@ ml_hybrid_project/
 │   │   ├── feature_importance_*.png    # Biểu đồ mức độ quan trọng của đặc trưng
 │   │   ├── residual_analysis.png       # Biểu đồ phân tích sai số phần dư
 │   │   ├── diagrams.py                 # Script tự động vẽ 6 sơ đồ bằng Matplotlib
-│   │   ├── submission_sklearn.csv      # File nộp bài từ mô hình ML tốt nhất (XGBoost)
-│   │   ├── submission_mlp.csv          # File nộp bài từ mạng PyTorch MLP
-│   │   └── submission_ensemble.csv     # File nộp bài kết hợp Ensemble
+│   │   ├── submission_xgb.csv          # ⭐ File nộp bài từ mô hình TỐT NHẤT (XGBoost)
+│   │   ├── submission_sklearn.csv      # File nộp bài từ Best Sklearn Model (Gradient Boosting)
+│   │   ├── submission_gb.csv           # File nộp bài từ Gradient Boosting
+│   │   ├── submission_rf.csv           # File nộp bài từ Random Forest
+│   │   ├── submission_elastic.csv      # File nộp bài từ ElasticNet
+│   │   ├── submission_lasso.csv       # File nộp bài từ Lasso
+│   │   ├── submission_ridge.csv        # File nộp bài từ Ridge
+│   │   ├── submission_mlp.csv          # File nộp bài từ PyTorch MLP
+│   │   └── submission_ensemble.csv      # File nộp bài kết hợp Ensemble
 │   │
 │   ├── sklearn/                        # Phân nhánh Machine Learning
 │   │   ├── features.py                 # Module trích xuất đặc trưng & encoding
@@ -199,29 +205,55 @@ File: [prj/eda/exploratory_data_analysis.ipynb](file:///d:/SGU_HK1_2026-2027/SGU
 ### 6.2. Tiền xử lý &amp; Kỹ nghệ đặc trưng (Feature Engineering)
 
 File: [prj/eda/preprocess.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/eda/preprocess.py) và [prj/sklearn/features.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/sklearn/features.py)
-Tạo 14 đặc trưng mới giúp mô hình nắm bắt thông tin thực tế:
 
-1. `TotalSF`: Tổng diện tích sàn nhà (`TotalBsmtSF + 1stFlrSF + 2ndFlrSF`).
-2. `TotalBath`: Tổng số phòng tắm (`FullBath + 0.5*HalfBath + BsmtFullBath + 0.5*BsmtHalfBath`).
-3. `HouseAge`: Số năm tuổi của ngôi nhà khi bán (`YrSold - YearBuilt`).
-4. `RemodAge`: Số năm từ lần sửa chữa/nâng cấp gần nhất (`YrSold - YearRemodAdd`).
-5. `TotalPorchSF`: Tổng diện tích hiên nhà (`OpenPorchSF + EnclosedPorch + 3SsnPorch + ScreenPorch`).
-6. `Qual_x_Area`: Tương tác phi tuyến giữa chất lượng tổng thể và diện tích (`OverallQual * TotalSF`).
-7. Các biến cờ nhị phân (Binary Flags): `HasPool`, `HasGarage`, `HasBsmt`, `HasFireplace`, `Has2ndFlr`, `IsRemodeled`, `IsNew`.
-8. Mã hóa: **Ordinal Mapping** cho các bậc chất lượng (`Ex: 5, Gd: 4, TA: 3, Fa: 2, Po: 1, None: 0`) và **LabelEncoder** cho các biến danh mục. Chuẩn hóa toàn bộ bằng `StandardScaler`.
+Tạo **105 đặc trưng** (80 gốc + 25 mới) giúp mô hình nắm bắt thông tin thực tế:
+
+**Features về Diện tích:**
+
+- `TotalSF`: Tổng diện tích sàn nhà (`TotalBsmtSF + 1stFlrSF + 2ndFlrSF`).
+- `TotalFloorSF`: Tổng diện tích sàn không basement.
+- `TotalPorchSF`: Tổng diện tích hiên nhà.
+
+**Features về Phòng tắm:**
+
+- `TotalBath`: Tổng số phòng tắm (`FullBath + 0.5*HalfBath + BsmtFullBath + 0.5*BsmtHalfBath`).
+
+**Features về Tuổi nhà:**
+
+- `HouseAge`: Số năm tuổi của ngôi nhà khi bán.
+- `RemodAge`: Số năm từ lần sửa chữa/nâng cấp gần nhất.
+
+**Binary Flags:**
+
+- `HasPool`, `HasGarage`, `HasBasement`, `HasFireplace`, `Has2ndFloor`, `HasMasVnr`, `IsRemodeled`, `IsNew`.
+
+**Quality Scores:**
+
+- `OverallScore`, `ExterScore`, `BsmtScore`, `GarageScore` (tích các điểm chất lượng).
+
+**Ratio &amp; Interaction Features:**
+
+- `BsmtRatio`, `AreaPerRoom`, `LivAreaRatio`, `GarageAreaPerCar`, `LotFrontageRatio`.
+- `SF_Qual_Interaction`, `Year_Qual_Interaction`, `SF_Bath_Interaction`.
+
+**Mã hóa:**
+
+- **Ordinal Mapping** cho các bậc chất lượng (`Ex: 5, Gd: 4, TA: 3, Fa: 2, Po: 1, None: 0`).
+- **LabelEncoder** cho các biến danh mục.
+- Chuẩn hóa toàn bộ bằng `StandardScaler`.
 
 ### 6.3. Nhánh Machine Learning (Scikit-Learn &amp; XGBoost)
 
 File: [prj/sklearn/train_baseline.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/sklearn/train_baseline.py)
 
-- Đánh giá khách quan bằng **5-Fold Cross Validation**.
+- Đánh giá khách quan bằng **5-Fold Cross Validation** (RMSLE chính xác, không overfitting).
 - Huấn luyện 6 mô hình:
   - **Ridge Regression** ($L_2$ regularization, $\alpha=10.0$): Kiểm soát đa cộng tuyến.
   - **Lasso Regression** ($L_1$ regularization, $\alpha=0.001$): Lọc bỏ đặc trưng dư thừa.
   - **ElasticNet** (Kết hợp $L_1$ &amp; $L_2$).
   - **Random Forest Regressor** (200 cây, `max_depth=15`): Bắt tương tác phi tuyến.
   - **Gradient Boosting Regressor** (200 cây, learning rate $0.1$).
-  - **XGBoost Regressor** (200 cây, `subsample=0.8`, `colsample_bytree=0.8`).
+  - **XGBoost Regressor** (200 cây, `subsample=0.8`, `colsample_bytree=0.8`) - **🥇 MÔ HÌNH TỐT NHẤT**.
 
 ### 6.4. Nhánh Deep Learning (PyTorch MLP)
 
@@ -229,7 +261,7 @@ Files: [prj/pytorch_mlp/dataset.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLear
 
 - **Kiến trúc mạng (MLPRegressor)**:
   $$
-  \text{Input (93 features)} \to \text{FC(256)} \to \text{FC(128)} \to \text{FC(64)} \to \text{FC(32)} \to \text{FC(1)}
+  \text{Input (105 features)} \to \text{FC(256)} \to \text{FC(128)} \to \text{FC(64)} \to \text{FC(32)} \to \text{FC(1)}
   $$
 - Mỗi tầng ẩn tích hợp: **BatchNorm1d** (ổn định phân phối gradient), hàm kích hoạt **ReLU**, và **Dropout (0.3** $\to$ **0.1)** (chống học vẹt).
 - Khởi tạo trọng số **Kaiming / Xavier Normal**.
@@ -241,21 +273,28 @@ Files: [prj/pytorch_mlp/dataset.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLear
 
 ## 7. Kết quả thực nghiệm
 
-### Bảng so sánh hiệu năng các mô hình (Số liệu thực tế)
+### Bảng so sánh hiệu năng các mô hình (5-Fold Cross Validation)
+
+> ⚠️ **Lưu ý quan trọng**: RMSLE được đánh giá trên **Validation Set** (Cross-Validation), không phải Train Set, để đảm bảo phản ánh đúng hiệu năng thực tế trên dữ liệu mới.
 
 
-| Thuật toán            | RMSE (USD) | MAE (USD)  | $R^2$ Score | RMSLE (Kaggle Metric) | Đánh giá               |
-| --------------------- | :----------: | :----------: | :-----------: | :---------------------: | ---------------------- |
-| **Ridge Regression**  | $27,164    | $15,652    | 0.8830      | 0.1246                | Tuyến tính ổn định     |
-| **Lasso Regression**  | $28,029    | $15,821    | 0.8754      | 0.1261                | Lọc đặc trưng tốt      |
-| **ElasticNet**        | $27,313    | $15,677    | 0.8817      | 0.1247                | Cân bằng L1/L2         |
-| **Random Forest**     | $13,179    | $7,360     | 0.9725      | 0.0648                | Khá tốt trên phi tuyến |
-| **Gradient Boosting (Best ML)** | **$4,489** | **$3,215** | **0.9968**  | **0.0243**            | Cực kỳ xuất sắc           |
-| **XGBoost** | **$4,541** | **$3,276** | **0.9967**  | **0.0244**            | Rất chính xác       |
-| **PyTorch MLP**       | $58,106    | $31,450    | 0.8710      | 0.2742                | Hội tụ mượt mà         |
+| Thuật toán           | RMSLE (5-Fold CV) | Std     | Kaggle Score | Đánh giá                    |
+| -------------------- | ----------------- | ------- | ------------ | --------------------------- |
+| **🥇 XGBoost**       | **0.1295**        | ±0.0170 | **0.12593**  | **TỐT NHẤT**                |
+| 🥈 Gradient Boosting | 0.1343            | ±0.0184 | 0.12966      | Tốt                         |
+| 🥉 Random Forest     | 0.1418            | ±0.0165 | \~0.14       | Khá                         |
+| Ridge                | 0.1481            | ±0.0401 | \~0.15       | Trung bình                  |
+| Lasso                | 0.1492            | ±0.0426 | \~0.15       | Trung bình                  |
+| ElasticNet           | 0.1507            | ±0.0395 | \~0.15       | Trung bình                  |
+| PyTorch MLP          | 0.2742            | -       | \~0.27       | Hội tụ nhưng kém tree-based |
 
 
-> **Nhận xét**: Các mô hình cây tăng cường (Gradient Boosting và XGBoost) đạt hiệu quả cao nhất trên tập dữ liệu bảng dạng này. Mô hình PyTorch MLP hội tụ tốt sau 135 epochs khi áp dụng BatchNorm và Cosine LR.
+> **Nhận xét**: 
+>
+> - **XGBoost** là mô hình tốt nhất với RMSLE = **0.1295** (5-Fold CV), điểm Kaggle thực tế đạt **0.12593**.
+> - **Gradient Boosting** là mô hình Scikit-Learn tốt nhất với RMSLE = **0.1343** (5-Fold CV), điểm Kaggle thực tế đạt **0.12966**.
+> - Các mô hình tree-based (XGBoost, Gradient Boosting, Random Forest) vượt trội hoàn toàn so với Linear models trên dữ liệu tabular.
+> - Mô hình PyTorch MLP kém hơn nhiều do dữ liệu tabular nhỏ (~1,460 mẫu) không đủ để deep learning phát huy ưu thế.
 
 ---
 
@@ -283,21 +322,29 @@ Tất cả các sản phẩm đầu ra được lưu tập trung tại **`prj/mo
 
 ### File nộp bài Kaggle
 
-- `submission_sklearn.csv` (từ XGBoost).
-- `submission_mlp.csv` (từ PyTorch MLP).
-- `submission_ensemble.csv` (kết hợp trung bình trọng số).
+
+| File                        | Mô hình                                              |
+| --------------------------- | ---------------------------------------------------- |
+| `submission_xgb.csv`        | **XGBoost (Tốt nhất - Kaggle: 0.12593)**             | 
+| `submission_sklearn.csv`    | **Best Sklearn (Gradient Boosting - Kaggle: 0.12966)** |
+| `submission_gb.csv`         | Gradient Boosting                                    |
+| `submission_rf.csv`         | Random Forest                                        |
+| `submission_ensemble.csv`   | Ensemble                                             |
+| `submission_*.csv` (Linear) | Ridge/Lasso/ElasticNet                               |
+| `submission_mlp.csv`        | PyTorch MLP                                          |
+
 
 ---
 
 ## 9. Quy cách nộp bài
 
-1. **Nộp bài lên Kaggle**: Nộp file `submission_ensemble.csv` hoặc `submission_sklearn.csv` lên cuộc thi Kaggle [House Prices](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques) và chụp lại màn hình điểm số / xếp hạng.
+1. **Nộp bài lên Kaggle**: Nộp file **`submission_xgb.csv`** lên cuộc thi Kaggle [House Prices](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques) và chụp lại màn hình điểm số / xếp hạng.
 2. **Viết Báo Cáo (Word/PDF)**:
    - Trang bìa: Ghi rõ Họ tên, Mã số sinh viên của 4 thành viên.
    - Bảng phân công công việc &amp; mức độ đóng góp (%).
    - Nội dung bài làm: Trình bày quy trình EDA, Feature Engineering, kiến trúc mô hình và chèn 6 sơ đồ từ `prj/model/diagrams/`.
 3. **Đóng gói file nén**: Nén thư mục project cùng file Báo cáo thành tệp:  
- `lab03_house_price_hoten_masv.zip` (theo họ tên và mã số sinh viên của nhóm trưởng).
+`lab03_house_price_hoten_masv.zip` (theo họ tên và mã số sinh viên của nhóm trưởng).
 
 ---
 
