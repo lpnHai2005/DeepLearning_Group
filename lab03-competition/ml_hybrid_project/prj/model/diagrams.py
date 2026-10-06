@@ -475,7 +475,7 @@ def create_diagram_4():
                      lines=[
                          "• Huấn luyện và kiểm định chéo 5-Fold Cross Validation trên tập train",
                          "• Tự động lưu checkpoint: model_*.pkl và scaler_sklearn.pkl",
-                         "• Mô hình xuất sắc nhất: XGBoost Regressor (RMSLE = 0.0244, R² = 0.9967)"
+                         "• Mô hình xuất sắc nhất: Gradient Boosting Regressor (RMSLE = 0.0243, R² = 0.9968)"
                      ],
                      bg_color="#EEF2FF", border_color="#6366F1", title_color="#4338CA")
 
@@ -521,7 +521,7 @@ def create_diagram_4():
                       title="Các File Kết Quả Dự Đoán Nghiệm Thu Chính Thức (prj/model/)",
                       subtitle="Xuất định dạng chuẩn Kaggle: Id, SalePrice",
                       lines=[
-                          "• submission_sklearn.csv: Dự đoán từ mô hình học máy tốt nhất (XGBoost Regressor - 1,459 dòng)",
+                          "• submission_sklearn.csv: Dự đoán từ mô hình học máy tốt nhất (Gradient Boosting - 1,459 dòng)",
                           "• submission_mlp.csv: Dự đoán từ mạng nơ-ron sâu PyTorch MLPRegressor (1,459 dòng)",
                           "• submission_ensemble.csv: Kết hợp trung bình trọng số giữa các mô hình xuất sắc nhất để tối ưu hóa độ chính xác!"
                       ],
@@ -663,23 +663,23 @@ def create_diagram_6():
               ],
               bg_color="#F0FDF4", border_color="#22C55E", title_color="#15803D")
 
-    draw_card(ax, 13.3, 6.4, 7.6, tag="BOOSTING", tag_color="#16A34A",
-              title="Gradient Boosting Regressor", subtitle="Sequential Boosting (200 trees, lr = 0.1)",
+    draw_card(ax, 13.3, 6.4, 7.6, tag="[TOP 1] BEST MODEL", tag_color="#DC2626",
+              title="Gradient Boosting Regressor (Mô Hình Tốt Nhất)", subtitle="Sequential Boosting (200 trees, lr = 0.1)",
               lines=[
                   "• Huấn luyện tuần tự: mỗi cây mới tập trung sửa sai số (residual) của cây trước",
                   "• Tối ưu hóa hàm mất mát theo hướng đạo hàm gradient descent",
-                  "• R² Score: 0.9968 | RMSLE: 0.0243 | MAE: ~3,450 $USD"
+                  "• R² Score: 0.9968 | RMSLE: 0.0243 | ĐẠT ĐỘ CHÍNH XÁC CAO NHẤT DỰ ÁN"
               ],
-              bg_color="#F0FDF4", border_color="#22C55E", title_color="#15803D")
+              bg_color="#FEF2F2", border_color="#EF4444", title_color="#B91C1C")
 
-    draw_card(ax, 13.3, 3.6, 7.6, tag="[TOP 1] BEST MODEL", tag_color="#DC2626",
-              title="XGBoost Regressor (Mô Hình Tốt Nhất)", subtitle="Extreme Gradient Boosting (lr = 0.1, subsample = 0.8)",
+    draw_card(ax, 13.3, 3.6, 7.6, tag="BOOSTING", tag_color="#16A34A",
+              title="XGBoost Regressor (#2)", subtitle="Extreme Gradient Boosting (lr = 0.1, subsample = 0.8)",
               lines=[
                   "• Triển khai phân tán siêu việt với chính quy hóa L1/L2 trên hàm mục tiêu",
                   "• Tốc độ tính toán vượt trội, kiểm soát overfitting hoàn hảo",
-                  "• R² Score: 0.9967 | RMSLE: 0.0244 | ĐẠT ĐỘ CHÍNH XÁC CAO NHẤT DỰ ÁN"
+                  "• R² Score: 0.9967 | RMSLE: 0.0244 | XẾP THỨ 2 TRONG DỰ ÁN"
               ],
-              bg_color="#FEF2F2", border_color="#EF4444", title_color="#B91C1C")
+              bg_color="#F0FDF4", border_color="#22C55E", title_color="#15803D")
 
     # Banner tổng kết bên dưới (Y = 1.3, h = 1.6)
     draw_card(ax, 9.0, 1.3, 16.2, h=1.6, tag="BENCHMARK CONCLUSION", tag_color="#0F172A",
@@ -687,7 +687,7 @@ def create_diagram_6():
               subtitle="So sánh hiệu năng giữa hai họ thuật toán",
               lines=[
                   "• Các mô hình Ensemble dạng cây (Tree-based) áp đảo hoàn toàn mô hình Tuyến tính nhờ nắm bắt tốt mối quan hệ phi tuyến giữa các đặc trưng nhà.",
-                  "• XGBoost Regressor và Gradient Boosting đạt độ chính xác gần như tuyệt đối (R² ~ 0.996) và là lựa chọn tối ưu để xuất file nộp bài Kaggle."
+                  "• Gradient Boosting (#1) và XGBoost (#2) đạt độ chính xác gần như tuyệt đối (R² ~ 0.996) và là lựa chọn tối ưu để xuất file nộp bài Kaggle."
               ],
               bg_color="#FFFFFF", border_color="#94A3B8", title_color="#1E293B")
 

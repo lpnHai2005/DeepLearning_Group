@@ -250,8 +250,8 @@ Files: [prj/pytorch_mlp/dataset.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLear
 | **Lasso Regression**  | $28,029    | $15,821    | 0.8754      | 0.1261                | Lọc đặc trưng tốt      |
 | **ElasticNet**        | $27,313    | $15,677    | 0.8817      | 0.1247                | Cân bằng L1/L2         |
 | **Random Forest**     | $13,179    | $7,360     | 0.9725      | 0.0648                | Khá tốt trên phi tuyến |
-| **Gradient Boosting** | **$4,489** | **$3,215** | **0.9968**  | **0.0243**            | Rất xuất sắc           |
-| **XGBoost (Best ML)** | **$4,541** | **$3,276** | **0.9967**  | **0.0244**            | Cực kỳ chính xác       |
+| **Gradient Boosting (Best ML)** | **$4,489** | **$3,215** | **0.9968**  | **0.0243**            | Cực kỳ xuất sắc           |
+| **XGBoost** | **$4,541** | **$3,276** | **0.9967**  | **0.0244**            | Rất chính xác       |
 | **PyTorch MLP**       | $58,106    | $31,450    | 0.8710      | 0.2742                | Hội tụ mượt mà         |
 
 
