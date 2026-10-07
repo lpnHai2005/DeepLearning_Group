@@ -278,17 +278,16 @@ Files: [prj/pytorch_mlp/dataset.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLear
 > ⚠️ **Lưu ý quan trọng**: RMSLE được đánh giá trên **Validation Set** (Cross-Validation) và **Public Test Set** của Kaggle. Thang đo **RMSLE càng thấp càng chính xác** (Lower is Better).
 
 
-| Hạng | Mô hình / Thuật toán | RMSLE (5-Fold CV) | Std | Kaggle Score | Đánh giá & Danh hiệu |
+| Hạng / TT | Mô hình | CV RMSE | Std | Score (Test / Submission) | Đánh giá & Nhận xét |
 | :---: | :--- | :---: | :---: | :---: | :--- |
-| 🏆 | **Ensemble (Log-Space Blend)** | **0.1311** | - | **0.12088** | 🥇 **MÔ HÌNH TỔNG THỂ TỐT NHẤT (QUÁN QUÂN DỰ ÁN)** |
-| 1 | **XGBoost Regressor** | **0.1295** | ±0.0170 | **0.12593** | 🥇 **Mô hình Đơn tốt nhất (Best Single Model)** |
-| 2 | **Gradient Boosting (GB)** | 0.1343 | ±0.0184 | **0.12546** | 🥈 Mô hình thuần Scikit-Learn tốt nhất |
-| 3 | **Random Forest** | 0.1418 | ±0.0165 | \~0.14 | Khá (Giảm phương sai tốt) |
-| 4 | **Ridge Regression** | 0.1481 | ±0.0401 | \~0.15 | Trung bình (Tuyến tính L2) |
-| 5 | **Lasso Regression** | 0.1492 | ±0.0426 | \~0.15 | Trung bình (Tuyến tính L1) |
-| 6 | **ElasticNet** | 0.1507 | ±0.0395 | \~0.15 | Trung bình (Kết hợp L1 + L2) |
-| - | **PyTorch MLP** | 0.2742 | - | \~0.27 | Hội tụ nhưng kém tree-based |
-
+| 1 | **Ensemble (Log-Space Blend)** | **0.1311** | - | **0.12088** |**MÔ HÌNH TỔNG THỂ TỐT NHẤT (QUÁN QUÂN DỰ ÁN)** |
+| 2 | **Gradient Boosting (GB)** | 0.1343 | ±0.0184 | **0.12546** |**Mô hình Đơn / Scikit-Learn tốt nhất** |
+| 3 | **XGBoost Regressor** | **0.1295** | ±0.0170 | **0.12593** |Mô hình Đơn tốt thứ hai (sát nút GB) |
+| 4 | **Lasso Regression** | 0.1492 | ±0.0426 | **0.13061** | Tuyến tính L1 (Kết quả bất ngờ vượt RF/Ridge) |
+| 5 | **Random Forest** | 0.1418 | ±0.0165 | **0.13447** | Khá (Giảm phương sai tốt) |
+| 6 | **Ridge Regression** | 0.1481 | ±0.0401 | **0.13538** | Trung bình (Tuyến tính L2) |
+| 7 | **ElasticNet** | 0.1507 | ±0.0395 | **0.13601** | Trung bình (Kết hợp L1 + L2) |
+| 8 | **PyTorch MLP** | 0.2742 | - | **0.36253** | Hội tụ nhưng kém xa tree-based & tuyến tính |
 
 > **Nhận xét chuyên sâu**: 
 >
