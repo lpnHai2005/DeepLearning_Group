@@ -347,9 +347,6 @@ def create_all_submissions(trained_models, X_test, test_ids):
         path = os.path.join(MODEL_DIR, filename)
         submission.to_csv(path, index=False)
 
-        # Also save to processed
-        submission.to_csv(os.path.join(DATA_PROCESSED_DIR, filename), index=False)
-
         submissions[name] = path
         print(f"✓ {name.upper()}: {filename}")
         print(f"   Range: ${y_pred.min():,.0f} - ${y_pred.max():,.0f}, Mean: ${y_pred.mean():,.0f}")
@@ -374,7 +371,6 @@ def create_all_submissions(trained_models, X_test, test_ids):
     ensemble_sub = pd.DataFrame({'Id': test_ids, 'SalePrice': ensemble_pred})
     ensemble_path = os.path.join(MODEL_DIR, "submission_ensemble.csv")
     ensemble_sub.to_csv(ensemble_path, index=False)
-    ensemble_sub.to_csv(os.path.join(DATA_PROCESSED_DIR, "submission_ensemble.csv"), index=False)
     print(f"\n✓ ENSEMBLE: submission_ensemble.csv")
     print(f"   Range: ${ensemble_pred.min():,.0f} - ${ensemble_pred.max():,.0f}, Mean: ${ensemble_pred.mean():,.0f}")
 
@@ -383,7 +379,6 @@ def create_all_submissions(trained_models, X_test, test_ids):
         gb_pred = np.expm1(trained_models['gb'].predict(X_test))
         sub_sk = pd.DataFrame({'Id': test_ids, 'SalePrice': gb_pred})
         sub_sk.to_csv(os.path.join(MODEL_DIR, "submission_sklearn.csv"), index=False)
-        sub_sk.to_csv(os.path.join(DATA_PROCESSED_DIR, "submission_sklearn.csv"), index=False)
         print("✓ BEST SKLEARN (GB): submission_sklearn.csv (Kaggle: 0.12966)")
 
     return submissions
