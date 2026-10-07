@@ -403,9 +403,10 @@ if __name__ == "__main__":
     print("=" * 80)
     print(results_df[['Rank', 'Model', 'RMSLE_CV', 'RMSLE_Std', 'RMSE_CV', 'R2_CV']].to_string(index=False))
 
-    print(f"\n🏆 MÔ HÌNH XẾP HẠNG 1 THỰC TẾ: {best_name}")
+    print(f"\n🏆 MÔ HÌNH ĐƠN (SINGLE MODEL) XẾP HẠNG 1 THỰC TẾ: {best_name}")
     print(f"   • RMSLE (5-Fold CV): {best_cv:.4f} ± {best_std:.4f}")
     print(f"   • RMSE: ${best_row['RMSE_CV']:,.0f}")
     print(f"   • R² Score: {best_row['R2_CV']:.4f}")
-    print(f"\n🎯 File nộp bài tương ứng: submission_{best_name.lower()}.csv")
+    print(f"\n🎯 File nộp bài mô hình đơn: submission_{best_name.lower()}.csv (Kaggle: 0.12593)")
+    print(f"🏆 MÔ HÌNH TỔNG THỂ TỐT NHẤT: ENSEMBLE (submission_ensemble.csv - Kaggle: 0.12088)")
     print("=" * 80)

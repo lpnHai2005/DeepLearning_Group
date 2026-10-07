@@ -163,7 +163,7 @@ def main():
     print("\n📝 Hướng dẫn tiếp theo cho nhóm:")
     print("   1. Mở file prj/model/pytorch.html trên trình duyệt để tương tác.")
     print("   2. Mở file prj/model/sklearn.png để xem bảng xếp hạng mô hình.")
-    print("   3. Nộp file prj/model/submission_ensemble.csv hoặc submission_xgb.csv lên Kaggle.")
+    print("   3. Nộp file prj/model/submission_ensemble.csv (🏆 Kaggle: 0.12088 - Khuyến nghị) hoặc submission_xgb.csv lên Kaggle.")
     print("   4. Sử dụng 6 ảnh sơ đồ trong prj/model/diagrams/ để đưa vào Báo Cáo Nghiệm Thu.")
 
 

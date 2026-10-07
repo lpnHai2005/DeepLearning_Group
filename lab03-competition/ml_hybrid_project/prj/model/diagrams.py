@@ -521,9 +521,9 @@ def create_diagram_4():
                       title="Các File Kết Quả Dự Đoán Nghiệm Thu Chính Thức (prj/model/)",
                       subtitle="Xuất định dạng chuẩn Kaggle: Id, SalePrice",
                       lines=[
-                          "• submission_xgb.csv: Dự đoán từ XGBoost (Mô hình TỐT NHẤT - Kaggle: 0.12593)",
-                          "• submission_gb.csv: Dự đoán từ Gradient Boosting (Kaggle: 0.12966)",
-                          "• submission_ensemble.csv: Kết hợp trung bình trọng số giữa 6 mô hình"
+                          "• submission_ensemble.csv: Kết hợp Ensemble Blending ([TOP 1] TỐT NHẤT DỰ ÁN - Kaggle: 0.12088)",
+                          "• submission_xgb.csv: Dự đoán từ XGBoost (Mô hình ĐƠN TỐT NHẤT - Kaggle: 0.12593)",
+                          "• submission_gb.csv: Dự đoán từ Gradient Boosting (Best Pure Sklearn - Kaggle: 0.12546)"
                       ],
                       bg_color="#ECFDF5", border_color="#10B981", title_color="#047857")
 
@@ -571,7 +571,7 @@ def create_diagram_5():
          "lines": ["• RMSE, MAE, R², RMSLE", "• Xuất sklearn.png", "• Tạo Dashboard", "  pytorch.html"],
          "color": "#A855F7", "bg": "#FAF5FF"},
         {"x": 16.1, "tag": "BƯỚC 6", "tag_color": "#16A34A", "title": "Submission", "sub": "prj/model/",
-         "lines": ["• submission_xgb.csv", "• submission_gb.csv", "• submission_ensemble.csv", "• Báo cáo nghiệm thu"],
+         "lines": ["• submission_ensemble.csv", "• submission_xgb.csv", "• submission_gb.csv", "• Báo cáo nghiệm thu"],
          "color": "#22C55E", "bg": "#F0FDF4"},
     ]
 
@@ -654,21 +654,21 @@ def create_diagram_6():
     ax.text(13.3, 10.95, "NHÓM 2: TREE-BASED ENSEMBLE MODELS", ha='center', fontsize=13, fontweight='bold', color='#15803D')
     ax.text(13.3, 10.65, "Bắt quan hệ phi tuyến phức tạp & Tăng cường dự đoán", ha='center', fontsize=9.5, color=COLOR_TEXT_MUTED)
 
-    draw_card(ax, 13.3, 9.2, 7.6, tag="BOOSTING", tag_color="#16A34A",
+    draw_card(ax, 13.3, 9.2, 7.6, tag="BOOSTING (PURE SKLEARN)", tag_color="#16A34A",
               title="Gradient Boosting Regressor (#2)", subtitle="Sequential Boosting (200 trees, lr = 0.1)",
               lines=[
                   "• Huấn luyện tuần tự: mỗi cây mới tập trung sửa sai số (residual) của cây trước",
                   "• Tối ưu hóa hàm mất mát theo hướng đạo hàm gradient descent",
-                  "• RMSLE: 0.1343 (5-Fold CV) | Xếp thứ 2 trong dự án"
+                  "• RMSLE: 0.1343 (5-Fold CV) | Kaggle: 0.12546 (Best Pure Sklearn)"
               ],
               bg_color="#F0FDF4", border_color="#22C55E", title_color="#15803D")
 
-    draw_card(ax, 13.3, 6.4, 7.6, tag="[TOP 1] BEST MODEL", tag_color="#DC2626",
-              title="XGBoost Regressor (Mô Hình Tốt Nhất)", subtitle="Extreme Gradient Boosting (lr = 0.1, subsample = 0.8)",
+    draw_card(ax, 13.3, 6.4, 7.6, tag="[TOP 1] BEST SINGLE MODEL", tag_color="#DC2626",
+              title="XGBoost Regressor (Mô Hình Đơn Tốt Nhất)", subtitle="Extreme Gradient Boosting (lr = 0.1, subsample = 0.8)",
               lines=[
                   "• Triển khai phân tán siêu việt với chính quy hóa L1/L2 trên hàm mục tiêu",
                   "• Tốc độ tính toán vượt trội, kiểm soát overfitting hoàn hảo",
-                  "• RMSLE: 0.1295 (5-Fold CV) | Kaggle: 0.12593 | ĐẠT ĐIỂM TỐT NHẤT DỰ ÁN"
+                  "• RMSLE: 0.1295 (5-Fold CV) | Kaggle: 0.12593 | MÔ HÌNH ĐƠN TỐT NHẤT"
               ],
               bg_color="#FEF2F2", border_color="#EF4444", title_color="#B91C1C")
 
@@ -683,11 +683,11 @@ def create_diagram_6():
 
     # Banner tổng kết bên dưới (Y = 1.3, h = 1.6)
     draw_card(ax, 9.0, 1.3, 16.2, h=1.6, tag="BENCHMARK CONCLUSION", tag_color="#0F172A",
-              title="Kết Luận Phân Tích Thực Nghiệm",
+              title="Kết Luận Phân Tích Thực Nghiệm & Đỉnh Cao Ensemble",
               subtitle="So sánh hiệu năng giữa hai họ thuật toán (5-Fold Cross Validation)",
               lines=[
-                  "• XGBoost là mô hình TỐT NHẤT với RMSLE = 0.1295 (5-Fold CV), điểm Kaggle = 0.12593.",
-                  "• Các mô hình tree-based (XGBoost, GB, RF) vượt trội hoàn toàn so với Linear models trên dữ liệu tabular."
+                  "• Best Single Model: XGBoost dẫn đầu các mô hình đơn với RMSLE CV = 0.1295, Kaggle = 0.12593.",
+                  "• Best Overall Model: Ensemble (Log-Space Blending) đạt RMSLE Kaggle = 0.12088 (TỐT NHẤT DỰ ÁN)."
               ],
               bg_color="#FFFFFF", border_color="#94A3B8", title_color="#1E293B")
 

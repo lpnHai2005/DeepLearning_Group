@@ -273,42 +273,45 @@ Files: [prj/pytorch_mlp/dataset.py](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLear
 
 ## 7. Kết quả thực nghiệm
 
-### Bảng so sánh hiệu năng các mô hình (5-Fold Cross Validation)
+### Bảng so sánh hiệu năng các mô hình (5-Fold Cross Validation & Kaggle Leaderboard)
 
-> ⚠️ **Lưu ý quan trọng**: RMSLE được đánh giá trên **Validation Set** (Cross-Validation), không phải Train Set, để đảm bảo phản ánh đúng hiệu năng thực tế trên dữ liệu mới.
-
-
-| Thuật toán           | RMSLE (5-Fold CV) | Std     | Kaggle Score | Đánh giá                    |
-| -------------------- | ----------------- | ------- | ------------ | --------------------------- |
-| **🥇 XGBoost**       | **0.1295**        | ±0.0170 | **0.12593**  | **TỐT NHẤT**                |
-| 🥈 Gradient Boosting | 0.1343            | ±0.0184 | 0.12966      | Tốt                         |
-| 🥉 Random Forest     | 0.1418            | ±0.0165 | \~0.14       | Khá                         |
-| Ridge                | 0.1481            | ±0.0401 | \~0.15       | Trung bình                  |
-| Lasso                | 0.1492            | ±0.0426 | \~0.15       | Trung bình                  |
-| ElasticNet           | 0.1507            | ±0.0395 | \~0.15       | Trung bình                  |
-| PyTorch MLP          | 0.2742            | -       | \~0.27       | Hội tụ nhưng kém tree-based |
+> ⚠️ **Lưu ý quan trọng**: RMSLE được đánh giá trên **Validation Set** (Cross-Validation) và **Public Test Set** của Kaggle. Thang đo **RMSLE càng thấp càng chính xác** (Lower is Better).
 
 
-> **Nhận xét**: 
+| Hạng | Mô hình / Thuật toán | RMSLE (5-Fold CV) | Std | Kaggle Score | Đánh giá & Danh hiệu |
+| :---: | :--- | :---: | :---: | :---: | :--- |
+| 🏆 | **Ensemble (Log-Space Blend)** | **0.1311** | - | **0.12088** | 🥇 **MÔ HÌNH TỔNG THỂ TỐT NHẤT (QUÁN QUÂN DỰ ÁN)** |
+| 1 | **XGBoost Regressor** | **0.1295** | ±0.0170 | **0.12593** | 🥇 **Mô hình Đơn tốt nhất (Best Single Model)** |
+| 2 | **Gradient Boosting (GB)** | 0.1343 | ±0.0184 | **0.12546** | 🥈 Mô hình thuần Scikit-Learn tốt nhất |
+| 3 | **Random Forest** | 0.1418 | ±0.0165 | \~0.14 | Khá (Giảm phương sai tốt) |
+| 4 | **Ridge Regression** | 0.1481 | ±0.0401 | \~0.15 | Trung bình (Tuyến tính L2) |
+| 5 | **Lasso Regression** | 0.1492 | ±0.0426 | \~0.15 | Trung bình (Tuyến tính L1) |
+| 6 | **ElasticNet** | 0.1507 | ±0.0395 | \~0.15 | Trung bình (Kết hợp L1 + L2) |
+| - | **PyTorch MLP** | 0.2742 | - | \~0.27 | Hội tụ nhưng kém tree-based |
+
+
+> **Nhận xét chuyên sâu**: 
 >
-> - **XGBoost** là mô hình tốt nhất với RMSLE = **0.1295** (5-Fold CV), điểm Kaggle thực tế đạt **0.12593**.
-> - **Gradient Boosting** là mô hình Scikit-Learn tốt nhất với RMSLE = **0.1343** (5-Fold CV), điểm Kaggle thực tế đạt **0.12966**.
-> - Các mô hình tree-based (XGBoost, Gradient Boosting, Random Forest) vượt trội hoàn toàn so với Linear models trên dữ liệu tabular.
-> - Mô hình PyTorch MLP kém hơn nhiều do dữ liệu tabular nhỏ (~1,460 mẫu) không đủ để deep learning phát huy ưu thế.
+> 1. **Đỉnh cao Ensemble Blending (0.12088)**: Kỹ thuật kết hợp trọng số trong không gian log ($35\%\text{ XGB} + 30\%\text{ GB} + 15\%\text{ RF} + 10\%\text{ Elastic} + 5\%\text{ Lasso} + 5\%\text{ Ridge}$) giúp triệt tiêu phương sai giữa các mô hình và tận dụng thế mạnh riêng của từng thuật toán, đưa sai số giảm sâu từ $0.125$ xuống **$0.12088$** (đạt thứ hạng cao nhất trên Kaggle Leaderboard).
+> 2. **XGBoost dẫn đầu các mô hình đơn**: Trên tập huấn luyện (5-Fold CV), XGBoost đạt RMSLE = **0.1295** và điểm Kaggle = **0.12593**, chứng minh sức mạnh vượt trội của cơ chế Extreme Gradient Boosting và chính quy hóa độ phức tạp cây.
+> 3. **Gradient Boosting (Scikit-Learn) hoạt động xuất sắc**: Đạt điểm Kaggle **0.12546** (được xuất thành cả `submission_gb.csv` và `submission_sklearn.csv`), là mô hình Scikit-Learn độc lập tốt nhất.
+> 4. **Tree-based so với Linear & MLP**:
+>    - Các mô hình dạng cây (XGBoost, GB, RF) vượt trội hoàn toàn so với các mô hình tuyến tính trên dữ liệu dạng bảng (tabular data).
+>    - PyTorch MLP hội tụ tốt qua 100 epoch với CosineAnnealingLR, tuy nhiên với dữ liệu bảng kích thước nhỏ (~1,460 mẫu), mạng Deep Learning không phát huy được ưu thế bằng Gradient Boosted Trees.
 
 ---
 
-## 8. Danh mục file nghiệm thu &amp; Output
+## 8. Danh mục file nghiệm thu & Output
 
 Tất cả các sản phẩm đầu ra được lưu tập trung tại **`prj/model/`**:
 
-### Biểu đồ &amp; Báo cáo trực quan
+### Biểu đồ & Báo cáo trực quan
 
 - [**sklearn.png**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model/sklearn.png): Biểu đồ cột so sánh RMSE và $R^2$ của các mô hình Machine Learning.
 - [**pytorch.html**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model/pytorch.html): Trang web báo cáo tương tác HTML (Chart.js) cho phép zoom, rê chuột xem loss từng epoch.
 - [**training_curves.png**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model/training_curves.png): Đường cong suy giảm hàm mất mát qua quá trình huấn luyện MLP.
-- [**actual_vs_predicted\_*.png**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model): Biểu đồ phân tán so sánh giá thực tế và giá dự đoán cho từng model.
-- [**feature_importance\_*.png**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model): Mức độ đóng góp của Top 20 đặc trưng quan trọng nhất.
+- [**actual_vs_predicted_\*.png**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model): Biểu đồ phân tán so sánh giá thực tế và giá dự đoán cho từng model.
+- [**feature_importance_\*.png**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model): Mức độ đóng góp của Top 20 đặc trưng quan trọng nhất.
 - [**residual_analysis.png**](file:///d:/SGU_HK1_2026-2027/SGU_DL/DeepLearning_Group/lab03-competition/ml_hybrid_project/prj/model/residual_analysis.png): Phân tích phân phối sai số phần dư.
 
 ### 6 Sơ đồ kiến trúc vẽ từ code (Lưu riêng tại `prj/model/diagrams/` - Dùng cho Báo Cáo Nghiệm Thu)
@@ -323,25 +326,25 @@ Tất cả các sản phẩm đầu ra được lưu tập trung tại **`prj/mo
 ### File nộp bài Kaggle
 
 
-| File                        | Mô hình                                              |
-| --------------------------- | ---------------------------------------------------- |
-| `submission_xgb.csv`        | **XGBoost (Tốt nhất - Kaggle: 0.12593)**             | 
-| `submission_sklearn.csv`    | **Best Sklearn (Gradient Boosting - Kaggle: 0.12966)** |
-| `submission_gb.csv`         | Gradient Boosting                                    |
-| `submission_rf.csv`         | Random Forest                                        |
-| `submission_ensemble.csv`   | Ensemble                                             |
-| `submission_*.csv` (Linear) | Ridge/Lasso/ElasticNet                               |
-| `submission_mlp.csv`        | PyTorch MLP                                          |
+| File | Mô hình | Điểm Kaggle (RMSLE) | Đánh giá & Khuyến nghị |
+| :--- | :--- | :---: | :--- |
+| `submission_ensemble.csv` | **Ensemble Blending (6 mô hình)** | **0.12088** | 🏆 **KHUYẾN NGHỊ NỘP CHÍNH THỨC (ĐIỂM CAO NHẤT DỰ ÁN)** |
+| `submission_gb.csv` | **Gradient Boosting** | **0.12546** | 🥈 Mô hình thuần Scikit-Learn tốt nhất |
+| `submission_sklearn.csv` | **Best Sklearn (GB)** | **0.12546** | 🥈 Trùng khớp 100% với `submission_gb.csv` |
+| `submission_xgb.csv` | **XGBoost Regressor** | **0.12593** | 🥇 Mô hình đơn tốt nhất |
+| `submission_rf.csv` | Random Forest | \~0.14 | Bagging Baseline |
+| `submission_*.csv` (Linear) | Ridge / Lasso / ElasticNet | \~0.15 | Regularized Linear Baselines |
+| `submission_mlp.csv` | PyTorch MLP | \~0.27 | Deep Learning Branch |
 
 
 ---
 
 ## 9. Quy cách nộp bài
 
-1. **Nộp bài lên Kaggle**: Nộp file **`submission_xgb.csv`** lên cuộc thi Kaggle [House Prices](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques) và chụp lại màn hình điểm số / xếp hạng.
+1. **Nộp bài lên Kaggle**: Nộp file **`submission_ensemble.csv`** (đạt điểm **0.12088**) hoặc **`submission_xgb.csv`** lên cuộc thi Kaggle [House Prices](https://www.kaggle.com/competitions/house-prices-advanced-regression-techniques) và chụp lại màn hình điểm số / xếp hạng.
 2. **Viết Báo Cáo (Word/PDF)**:
    - Trang bìa: Ghi rõ Họ tên, Mã số sinh viên của 4 thành viên.
-   - Bảng phân công công việc &amp; mức độ đóng góp (%).
+   - Bảng phân công công việc & mức độ đóng góp (%).
    - Nội dung bài làm: Trình bày quy trình EDA, Feature Engineering, kiến trúc mô hình và chèn 6 sơ đồ từ `prj/model/diagrams/`.
 3. **Đóng gói file nén**: Nén thư mục project cùng file Báo cáo thành tệp:  
 `lab03_house_price_hoten_masv.zip` (theo họ tên và mã số sinh viên của nhóm trưởng).

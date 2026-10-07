@@ -243,21 +243,22 @@ python prj/model/diagrams.py
 
 ---
 
-## 📈 Kết quả mong đợi
+## 📈 Kết quả thực tế & Điểm nộp bài Kaggle
 
 
-| Model             | RMSE (original) | RMSLE  |
-| ----------------- | --------------- | ------ |
-| Ridge             | \~25,000        | \~0.15 |
-| Lasso             | \~25,000        | \~0.15 |
-| ElasticNet        | \~25,000        | \~0.15 |
-| Random Forest     | \~22,000        | \~0.14 |
-| Gradient Boosting | \~20,000        | \~0.13 |
-| XGBoost           | \~19,000        | \~0.12 |
-| **MLP (PyTorch)** | \~21,000        | \~0.13 |
+| Model | RMSLE (5-Fold CV) | Kaggle Score (RMSLE) | Đánh giá & Danh hiệu |
+| :--- | :---: | :---: | :--- |
+| **🏆 Ensemble (Weighted)** | **0.1311** | **0.12088** | 🥇 **QUÁN QUÂN DỰ ÁN (Tốt nhất toàn diện)** |
+| **🥇 XGBoost** | **0.1295** | **0.12593** | 🥇 **Mô hình Đơn tốt nhất (Best Single Model)** |
+| **🥈 Gradient Boosting** | 0.1343 | **0.12546** | 🥈 Mô hình thuần Scikit-Learn tốt nhất |
+| **Random Forest** | 0.1418 | \~0.14 | Khá |
+| **Ridge Regression** | 0.1481 | \~0.15 | Tuyến tính L2 Regularization |
+| **Lasso Regression** | 0.1492 | \~0.15 | Tuyến tính L1 Regularization |
+| **ElasticNet** | 0.1507 | \~0.15 | Tuyến tính kết hợp L1 + L2 |
+| **MLP (PyTorch)** | 0.2742 | \~0.27 | Mạng nơ-ron Deep Learning |
 
 
-> Kết quả thực tế phụ thuộc vào random seed và hyperparameters.
+> **Quy tắc xếp hạng Kaggle**: Metric chấm bài là RMSLE (Root Mean Squared Logarithmic Error) — **sai số càng thấp thì dự đoán càng chính xác và thứ hạng càng cao**. File `submission_ensemble.csv` đạt điểm **0.12088** là kết quả tốt nhất của nhóm.
 
 ---
 

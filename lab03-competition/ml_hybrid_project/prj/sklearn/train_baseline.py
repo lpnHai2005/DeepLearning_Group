@@ -374,12 +374,12 @@ def create_all_submissions(trained_models, X_test, test_ids):
     print(f"\n✓ ENSEMBLE: submission_ensemble.csv")
     print(f"   Range: ${ensemble_pred.min():,.0f} - ${ensemble_pred.max():,.0f}, Mean: ${ensemble_pred.mean():,.0f}")
 
-    # Đảm bảo lưu submission_sklearn.csv (từ best pure Scikit-Learn Model: Gradient Boosting, Kaggle: 0.12966)
+    # Đảm bảo lưu submission_sklearn.csv (từ best pure Scikit-Learn Model: Gradient Boosting, Kaggle: 0.12546)
     if 'gb' in trained_models:
         gb_pred = np.expm1(trained_models['gb'].predict(X_test))
         sub_sk = pd.DataFrame({'Id': test_ids, 'SalePrice': gb_pred})
         sub_sk.to_csv(os.path.join(MODEL_DIR, "submission_sklearn.csv"), index=False)
-        print("✓ BEST SKLEARN (GB): submission_sklearn.csv (Kaggle: 0.12966)")
+        print("✓ BEST SKLEARN (GB): submission_sklearn.csv (Kaggle: 0.12546)")
 
     return submissions
 
@@ -430,19 +430,19 @@ if __name__ == "__main__":
         marker = "🏆" if i == 1 else "   "
         print(f"   {marker} {i}. {name.upper():<15}: RMSLE = {row['rmsle_mean']:.4f} ± {row['rmsle_std']:.4f}")
 
-    print(f"\n🏆 MÔ HÌNH TỐT NHẤT: {best_model_name.upper()}")
+    print(f"\n🏆 MÔ HÌNH ĐƠN TỐT NHẤT (BEST SINGLE MODEL): {best_model_name.upper()}")
     print(f"   RMSLE (5-Fold CV): {results_df.iloc[0]['rmsle_mean']:.4f}")
 
     print("\n📁 FILES ĐÃ TẠO:")
-    print("   ├─ submission_xgb.csv")
-    print("   ├─ submission_gb.csv")
+    print("   ├─ submission_ensemble.csv (🏆 BEST OVERALL - Kaggle: 0.12088)")
+    print("   ├─ submission_xgb.csv      (Best Single Model - Kaggle: 0.12593)")
+    print("   ├─ submission_gb.csv       (Best Pure Sklearn - Kaggle: 0.12546)")
+    print("   ├─ submission_sklearn.csv  (GB - Kaggle: 0.12546)")
     print("   ├─ submission_rf.csv")
     print("   ├─ submission_elastic.csv")
     print("   ├─ submission_lasso.csv")
-    print("   ├─ submission_ridge.csv")
-    print("   ├─ submission_sklearn.csv (GB - Kaggle: 0.12966)")
-    print("   └─ submission_ensemble.csv")
+    print("   └─ submission_ridge.csv")
 
     print("\n" + "=" * 70)
-    print(" Nộp file submission_xgb.csv hoặc submission_ensemble.csv lên Kaggle")
+    print(" ⭐ KHUYẾN NGHỊ: Nộp file submission_ensemble.csv (0.12088) để đạt thứ hạng cao nhất!")
     print("=" * 70)
