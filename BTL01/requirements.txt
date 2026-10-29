@@ -1,0 +1,14 @@
+# Thư viện chạy toàn bộ thí nghiệm (PyTorch; KHÔNG dùng TensorFlow/Keras/AutoML)
+# Phiên bản đã chạy thử: torch 2.6.0, numpy 2.5.2, pandas 3.0.3, scipy 1.17.1, matplotlib 3.10.1
+torch>=2.0
+numpy>=1.24
+pandas>=2.0
+scipy>=1.10
+matplotlib>=3.7
+tqdm>=4.65
+pytest>=7.0
+
+# Tùy chọn, chỉ cần khi làm báo cáo/slide (bỏ dấu # để cài):
+# python-docx>=1.1
+# python-pptx>=0.6.23
+# torchinfo>=1.8

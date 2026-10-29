@@ -1,0 +1,7 @@
+{"_note": "PLACEHOLDER baseline, chot o G2. Moi tang 10 neuron. Them nhom doi chung cung so tham so (B=50, 87, 123) o file rieng.",
+ "exp": "C",
+ "vary": {"hidden_sizes": [[10], [10, 10], [10, 10, 10], [10, 10, 10, 10]]},
+ "base": {"n_train": 1000, "activation": "tanh", "optimizer": "adam",
+          "lr": 0.003, "batch_size": 32, "max_epochs": 2000, "patience": 200},
+ "seeds": [0, 1, 2],
+ "out_dir": "results/expC"}

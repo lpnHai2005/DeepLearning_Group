@@ -1,0 +1,21 @@
+# môi trường / cache
+.venv/
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+
+# hệ điều hành / Office
+Thumbs.db
+.DS_Store
+~$*
+
+# công cụ
+.claude/
+
+# Tài liệu đề bài của thầy: chỉ để đọc, không đưa vào repo/zip nộp.
+# Sample_Code.html là code Keras (đề CẤM dùng), tránh vô tình đóng gói.
+MLP_Exercise*.pdf
+Sample_Report.pdf
+Sample_Code.html
