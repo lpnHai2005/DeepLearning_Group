@@ -214,7 +214,7 @@ def sample_uniform(n, rng):
 | Khởi tạo Xavier/He | Biết khi nào dùng | `DL08b` p69–80 |
 | Checkpoint theo val loss, early stopping, `state_dict` | Làm được | Sách Ch.13 p143, Ch.21 p240; `train_mlp.py` Lab03 (`EarlyStopping`) |
 | Vanishing/exploding gradient và cách **đo** | Hiểu | `DL08a` p35–36; `DL08b` p45 |
-| Số tham số: mạng [2,B,1] có 3B+1; C tầng rộng 10 có 30 + 110(C−1) + 11 | Tính được | Tự tính (41/151/261/371 với C=1..4) |
+| Số tham số: mạng [2,B,1] có 4B+1; C tầng rộng 10 có 30 + 110(C−1) + 11 | Tính được | Tự tính (41/151/261/371 với C=1..4) |
 
 ### 5.2 Công việc chi tiết
 
@@ -264,7 +264,7 @@ def validate(model, loader, crit):
 ### 5.3 Thiết kế Thực nghiệm C
 
 - Biến độc lập: C = 1, 2, 3, 4 (mở rộng 5, 6, 8), **mỗi tầng 10 nơ-ron**, A cố định (ví dụ 1000 hoặc 2000), baseline giữ nguyên.
-- Vì C tăng làm số tham số tăng (41 → 151 → 261 → 371), chạy thêm **nhóm đối chứng cùng số tham số**: C=1 với B ≈ 50, 87, 123 (3B+1 = 151, 262, 370). Nhờ đó tách được "sâu hơn" khỏi "nhiều tham số hơn" (`DL07b` p54: tăng độ sâu hiệu quả hơn tăng tham số).
+- Vì C tăng làm số tham số tăng (41 → 151 → 261 → 371), chạy thêm **nhóm đối chứng cùng số tham số**: C=1 với B ≈ 38, 65, 93 (4B+1 = 153, 261, 373; file `configs/expC_ctrl.json`). Nhờ đó tách được "sâu hơn" khỏi "nhiều tham số hơn" (`DL07b` p54: tăng độ sâu hiệu quả hơn tăng tham số).
 - Đo cho từng lần chạy: test MSE/MAE/RMSE, số tham số, **thời gian huấn luyện** (`time.perf_counter()` chỉ quanh `fit`, cùng CPU, cùng số luồng), thời gian/epoch (ms), số epoch tới điểm tốt nhất, đường val loss theo epoch (trục y log).
 - Để nói về vanishing gradient **phải có bằng chứng**: ghi chuẩn gradient từng lớp (`[p.grad.norm() for p in model.parameters()]`) ở epoch đầu và cuối. Nếu số liệu không cho thấy gradient lớp đầu nhỏ hơn rõ rệt thì không được kết luận vanishing gradient.
 - Có thể so thêm activation (tanh/sigmoid/relu) ở C=4: sigmoid thường khó huấn luyện hơn khi sâu (`DL08b` p45).

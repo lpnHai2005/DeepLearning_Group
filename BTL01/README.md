@@ -34,10 +34,12 @@ Trên Windows, đặt `PYTHONUTF8=1` nếu `print` tiếng Việt báo lỗi mã
 
 ```
 python src/generate_data.py                                  # sinh data/*.csv
+python src/run_experiment.py --config configs/grid_baseline.json      # T2.5: lưới chốt baseline (chỉ xem val)
 python src/run_experiment.py --config configs/baseline.json
 python src/run_experiment.py --config configs/expA.json
 python src/run_experiment.py --config configs/expB.json
 python src/run_experiment.py --config configs/expC.json
+python src/run_experiment.py --config configs/expC_ctrl.json         # đối chứng C: 1 tầng, cùng số tham số
 python src/make_report_assets.py                             # gom bảng/hình cho báo cáo
 ```
 

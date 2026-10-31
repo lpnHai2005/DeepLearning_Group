@@ -1,4 +1,4 @@
-{"_note": "PLACEHOLDER baseline, chot o G2. Moi tang 10 neuron. Them nhom doi chung cung so tham so (B=50, 87, 123) o file rieng.",
+{"_note": "PLACEHOLDER baseline, chot o G2. Moi tang 10 neuron. Nhom doi chung cung so tham so: configs/expC_ctrl.json.",
  "exp": "C",
  "vary": {"hidden_sizes": [[10], [10, 10], [10, 10, 10], [10, 10, 10, 10]]},
  "base": {"n_train": 1000, "activation": "tanh", "optimizer": "adam",

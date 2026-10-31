@@ -1,0 +1,7 @@
+{"_note": "T2.5: luoi chot baseline, CHI xet val_mse (khong --eval-test). Ket qua -> chep cau hinh tot nhat vao baseline.json va dong bang.",
+ "exp": "grid",
+ "vary": {"lr": [0.001, 0.003, 0.01], "activation": ["tanh", "sigmoid", "relu"]},
+ "base": {"n_train": 1000, "hidden_sizes": [10], "optimizer": "adam",
+          "batch_size": 32, "max_epochs": 2000, "patience": 200},
+ "seeds": [0, 1, 2],
+ "out_dir": "results/grid_baseline"}
