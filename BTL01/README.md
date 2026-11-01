@@ -9,12 +9,13 @@ Ba nhóm thí nghiệm: **A** thay đổi số mẫu huấn luyện (200…2000)
 
 ## Trạng thái
 
-Khung repo đã dựng sẵn. Các hàm trong `src/` hiện là **stub** (`raise NotImplementedError("TVx - Tx.x")`),
-mỗi thành viên điền phần của mình theo `CHI_TIET_NHIEM_VU.md`.
+Khung repo đã dựng sẵn; các thành viên hoàn thiện phần được giao theo `CHI_TIET_NHIEM_VU.md`.
+
+**TV1:** Đã sinh dữ liệu, hoàn thiện loader/EDA, chọn ứng viên baseline bằng validation và chạy đủ 30 run A. Ứng viên hiện tại là sigmoid/lr 0.01; chờ TV2/TV3 review và TV4 QA/bàn giao.
 
 | Phần | Người | File |
 |---|---|---|
-| Dữ liệu, repo, Thực nghiệm A | TV1 | `src/data/*`, `src/generate_data.py`, `configs/expA.json` |
+| Dữ liệu, repo, Thực nghiệm A | TV1 | `src/data/*`, `src/generate_data.py`, `src/data/eda.py`, `src/data/summarize_expA.py`, `configs/expA.json` |
 | Mô hình, huấn luyện, Thực nghiệm C | TV2 | `src/model/mlp.py`, `src/engine/trainer.py`, `src/run_experiment.py`, `src/utils/*`, `configs/expC.json` |
 | Đánh giá, vẽ hình, Thực nghiệm B | TV3 | `src/engine/evaluate.py`, `src/visual/plots.py`, `configs/expB.json` |
 | Báo cáo, slide, QA, đóng gói | TV4 | `report/`, `src/make_report_assets.py` |
@@ -34,9 +35,11 @@ Trên Windows, đặt `PYTHONUTF8=1` nếu `print` tiếng Việt báo lỗi mã
 
 ```
 python src/generate_data.py                                  # sinh data/*.csv
+python src/data/eda.py                                       # TV1: thống kê và hình dữ liệu
 python src/run_experiment.py --config configs/grid_baseline.json      # T2.5: lưới chốt baseline (chỉ xem val)
 python src/run_experiment.py --config configs/baseline.json
 python src/run_experiment.py --config configs/expA.json
+python src/data/summarize_expA.py                            # TV1: tổng hợp/đồ thị A
 python src/run_experiment.py --config configs/expB.json
 python src/run_experiment.py --config configs/expC.json
 python src/run_experiment.py --config configs/expC_ctrl.json         # đối chứng C: 1 tầng, cùng số tham số
@@ -48,14 +51,14 @@ Sơ đồ mạng vẽ từ model thật: `python src/visual/draw_mlp.py` (lưu v
 ## Cấu trúc thư mục
 
 ```
-configs/      baseline.json, expA.json, expB.json, expC.json (giá trị baseline là PLACEHOLDER, chốt ở G2)
+configs/      baseline.json, expA.json, expB.json, expC.json (ứng viên sigmoid/lr 0.01 chọn bằng validation; chờ nhóm duyệt)
 src/data/     gaussian.py, dataset.py
 src/model/    mlp.py
 src/engine/   trainer.py, evaluate.py
 src/visual/   plots.py, draw_mlp.py
 src/utils/    seed.py, io.py, timer.py
 src/          generate_data.py, run_experiment.py, make_report_assets.py
-tests/        test_skeleton.py (+ test_gaussian.py, test_backprop.py khi làm xong)
+tests/        test_skeleton.py, test_gaussian.py, test_dataset.py, test_evaluate.py, test_trainer.py, test_backprop.py
 notebooks/    EDA, demo
 data/         train_pool.csv, val.csv, test.csv, meta.json
 results/      <exp>/<giá trị>/seed_<k>/{config.json, history.csv, metrics.json, best.pt}, summary.csv

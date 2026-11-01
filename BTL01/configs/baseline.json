@@ -1,7 +1,16 @@
-{"_note": "PLACEHOLDER - chot bang val o moc G2 (T2.5), sau do dong bang. Khoa nay bat dau bang '_' se bi run_experiment bo qua.",
- "exp": "baseline",
- "vary": {},
- "base": {"n_train": 1000, "hidden_sizes": [10], "activation": "tanh", "optimizer": "adam",
-          "lr": 0.003, "batch_size": 32, "max_epochs": 2000, "patience": 200},
- "seeds": [0, 1, 2],
- "out_dir": "results/baseline"}
+{
+  "exp": "baseline",
+  "vary": {},
+  "base": {
+    "n_train": 1000,
+    "hidden_sizes": [10],
+    "activation": "sigmoid",
+    "optimizer": "adam",
+    "lr": 0.01,
+    "batch_size": 32,
+    "max_epochs": 2000,
+    "patience": 200
+  },
+  "seeds": [0, 1, 2],
+  "out_dir": "results/baseline"
+}

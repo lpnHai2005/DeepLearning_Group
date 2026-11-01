@@ -1,7 +1,17 @@
-{"_note": "PLACEHOLDER baseline, chot o G2.",
- "exp": "A",
- "vary": {"n_train": [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]},
- "base": {"hidden_sizes": [10], "activation": "tanh", "optimizer": "adam",
-          "lr": 0.003, "batch_size": 32, "max_epochs": 2000, "patience": 200},
- "seeds": [0, 1, 2],
- "out_dir": "results/expA"}
+{
+  "exp": "A",
+  "vary": {
+    "n_train": [200, 400, 600, 800, 1000, 1200, 1400, 1600, 1800, 2000]
+  },
+  "base": {
+    "hidden_sizes": [10],
+    "activation": "sigmoid",
+    "optimizer": "adam",
+    "lr": 0.01,
+    "batch_size": 32,
+    "max_epochs": 2000,
+    "patience": 200
+  },
+  "seeds": [0, 1, 2],
+  "out_dir": "results/expA"
+}

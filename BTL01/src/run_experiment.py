@@ -26,8 +26,9 @@ from src.model.mlp import MLP, n_params  # noqa: E402
 from src.utils.io import save_json, write_csv  # noqa: E402
 from src.utils.seed import set_seed  # noqa: E402
 
-SUMMARY_COLS = ["exp", "value", "seed", "n_params", "train_mse", "val_mse", "test_mse", "test_mae",
-                "test_rmse", "test_r2", "best_epoch", "epochs_run", "train_time_s", "time_per_epoch_ms"]
+SUMMARY_COLS = ["exp", "value", "seed", "n_params", "train_mse", "train_mae", "train_rmse",
+                "val_mse", "val_mae", "val_rmse", "test_mse", "test_mae", "test_rmse", "test_r2",
+                "best_epoch", "epochs_run", "train_time_s", "time_per_epoch_ms"]
 
 
 def load_config(path):
@@ -63,9 +64,11 @@ def run(cfg, eval_test=False):
             model = MLP(p["hidden_sizes"], p["activation"])
             info = fit(model, make_loader(x_tr, y_tr, p["batch_size"], True, seed),
                        make_loader(x_val, y_val, p["batch_size"], False, seed), p, run_dir)
+            train_metrics = metrics(y_tr, predict(model, x_tr))
+            val_metrics = metrics(y_val, predict(model, x_val))
             row = {"exp": cfg["exp"], "value": name, "seed": seed, "n_params": n_params(model),
-                   "train_mse": metrics(y_tr, predict(model, x_tr))["mse"],
-                   "val_mse": metrics(y_val, predict(model, x_val))["mse"], **info,
+                   **{f"train_{k}": v for k, v in train_metrics.items()},
+                   **{f"val_{k}": v for k, v in val_metrics.items()}, **info,
                    "time_per_epoch_ms": 1000 * info["train_time_s"] / info["epochs_run"]}
             if eval_test:
                 row.update({f"test_{k}": v for k, v in metrics(y_te, predict(model, x_te)).items()})
