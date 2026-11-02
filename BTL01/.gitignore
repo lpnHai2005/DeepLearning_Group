@@ -19,3 +19,6 @@ Thumbs.db
 MLP_Exercise*.pdf
 Sample_Report.pdf
 Sample_Code.html
+
+# kết quả demo chạy trước lớp, sinh lại được bằng configs/demo.json
+results/demo/

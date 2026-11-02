@@ -68,13 +68,15 @@ def draw_mlp(model, max_show=8, save_path=None):
 
 
 if __name__ == "__main__":
-    def demo_mlp(hidden_sizes):
-        layers, d = [], 2
-        for h in hidden_sizes:
-            layers += [nn.Linear(d, h), nn.Tanh()]
-            d = h
-        layers.append(nn.Linear(d, 1))
-        return nn.Sequential(*layers)
+    import json
+    import sys
+    from pathlib import Path
 
-    draw_mlp(demo_mlp([10]), save_path="figures/mlp_1hidden_B10.png")
-    draw_mlp(demo_mlp([10, 10, 10]), save_path="figures/mlp_C3_10.png")
+    root = Path(__file__).resolve().parents[2]
+    sys.path.insert(0, str(root))
+    from src.model.mlp import MLP
+
+    # vẽ từ MLP thật với activation của baseline đã chốt, để hình luôn khớp cấu hình
+    act = json.loads((root / "configs" / "baseline.json").read_text(encoding="utf-8"))["base"]["activation"]
+    draw_mlp(MLP([10], act), save_path=root / "figures" / "mlp_1hidden_B10.png")
+    draw_mlp(MLP([10, 10, 10], act), save_path=root / "figures" / "mlp_C3_10.png")

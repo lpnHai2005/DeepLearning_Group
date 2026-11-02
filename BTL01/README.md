@@ -13,6 +13,8 @@ Khung repo đã dựng sẵn; các thành viên hoàn thiện phần được gi
 
 **TV1:** Đã sinh dữ liệu, hoàn thiện loader/EDA, chọn ứng viên baseline bằng validation và chạy đủ 30 run A. Ứng viên hiện tại là sigmoid/lr 0.01; chờ TV2/TV3 review và TV4 QA/bàn giao.
 
+**TV2:** Đã chạy đủ Thực nghiệm C (12 run) và đối chứng cùng số tham số (9 run) với baseline đã chốt; có bản nháp Ch.3, mục 4.4 và ghi chú slide; demo `configs/demo.json` chạy khoảng 10 giây.
+
 | Phần | Người | File |
 |---|---|---|
 | Dữ liệu, repo, Thực nghiệm A | TV1 | `src/data/*`, `src/generate_data.py`, `src/data/eda.py`, `src/data/summarize_expA.py`, `configs/expA.json` |
@@ -31,7 +33,7 @@ pytest -q                       # kiểm tra khung repo
 
 Trên Windows, đặt `PYTHONUTF8=1` nếu `print` tiếng Việt báo lỗi mã hóa.
 
-## Chạy (khi các stub đã được điền)
+## Chạy
 
 ```
 python src/generate_data.py                                  # sinh data/*.csv
@@ -43,6 +45,8 @@ python src/data/summarize_expA.py                            # TV1: tổng hợp
 python src/run_experiment.py --config configs/expB.json
 python src/run_experiment.py --config configs/expC.json
 python src/run_experiment.py --config configs/expC_ctrl.json         # đối chứng C: 1 tầng, cùng số tham số
+python src/summarize_expC.py                                 # TV2: tổng hợp/đồ thị C + chuẩn gradient
+python src/run_experiment.py --config configs/demo.json      # demo trước lớp (~10 s)
 python src/make_report_assets.py                             # gom bảng/hình cho báo cáo
 ```
 

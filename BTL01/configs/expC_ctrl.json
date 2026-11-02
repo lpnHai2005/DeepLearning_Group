@@ -1,7 +1,7 @@
-{"_note": "Doi chung cho C: 1 tang an, cung so tham so voi C=2/3/4 (151/261/371). [2,B,1] co 4B+1 tham so -> B=38/65/93 (153/261/373). Baseline PLACEHOLDER, chot o G2.",
+{"_note": "Doi chung cho C: 1 tang an, cung so tham so voi C=2/3/4 (151/261/371). [2,B,1] co 4B+1 tham so -> B=38/65/93 (153/261/373). Baseline da chot o G2: sigmoid, lr 0.01.",
  "exp": "C_ctrl",
  "vary": {"hidden_sizes": [[38], [65], [93]]},
- "base": {"n_train": 1000, "activation": "tanh", "optimizer": "adam",
-          "lr": 0.003, "batch_size": 32, "max_epochs": 2000, "patience": 200},
+ "base": {"n_train": 1000, "activation": "sigmoid", "optimizer": "adam",
+          "lr": 0.01, "batch_size": 32, "max_epochs": 2000, "patience": 200},
  "seeds": [0, 1, 2],
  "out_dir": "results/expC_ctrl"}

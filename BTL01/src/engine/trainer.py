@@ -51,7 +51,8 @@ def fit(model, train_loader, val_loader, cfg, run_dir):
     opt = OPTS[cfg["optimizer"]](model.parameters(), lr=cfg["lr"])
     crit = nn.MSELoss()
     weights = [m.weight for m in model.modules() if isinstance(m, nn.Linear)]
-    best, best_epoch, best_state, wait, history = math.inf, 0, None, 0, []
+    # best_state khởi tạo từ trọng số ban đầu: nếu val loss NaN suốt (lr quá lớn) vẫn nạp lại được, không crash
+    best, best_epoch, best_state, wait, history = math.inf, 0, copy.deepcopy(model.state_dict()), 0, []
 
     with Timer() as t:
         for epoch in range(1, cfg["max_epochs"] + 1):

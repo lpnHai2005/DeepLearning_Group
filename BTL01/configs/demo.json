@@ -1,0 +1,7 @@
+{"_note": "T2.7 demo truoc lop (< 1 phut): baseline da chot, 1 seed, 300 epoch. Ket qua ghi vao results/demo (khong commit).",
+ "exp": "demo",
+ "vary": {},
+ "base": {"n_train": 1000, "hidden_sizes": [10], "activation": "sigmoid", "optimizer": "adam",
+          "lr": 0.01, "batch_size": 32, "max_epochs": 300, "patience": 200},
+ "seeds": [0],
+ "out_dir": "results/demo"}
