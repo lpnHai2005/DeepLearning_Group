@@ -5,7 +5,7 @@ import pytest
 import torch
 from torch.utils.data import DataLoader, TensorDataset
 
-from src.engine.trainer import fit, validate
+from src.engine.trainer import OPTS, fit, validate
 from src.model.mlp import MLP, n_params
 from src.utils.seed import set_seed
 
@@ -57,3 +57,18 @@ def test_reproducible(tmp_path):
 def test_shape_guard():
     with pytest.raises(AssertionError):
         validate(MLP([2]), DataLoader(TensorDataset(torch.zeros(4, 2), torch.zeros(4, 1))), torch.nn.MSELoss())
+
+
+@pytest.mark.parametrize("name", OPTS)
+def test_every_optimizer_lowers_val_loss(name, tmp_path):
+    set_seed(0)
+    model = MLP([4])
+    tr, va = _loaders()
+    start = validate(model, va, torch.nn.MSELoss())
+    info = fit(model, tr, va, {**CFG, "optimizer": name, "lr": 0.05}, tmp_path)
+    assert info["best_val_loss"] < start
+
+
+def test_nesterov_differs_from_momentum():
+    p = torch.nn.Parameter(torch.ones(1))
+    assert OPTS["nesterov"]([p], lr=0.1).defaults["nesterov"] and not OPTS["momentum"]([p], lr=0.1).defaults["nesterov"]

@@ -14,7 +14,15 @@
 - Vòng lặp: zero_grad → forward → loss → backward → step; train()/eval(); validate dưới no_grad.
 - Hai bẫy đã chặn: shape (N,1) với (N,) trong MSELoss (assert shape); state_dict là tham chiếu (deepcopy khi lưu best).
 - Early stopping theo val (patience 200), lưu best.pt; fit() không nhận test.
-- Tái lập: chạy lại cho cùng số, cùng file best.pt.
+- Tái lập: chạy lại trên cùng máy cho cùng số; khác máy thì val MSE lệch tương đối dưới 0.01%.
+
+## Slide 7 – Baseline (phần TV2 gửi TV4)
+
+- Hình: **figures/grid_baseline_val_mse.png** (chọn lr và activation) và **figures/optimizer_loss.png** (so sánh optimizer).
+- Chọn baseline chỉ theo val: sigmoid, lr 0.01, val MSE 1.89e-5 ± 5.89e-6. Tanh lr 0.003 (2.96e-5 ± 1.11e-5) chồng khoảng ± std, nên đây là chọn theo mean.
+- So 6 optimizer, mỗi cái dò 7 lr, 126 run: Adam 1.88e-5, Nadam 2.51e-5, RMSProp 3.38e-5, Momentum 8.35e-5, Nesterov 1.01e-4, SGD 3.57e-4.
+- Câu chốt: Adam, Nadam, RMSProp chưa tách được với 3 seed; không có optimizer nào tốt hơn Adam nên giữ baseline, không chạy lại A, B, C.
+- Nói rõ hạn chế: sigmoid được chọn dưới Adam, và phép so chỉ trên mạng một tầng ẩn.
 
 ## Slide 10 – Kết quả C (kèm thời gian)
 
@@ -42,3 +50,4 @@ Chạy khoảng 10 giây (1 seed, 300 epoch, baseline). In ra val MSE, epoch t�
 5. Vì sao thời gian tăng theo C mà không tăng theo B?
 6. Có vanishing gradient không? Bằng chứng nào? Vì sao vẫn học được?
 7. Nếu loss giảm mà dự đoán gần hằng số thì nghi lỗi gì? → shape (N,1) với (N,).
+8. Vì sao chọn Adam? → Mean val thấp nhất khi mỗi optimizer dò lr riêng; Nadam và RMSProp chưa tách được với 3 seed, nên giữ Adam chứ không khẳng định Adam tốt hơn hẳn.

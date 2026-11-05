@@ -1,0 +1,8 @@
+{"_note": "T2.8: so sanh optimizer tren baseline, CHI xet val_mse (khong --eval-test). Moi optimizer chon lr rieng tu luoi nay; SGD can lr lon hon Adam nen luoi rong. patience = max_epochs: tat dung som de moi run du 2000 epoch, dung som lam cut duong cong va phat seed dang ket plateau; checkpoint van chon theo val.",
+ "exp": "grid_optimizer",
+ "vary": {"optimizer": ["sgd", "momentum", "nesterov", "rmsprop", "adam", "nadam"],
+          "lr": [0.001, 0.003, 0.01, 0.03, 0.1, 0.3, 1.0]},
+ "base": {"n_train": 1000, "hidden_sizes": [10], "activation": "sigmoid",
+          "batch_size": 32, "max_epochs": 2000, "patience": 2000},
+ "seeds": [0, 1, 2],
+ "out_dir": "results/grid_optimizer"}

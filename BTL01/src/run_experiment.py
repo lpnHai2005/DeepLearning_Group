@@ -6,7 +6,8 @@
 Khóa bắt đầu bằng '_' trong JSON (vd '_note') bị bỏ qua.
 'vary' có nhiều khóa thì chạy tích Descartes (vd lưới lr × activation cho baseline).
 Mỗi lần chạy lưu results/<exp>/<giá trị>/seed_<k>/{config.json, history.csv, metrics.json, best.pt}
-và gom vào results/<exp>/summary.csv.
+và gom vào results/<exp>/summary.csv. results/<exp>/run.log ghi mỗi run một dòng ngay khi run xong,
+nên chạy dở mà dừng vẫn biết đã xong những run nào; chạy lại thì ghi đè, giống summary.csv.
 """
 import argparse
 import itertools
@@ -51,6 +52,9 @@ def expand(cfg):
 def run(cfg, eval_test=False):
     torch.set_num_threads(1)           # cùng số luồng cho mọi lần chạy: so sánh thời gian công bằng, tái lập
     out = ROOT / cfg["out_dir"]
+    out.mkdir(parents=True, exist_ok=True)
+    log_path = out / "run.log"
+    log_path.write_text("", encoding="utf-8")
     x_pool, y_pool = load_split("train_pool")
     x_val, y_val = load_split("val")
     if eval_test:
@@ -75,8 +79,11 @@ def run(cfg, eval_test=False):
             save_json(run_dir / "config.json", {**p, "seed": seed})
             save_json(run_dir / "metrics.json", row)
             rows.append(row)
-            print(f"[{cfg['exp']}] {name} seed={seed}  val_mse={row['val_mse']:.3e}  "
-                  f"best_epoch={info['best_epoch']}/{info['epochs_run']}  {info['train_time_s']:.1f}s", flush=True)
+            line = (f"[{cfg['exp']}] {name} seed={seed}  val_mse={row['val_mse']:.3e}  "
+                    f"best_epoch={info['best_epoch']}/{info['epochs_run']}  {info['train_time_s']:.1f}s")
+            print(line, flush=True)
+            with log_path.open("a", encoding="utf-8") as f:
+                print(line, file=f)
     write_csv(out / "summary.csv", rows, SUMMARY_COLS)
     return rows
 

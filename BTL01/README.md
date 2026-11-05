@@ -39,6 +39,7 @@ Trên Windows, đặt `PYTHONUTF8=1` nếu `print` tiếng Việt báo lỗi mã
 python src/generate_data.py                                  # sinh data/*.csv
 python src/data/eda.py                                       # TV1: thống kê và hình dữ liệu
 python src/run_experiment.py --config configs/grid_baseline.json      # T2.5: lưới chốt baseline (chỉ xem val)
+python src/summarize_grid_baseline.py                        # T2.5: hình bằng chứng chọn lr, activation
 python src/run_experiment.py --config configs/baseline.json
 python src/run_experiment.py --config configs/expA.json
 python src/data/summarize_expA.py                            # TV1: tổng hợp/đồ thị A
@@ -46,6 +47,8 @@ python src/run_experiment.py --config configs/expB.json
 python src/run_experiment.py --config configs/expC.json
 python src/run_experiment.py --config configs/expC_ctrl.json         # đối chứng C: 1 tầng, cùng số tham số
 python src/summarize_expC.py                                 # TV2: tổng hợp/đồ thị C + chuẩn gradient
+python src/run_experiment.py --config configs/grid_optimizer.json     # T2.8: 6 optimizer × 7 lr × 3 seed, chỉ xem val (~2 giờ nếu chạy tuần tự)
+python src/summarize_optimizer.py                            # TV2: chọn lr theo val, vẽ figures/optimizer_loss.png
 python src/run_experiment.py --config configs/demo.json      # demo trước lớp (~10 s)
 python src/make_report_assets.py                             # gom bảng/hình cho báo cáo
 ```

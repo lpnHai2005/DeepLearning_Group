@@ -57,7 +57,7 @@
 | Seed dữ liệu | train_pool=2026, val=2027, test=2028 (ghi trong config) |
 | Kích thước | train_pool 2000, val 200, test 100 |
 | Kiến trúc | 2 → [10] → 1, output tuyến tính; activation chốt bằng val trong {tanh, sigmoid, relu} (chạy thử sơ bộ: relu < tanh < sigmoid về MSE, xem `CHI_TIET_NHIEM_VU.md` mục 1) |
-| Optimizer | Adam, lr chốt bằng val trong {1e-3, 3e-3, 1e-2} (lr = 1e-3 với 300 epoch chưa hội tụ) |
+| Optimizer | Adam, lr chốt bằng val trong {1e-3, 3e-3, 1e-2} (lr = 1e-3 với 300 epoch chưa hội tụ); đối chiếu với optimizer khác ở T2.8 |
 | Batch size | 32 |
 | Epochs / dừng | max ≥ 2000, early stopping patience ≥ 100–200 theo val MSE, lưu best checkpoint |
 | Seeds huấn luyện | 0, 1, 2 (khuyến khích thêm 3, 4) |
@@ -120,6 +120,7 @@ Nguyên tắc: mỗi người **vừa code, vừa chạy thí nghiệm, vừa vi
 - `src/engine/trainer.py`: `train_step`/`valid_step`/`fit` đúng chuẩn (`train()/eval()`, `no_grad`, zero_grad→backward→step), log loss theo epoch ra CSV, early stopping, checkpoint best/last, đo thời gian, chọn CPU/GPU.
 - `src/run_experiment.py` đọc config JSON, lặp qua giá trị khảo sát × seeds, ghi `results/.../summary.csv`. **Chốt interface sớm (cuối giai đoạn 1)** để TV1, TV3 dùng.
 - Chạy baseline và chốt baseline cùng nhóm (chỉ dựa trên val).
+- **So sánh optimizer (T2.8)**: SGD, Momentum, Nesterov, RMSProp, Adam, Nadam trên kiến trúc baseline, mỗi optimizer dò lr riêng, chỉ xét val; làm trước khi TV3 chạy B.
 - **Thực nghiệm C**: C = 1..4 (+5,6,8) → bảng test error, số tham số, thời gian train/epoch & tổng, đường hội tụ loss từng C; phân tích độ sâu (chỉ kết luận vanishing gradient nếu có số liệu chuẩn gradient từng lớp; chạy thử sơ bộ cho thấy tăng tầng làm lỗi giảm, ngược với Sample_Report).
 - Viết báo cáo: **Ch.3 Mô hình & cài đặt** (công thức forward, MSE, backprop, Adam, môi trường), **mục 4.4 Thực nghiệm C**; slide: kiến trúc + code PyTorch chính + kết quả C. Chuẩn bị **demo chạy code**.
 
@@ -128,6 +129,7 @@ Nguyên tắc: mỗi người **vừa code, vừa chạy thí nghiệm, vừa vi
 - `src/visual/plots.py`: loss curve train/val, scatter y–ŷ (đường y=x), bề mặt xấp xỉ vs bề mặt thật, bản đồ sai số |y−ŷ| trên lưới, đồ thị error vs biến khảo sát có error bar. Dùng chung cho A/B/C (thống nhất style, nhãn trục, đơn vị).
 - **Thực nghiệm B**: B = 1..10 (+16, 32, 64) × ≥3 seeds, ở A=1000 và A=200 → bảng + đồ thị train/val/test, chỉ ra vùng underfitting (B nhỏ) và overfitting/khoảng cách train–val.
 - **Tổng hợp chọn mô hình cuối** (theo val), đánh giá test 1 lần, xuất `best.pt` + hình y–ŷ / bề mặt của mô hình được chọn.
+- Review T2.8 của TV2 trước khi chạy Thực nghiệm B.
 - Viết báo cáo: **mục 4.3 Thực nghiệm B**, **mục 4.5 Mô hình được chọn & đánh giá test**; slide: kết quả B + minh họa xấp xỉ.
 
 ### TV4 – Báo cáo, slide, thảo luận & kiểm định tái lập (Rubric 7, 8)
@@ -135,6 +137,7 @@ Nguyên tắc: mỗi người **vừa code, vừa chạy thí nghiệm, vừa vi
 - Vẽ hình kiến trúc MLP tổng quát (1 tầng – B nơ-ron; C tầng) và sơ đồ pipeline train/val/test (draw.io), dùng cho báo cáo/slide/README (tương tự `static/` của repo tham khảo).
 - `src/make_report_assets.py`: gom `summary.csv` của A/B/C → bảng LaTeX/Word & bảng siêu tham số; kiểm tra mọi số liệu trong báo cáo **truy vết được** về file log.
 - **QA tái lập**: clone repo về thư mục khác, tạo venv mới, chạy theo README từ đầu; báo lỗi cho người phụ trách.
+- Đưa kết quả so sánh optimizer (T2.8) vào Ch.5 và phụ lục lệnh tái lập.
 - Viết báo cáo: **Ch.1 Giới thiệu** (mục tiêu, bài toán, bảng phân công/% đóng góp), **4.1 Thiết lập & quy trình đánh giá công bằng**, **Ch.5 Thảo luận** (tổng hợp nhận xét từ TV1–3, trường hợp không như kỳ vọng, hạn chế, cải tiến), **Ch.6 Kết luận**, TLTK, phụ lục lệnh tái lập; xuất .docx/.pdf.
 - Dựng slide .pptx 10–15 slide từ nội dung các thành viên, kịch bản thuyết trình, phân vai, tổ chức tập dượt + bộ câu hỏi Q&A dự kiến. Đóng gói file zip nộp.
 
@@ -143,7 +146,7 @@ Nguyên tắc: mỗi người **vừa code, vừa chạy thí nghiệm, vừa vi
 | Giai đoạn | Việc chính | Đầu ra / mốc |
 |---|---|---|
 | G1 – Khởi động | Đọc đề, chốt cấu trúc repo, interface hàm (`get_dataloaders`, `MLP`, `fit`), template báo cáo | TV1: data CSV + dataset.py; TV2: mlp.py + trainer.py chạy được baseline; TV4: template |
-| G2 – Baseline | Chạy thử, chốt baseline (dựa trên val), hoàn thiện evaluate/plots | `configs/baseline.json` được **đóng băng** |
+| G2 – Baseline | Chạy thử, chốt baseline (dựa trên val), so sánh optimizer (T2.8), hoàn thiện evaluate/plots | `configs/baseline.json` được **đóng băng** |
 | G3 – Thực nghiệm | A (TV1), B (TV3), C (TV2) song song, ≥3 seeds | `results/exp*/summary.csv` + hình |
 | G4 – Viết | Mỗi người viết phần mình + gửi 2–3 slide; TV4 ghép, viết Thảo luận/Kết luận | Bản nháp báo cáo + slide |
 | G5 – Hoàn thiện | Review chéo (TV1↔TV3, TV2↔TV4), QA tái lập, tập thuyết trình, đóng gói zip | Nộp bài |

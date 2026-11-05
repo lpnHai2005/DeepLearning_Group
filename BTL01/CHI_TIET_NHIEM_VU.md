@@ -227,6 +227,7 @@ def sample_uniform(n, rng):
 | T2.5 | **Chốt baseline** (cùng nhóm, G2): lưới nhỏ lr ∈ {1e-3, 3e-3, 1e-2} × activation ∈ {tanh, sigmoid, relu}, chỉ xét **val** | `configs/baseline.json` đóng băng | Có bảng lưới được lưu lại làm minh chứng |
 | T2.6 | **Thực nghiệm C** | `results/expC/*`, hình, bảng | Xem 5.3 |
 | T2.7 | Chuẩn bị demo chạy code trực tiếp | Lệnh chạy 1 cấu hình < 1 phút | Giải thích được từng dòng vòng lặp |
+| T2.8 | **So sánh optimizer** (làm trước khi TV3 chạy B): giữ kiến trúc baseline, sigmoid, A = 1000, 3 seed; so sánh SGD, Momentum, Nesterov, RMSProp, Adam, Nadam; **mỗi optimizer dò lr riêng**; chỉ xét **val** | `configs/grid_optimizer.json`, `results/grid_optimizer/*`, hình train/val loss theo epoch, thêm vào mục 3.5 và 4.2 | TV3 review xong; nhóm chốt giữ Adam hay đổi baseline |
 
 Khung code (giữ đúng thứ tự các bước mà đề yêu cầu):
 
@@ -315,6 +316,7 @@ def validate(model, loader, crit):
 | T3.5 | `aggregate.py`: gom mọi `summary.csv` thành bảng tổng hợp (mean ± std) | `results/summary_all.csv` | TV4 lấy số cho báo cáo |
 | T3.6 | **Chọn mô hình cuối theo val** (không theo test), chạy `--eval-test` **một lần**, lưu `best.pt` mô hình chọn | `results/final/`, hình y–ŷ và bề mặt trên test | Báo cáo nêu rõ quy trình chọn |
 | T3.7 | **Review chéo** code `fit()` của TV2 để chắc không đụng test | Biên bản review | Không có tham chiếu test trong lúc train/chọn |
+| T3.8 | **Review T2.8** của TV2: lr được dò công bằng cho từng optimizer, không đụng test | Biên bản review | Xong trước khi chạy Thực nghiệm B |
 
 ### 6.3 Thiết kế Thực nghiệm B
 
@@ -380,6 +382,7 @@ Quy chuẩn Word có sẵn từ các bài trước (`SKILL.md`): Times New Roman
 | T4.6 | Slide 10–15 trang theo mục 7.4, bản PDF | `.pptx` + `.pdf` | Tập dượt ≤ 15 phút |
 | T4.7 | **QA tái lập** trên thư mục/venv mới theo mục 7.5 | Biên bản QA | Pass hết checklist |
 | T4.8 | Đóng gói zip, bảng thành viên – nhiệm vụ – % đóng góp (tổng 100%) | `BTL01_Nhom_HoTen_MSSV.zip` | Đúng danh mục nộp |
+| T4.9 | Đưa kết quả T2.8 vào Ch.5 và phụ lục lệnh tái lập | Đoạn thảo luận chọn optimizer | Số liệu truy được về `results/grid_optimizer/` |
 
 ### 7.3 Nội dung các chương do TV4 viết
 
@@ -447,7 +450,7 @@ python src/make_report_assets.py
 | Giai đoạn | Điều kiện qua mốc | Người kiểm |
 |---|---|---|
 | G1 Khởi động | Khung repo chạy; hợp đồng giao diện được chốt; template Word đã gửi | TV4 kiểm TV1 |
-| G2 Baseline | `baseline.json` đóng băng có bảng lưới minh chứng; đạo hàm autograd khớp tay | TV3 kiểm TV2 |
+| G2 Baseline | `baseline.json` đóng băng có bảng lưới minh chứng; đạo hàm autograd khớp tay; có bảng so sánh optimizer (T2.8) | TV3 kiểm TV2 |
 | G3 Thực nghiệm | `summary.csv` đủ A/B/C ≥ 3 seed; hình đủ nhãn | TV1 kiểm TV3 (và ngược lại) |
 | G4 Viết | Bản nháp báo cáo + slide; mọi số truy vết được | TV2 kiểm TV4 |
 | G5 Hoàn thiện | QA tái lập pass; tập dượt trả lời vấn đáp | Cả nhóm |

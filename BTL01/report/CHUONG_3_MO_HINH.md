@@ -88,11 +88,19 @@ Các điểm quan trọng:
 
 **Nhật ký.** Mỗi epoch ghi train loss, val loss và chuẩn gradient \(\lVert\partial L/\partial W^{(l)}\rVert\) của từng lớp (ở batch cuối của epoch) vào **history.csv**. Mỗi lần chạy lưu **config.json**, **history.csv**, **metrics.json**, **best.pt** trong **results/&lt;exp&gt;/&lt;giá trị&gt;/seed_&lt;k&gt;/**; **run_experiment.py** gom tất cả vào **summary.csv**.
 
-**Tái lập.** **set_seed** cố định seed của random, NumPy và PyTorch trước khi khởi tạo mô hình; **torch.set_num_threads(1)** cho mọi lần chạy để thời gian huấn luyện so sánh được với nhau. Chạy lại cùng cấu hình cho ra cùng số: run A=1000 của Thực nghiệm A trùng khớp từng chữ số với run sigmoid/lr 0.01 trong lưới chọn baseline.
+**Tái lập.** **set_seed** cố định seed của random, NumPy và PyTorch trước khi khởi tạo mô hình; **torch.set_num_threads(1)** cho mọi lần chạy để thời gian huấn luyện so sánh được với nhau. Trên cùng một máy, chạy lại cùng cấu hình cho ra cùng số: run A=1000 của Thực nghiệm A trùng khớp từng chữ số với run sigmoid/lr 0.01 trong lưới chọn baseline, và run C=1 trùng khớp với run B=10. Giữa hai máy, kết quả lệch rất nhỏ: cùng cấu hình baseline, validation MSE của Thực nghiệm A và Thực nghiệm C chênh tương đối dưới 0.01%.
 
 ## 3.5. Siêu tham số baseline
 
-Baseline được chọn bằng lưới 3 learning rate × 3 hàm kích hoạt × 3 seed, **chỉ dựa trên validation MSE** (bảng đầy đủ ở mục 4.2 và **results/grid_baseline/summary.csv**), rồi đóng băng trong **configs/baseline.json**. A, B, C chỉ đổi một yếu tố so với bảng này.
+Baseline được chọn bằng lưới 3 learning rate × 3 hàm kích hoạt × 3 seed, **chỉ dựa trên validation MSE** (Hình 3.3; bảng đầy đủ ở mục 4.2 và **results/grid_baseline/summary.csv**), rồi đóng băng trong **configs/baseline.json**. A, B, C chỉ đổi một yếu tố so với Bảng 3.1.
+
+**Hình 3.3.** Validation MSE của lưới chọn baseline theo learning rate và hàm kích hoạt; điểm lớn là trung bình 3 seed, điểm nhỏ là từng seed (sinh bằng **python src/summarize_grid_baseline.py**).
+
+![Lưới chọn learning rate và hàm kích hoạt](../figures/grid_baseline_val_mse.png)
+
+Sigmoid với lr 0.01 có mean validation MSE thấp nhất (1.89e-5 ± 5.89e-6) nên được chọn. Tanh với lr 0.003 đứng thứ hai (2.96e-5 ± 1.11e-5); khoảng ± std của hai cấu hình chồng nhau, nên đây là lựa chọn theo mean, chưa chứng minh sigmoid tốt hơn tanh. ReLU có mean cao hơn khoảng 17 lần và phân tán mạnh giữa các seed (tốt nhất 3.30e-4 ± 3.35e-4).
+
+**Bảng 3.1.** Siêu tham số baseline.
 
 | Siêu tham số | Giá trị |
 |---|---|
@@ -108,7 +116,32 @@ Baseline được chọn bằng lưới 3 learning rate × 3 hàm kích hoạt �
 | Seed huấn luyện | 0, 1, 2 (khởi tạo trọng số và thứ tự batch) |
 | Seed dữ liệu | train pool 2026, validation 2027, test 2028 |
 
+### Kiểm tra lựa chọn optimizer
+
+Lưới trên chỉ xét Adam, nên nhóm so sánh thêm sáu optimizer: SGD, Momentum (0.9), Nesterov (0.9), RMSProp, Adam, Nadam. Kiến trúc, sigmoid, A = 1000, batch 32 và seed giữ nguyên như baseline. Mỗi optimizer dò riêng 7 learning rate từ 0.001 đến 1.0 (6 × 7 × 3 = 126 run), vì lr tốt của optimizer này có thể rất tệ với optimizer khác. Early stopping được tắt (patience 2000) để mọi đường đủ 2.000 epoch. Lr tốt nhất chọn theo mean validation MSE; tập test không được dùng. Nguồn: **results/grid_optimizer/aggregate.csv**, sinh bằng **python src/summarize_optimizer.py**.
+
+**Bảng 3.2.** Kết quả ở lr tốt nhất của từng optimizer (mean ± std, 3 seed).
+
+| Optimizer | lr tốt nhất | Validation MSE | Epoch tốt nhất |
+|---|---:|---:|---:|
+| Adam | 0.01 | 1.88e-5 ± 5.91e-6 | 1906 |
+| Nadam | 0.01 | 2.51e-5 ± 1.20e-5 | 1702 |
+| RMSProp | 0.003 | 3.38e-5 ± 2.12e-5 | 1961 |
+| Momentum | 0.3 | 8.35e-5 ± 6.13e-5 | 1929 |
+| Nesterov | 0.1 | 1.01e-4 ± 3.84e-5 | 1949 |
+| SGD | 0.3 | 3.57e-4 ± 7.69e-5 | 1838 |
+
+**Hình 3.4.** Train loss và validation loss theo epoch ở lr tốt nhất của từng optimizer: trung bình 3 seed, làm mượt bằng trung vị trượt 25 epoch.
+
+![So sánh optimizer](../figures/optimizer_loss.png)
+
+Adam có mean thấp nhất, nhưng khoảng ± std của Adam, Nadam và RMSProp chồng nhau, nên 3 seed chưa tách được ba optimizer này. Momentum và Nesterov có mean cao hơn Adam 4–5 lần, SGD cao hơn khoảng 19 lần. Vì không có optimizer nào tốt hơn Adam, nhóm giữ nguyên baseline và không phải chạy lại A, B, C. Lưới này cũng thử Adam ở lr lớn hơn mức 0.01 vốn nằm ở biên lưới baseline: lr 0.03 cho 5.18e-5 ± 4.71e-5, nên không có dấu hiệu lr tốt hơn nằm ngoài lưới baseline.
+
+Hai hạn chế: sigmoid được chọn trong lưới chỉ dùng Adam, nên so sánh có thể hơi có lợi cho Adam; và phép so sánh chỉ làm trên mạng một tầng ẩn, nên chưa cho biết optimizer ảnh hưởng thế nào đến mạng sâu ở Thực nghiệm C.
+
 ## 3.6. Môi trường
+
+**Bảng 3.3.** Môi trường chạy B, C và so sánh optimizer. Lưới baseline và Thực nghiệm A chạy trên một máy khác (xem phần Tái lập ở mục 3.4).
 
 | Thành phần | Phiên bản |
 |---|---|

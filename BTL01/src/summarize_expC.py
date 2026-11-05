@@ -29,6 +29,8 @@ STATS = ("train_mse", "val_mse", "train_mae", "val_mae", "train_rmse", "val_rmse
          "best_epoch", "epochs_run", "train_time_s", "time_per_epoch_ms")
 N_TRAIN = 1000
 COLORS = {"deep": "#2563eb", "wide": "#f97316"}
+DEPTH_COLORS = ("#2a78d6", "#eb6834", "#1baf7a", "#e87ba4")     # C = 1..4
+SMOOTH = 25
 
 
 def read_summary(exp_dir):
@@ -56,6 +58,17 @@ def read_history(run_dir):
     with (run_dir / "history.csv").open(newline="", encoding="utf-8") as f:
         rows = list(csv.DictReader(f))
     return {k: np.asarray([float(r[k]) for r in rows]) for k in rows[0]}
+
+
+def mean_curve(hists, key):
+    """Trung bình các seed, đổi về thang y gốc, trung vị trượt SMOOTH epoch chỉ để hình đọc được.
+
+    Seed dừng sớm có history ngắn hơn, nên đường chỉ kéo tới epoch seed đầu tiên dừng.
+    """
+    n = min(len(h[key]) for h in hists)
+    y = np.mean([h[key][:n] for h in hists], axis=0) * Y_SCALE ** 2
+    padded = np.pad(y, SMOOTH // 2, mode="reflect")
+    return np.median(np.lib.stride_tricks.sliding_window_view(padded, SMOOTH), axis=1)
 
 
 def grad_table(exp_dir, grouped):
@@ -99,19 +112,19 @@ def plot_error(deep, wide, base_mse, path):
 
 
 def plot_curves(exp_dir, grouped, path):
-    fig, ax = plt.subplots(figsize=(8.5, 5.5), constrained_layout=True)
-    cmap = plt.get_cmap("viridis")
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5), sharey=True, constrained_layout=True)
     values = sorted(grouped, key=lambda v: len(v.split("-")))
-    for i, value in enumerate(values):
-        color = cmap(i / max(1, len(values) - 1))
-        for j, r in enumerate(grouped[value]):
-            h = read_history(exp_dir / value / f"seed_{r['seed']}")
-            ax.plot(h["epoch"], h["val_loss"] * Y_SCALE ** 2, color=color, lw=1.0, alpha=0.8,
-                    label=f"C={len(value.split('-'))}" if j == 0 else None)   # đổi loss về thang y gốc
-    ax.set(yscale="log", xlabel="Epoch", ylabel="Validation MSE, original y scale (log)",
-           title="Experiment C: validation loss per epoch (3 seeds per depth)")
-    ax.grid(True, which="both", alpha=0.22)
-    ax.legend()
+    for value, color in zip(values, DEPTH_COLORS):
+        hists = [read_history(exp_dir / value / f"seed_{r['seed']}") for r in grouped[value]]
+        for ax, key in zip(axes, ("train_loss", "val_loss")):
+            y = mean_curve(hists, key)
+            ax.plot(np.arange(1, len(y) + 1), y, color=color, lw=2, label=f"C={len(value.split('-'))}")
+    for ax, title in zip(axes, ("Train loss", "Validation loss")):
+        ax.set(yscale="log", xlabel="Epoch", title=title)
+        ax.grid(True, which="major", alpha=0.22)
+    axes[0].set_ylabel("MSE on original y scale (log)")
+    fig.suptitle(f"Experiment C: mean of 3 seeds, {SMOOTH}-epoch rolling median, until the first seed stops")
+    axes[0].legend(title="Hidden layers")
     fig.savefig(path, dpi=300, bbox_inches="tight")
     plt.close(fig)
 

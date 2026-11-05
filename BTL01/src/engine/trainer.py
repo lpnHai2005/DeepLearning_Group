@@ -3,6 +3,7 @@ fit() KHÔNG nhận dữ liệu test. Chọn checkpoint và dừng sớm chỉ t
 """
 import copy
 import math
+from functools import partial
 from pathlib import Path
 
 import torch
@@ -11,7 +12,12 @@ import torch.nn as nn
 from src.utils.io import write_csv
 from src.utils.timer import Timer
 
-OPTS = {"adam": torch.optim.Adam, "sgd": torch.optim.SGD}
+OPTS = {"sgd": torch.optim.SGD,
+        "momentum": partial(torch.optim.SGD, momentum=0.9),
+        "nesterov": partial(torch.optim.SGD, momentum=0.9, nesterov=True),
+        "rmsprop": torch.optim.RMSprop,
+        "adam": torch.optim.Adam,
+        "nadam": torch.optim.NAdam}
 
 
 def train_one_epoch(model, loader, opt, crit):
