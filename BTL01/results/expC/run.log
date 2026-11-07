@@ -1,0 +1,12 @@
+[C] 10 seed=0  val_mse=1.316e-05  best_epoch=1193/1393  28.0s
+[C] 10 seed=1  val_mse=1.863e-05  best_epoch=1783/1983  40.3s
+[C] 10 seed=2  val_mse=2.493e-05  best_epoch=1983/2000  40.5s
+[C] 10-10 seed=0  val_mse=1.201e-07  best_epoch=1700/1900  44.7s
+[C] 10-10 seed=1  val_mse=7.354e-08  best_epoch=1317/1517  36.4s
+[C] 10-10 seed=2  val_mse=1.204e-07  best_epoch=1941/2000  44.3s
+[C] 10-10-10 seed=0  val_mse=8.249e-08  best_epoch=1896/2000  51.3s
+[C] 10-10-10 seed=1  val_mse=5.683e-08  best_epoch=1616/1816  47.5s
+[C] 10-10-10 seed=2  val_mse=4.141e-08  best_epoch=1490/1690  42.9s
+[C] 10-10-10-10 seed=0  val_mse=1.865e-07  best_epoch=953/1153  37.3s
+[C] 10-10-10-10 seed=1  val_mse=3.653e-08  best_epoch=1797/1997  60.4s
+[C] 10-10-10-10 seed=2  val_mse=5.336e-08  best_epoch=1145/1345  38.9s

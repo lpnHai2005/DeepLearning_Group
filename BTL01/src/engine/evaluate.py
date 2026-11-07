@@ -2,7 +2,7 @@
 import numpy as np
 import torch
 
-from src.data.gaussian import X1_RANGE, X2_RANGE, X_SCALE, Y_SCALE
+from src.data.gaussian import X1_RANGE, X2_RANGE, X_SCALE, Y_SCALE, gaussian_pdf
 
 
 def predict(model, x):
@@ -58,3 +58,15 @@ def predict_grid(model, n=100):
     points = np.column_stack((grid_x1.ravel(), grid_x2.ravel()))
     grid_y = predict(model, points).reshape(grid_x1.shape)
     return grid_x1, grid_x2, grid_y
+
+
+def evaluate_grid(model, n=100):
+    """Đánh giá sai số xấp xỉ trên lưới đều n×n toàn miền -> dict(mse, mae, rmse, r2, max_abs_err)."""
+    grid_x1, grid_x2, grid_y_hat = predict_grid(model, n=n)
+    points = np.column_stack((grid_x1.ravel(), grid_x2.ravel()))
+    y_true = gaussian_pdf(points)
+    y_hat = grid_y_hat.ravel()
+    out = metrics(y_true, y_hat)
+    out["max_abs_err"] = float(np.max(np.abs(y_hat - y_true)))
+    return out
+

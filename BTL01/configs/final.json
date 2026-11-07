@@ -1,0 +1,19 @@
+{
+  "_note": "Mo hinh cuoi duoc chon theo validation MSE thap nhat (C=3, [10, 10, 10], 261 tham so). Chi danh gia test o buoc nay (--eval-test).",
+  "exp": "final",
+  "vary": {
+    "hidden_sizes": [[10, 10, 10]]
+  },
+  "base": {
+    "n_train": 1000,
+    "activation": "sigmoid",
+    "optimizer": "adam",
+    "lr": 0.01,
+    "batch_size": 32,
+    "max_epochs": 2000,
+    "patience": 200
+  },
+  "seeds": [0, 1, 2],
+  "out_dir": "results/final"
+}
+

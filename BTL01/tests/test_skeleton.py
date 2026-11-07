@@ -12,7 +12,7 @@ MODULES = [
     "src.model.mlp", "src.engine.trainer", "src.engine.evaluate",
     "src.utils.seed", "src.utils.io", "src.utils.timer",
     "src.visual.plots", "src.visual.draw_mlp",
-    "src.run_experiment", "src.make_report_assets", "src.summarize_expC", "src.summarize_optimizer", "src.summarize_grid_baseline",
+    "src.run_experiment", "src.make_report_assets", "src.summarize_expB", "src.summarize_expC", "src.summarize_optimizer", "src.summarize_grid_baseline",
 ]
 
 

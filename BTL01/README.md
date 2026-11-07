@@ -15,11 +15,13 @@ Khung repo đã dựng sẵn; các thành viên hoàn thiện phần được gi
 
 **TV2:** Đã chạy đủ Thực nghiệm C (12 run) và đối chứng cùng số tham số (9 run) với baseline đã chốt; có bản nháp Ch.3, mục 4.4 và ghi chú slide; demo `configs/demo.json` chạy khoảng 10 giây.
 
+**TV3:** Đã hoàn thiện `src/engine/evaluate.py`, `src/visual/plots.py`, tổng hợp/vẽ biểu đồ Thực nghiệm B (`src/summarize_expB.py`), chọn mô hình cuối theo validation và đánh giá tập test + lưới 100×100 (`src/make_report_assets.py`, `results/final/`), cùng bản thảo mục 4.3, mục 4.5 và ghi chú slide TV3.
+
 | Phần | Người | File |
 |---|---|---|
 | Dữ liệu, repo, Thực nghiệm A | TV1 | `src/data/*`, `src/generate_data.py`, `src/data/eda.py`, `src/data/summarize_expA.py`, `configs/expA.json` |
 | Mô hình, huấn luyện, Thực nghiệm C | TV2 | `src/model/mlp.py`, `src/engine/trainer.py`, `src/run_experiment.py`, `src/utils/*`, `configs/expC.json` |
-| Đánh giá, vẽ hình, Thực nghiệm B | TV3 | `src/engine/evaluate.py`, `src/visual/plots.py`, `configs/expB.json` |
+| Đánh giá, vẽ hình, Thực nghiệm B | TV3 | `src/engine/evaluate.py`, `src/visual/plots.py`, `src/summarize_expB.py`, `src/make_report_assets.py`, `configs/expB.json` |
 | Báo cáo, slide, QA, đóng gói | TV4 | `report/`, `src/make_report_assets.py` |
 
 ## Cài đặt
@@ -44,6 +46,7 @@ python src/run_experiment.py --config configs/baseline.json
 python src/run_experiment.py --config configs/expA.json
 python src/data/summarize_expA.py                            # TV1: tổng hợp/đồ thị A
 python src/run_experiment.py --config configs/expB.json
+python src/summarize_expB.py                                 # TV3: tổng hợp/đồ thị B + bề mặt theo B
 python src/run_experiment.py --config configs/expC.json
 python src/run_experiment.py --config configs/expC_ctrl.json         # đối chứng C: 1 tầng, cùng số tham số
 python src/summarize_expC.py                                 # TV2: tổng hợp/đồ thị C + chuẩn gradient
