@@ -1,0 +1,9 @@
+[B] 16 seed=0  val_mse=4.064e-06  best_epoch=1982/2000  40.1s
+[B] 16 seed=1  val_mse=9.320e-06  best_epoch=1906/2000  45.9s
+[B] 16 seed=2  val_mse=3.515e-06  best_epoch=1874/2000  49.2s
+[B] 32 seed=0  val_mse=2.388e-06  best_epoch=1698/1898  48.5s
+[B] 32 seed=1  val_mse=4.079e-06  best_epoch=680/880  25.0s
+[B] 32 seed=2  val_mse=1.688e-06  best_epoch=1453/1653  36.5s
+[B] 64 seed=0  val_mse=2.814e-06  best_epoch=1380/1580  34.0s
+[B] 64 seed=1  val_mse=2.151e-06  best_epoch=1211/1411  29.9s
+[B] 64 seed=2  val_mse=1.301e-06  best_epoch=1474/1674  35.0s

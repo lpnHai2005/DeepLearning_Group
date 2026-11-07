@@ -1,6 +1,6 @@
 # Mục 4.4 – Thực nghiệm C: ảnh hưởng của số tầng ẩn
 
-> Bản thảo TV2. Tổng hợp từ 12 run C (4 độ sâu × 3 seed) và 9 run đối chứng (3 độ rộng × 3 seed). Mọi metric ở thang y gốc; std là độ lệch chuẩn mẫu giữa ba seed. Nguồn: **results/expC/aggregate.csv**, **results/expC/grad_norms.csv**, sinh bằng **python src/summarize_expC.py**.
+> Bản thảo TV2. Tổng hợp từ 12 run C (4 độ sâu × 3 seed) và 9 run đối chứng (3 độ rộng × 3 seed). Mọi metric ở thang y gốc; std là độ lệch chuẩn mẫu giữa ba seed. Nguồn: **results/expC/aggregate.csv**, **results/expC/grad_norms.csv**, sinh bằng **python src/summarize_expC.py**; số liệu từng run ở `results/expC/summary.csv`, `results/expC_ctrl/summary.csv`, log `run.log` và `posthoc_test.log`.
 
 ## Thiết kế
 
@@ -14,19 +14,19 @@ Thời gian đo bằng **time.perf_counter()** chỉ quanh **fit()**, cùng máy
 
 Baseline dự đoán hằng số (trung bình nhãn train) có validation MSE 2.49e-3.
 
-**Bảng 4.4.1.** Thực nghiệm C và nhóm đối chứng cùng số tham số (mean ± std, 3 seed), đo tại checkpoint tốt nhất theo validation.
+**Bảng 4.4.1.** Thực nghiệm C và nhóm đối chứng cùng số tham số (mean ± std, 3 seed), đo tại checkpoint tốt nhất theo validation. Cột Test MSE là hậu kiểm (`src/posthoc_test.py` nạp `best.pt` đã đóng băng), không dùng để chọn cấu hình.
 
-| Mạng | Tham số | Train MSE | Validation MSE | Validation MAE | Validation RMSE | Epoch tốt nhất | Thời gian (s) | ms/epoch |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|
-| C=1 [10] | 41 | 2.21e-5 ± 6.15e-6 | 1.89e-5 ± 5.89e-6 | 3.35e-3 ± 5.64e-4 | 4.31e-3 ± 6.83e-4 | 1653 ± 411 | 36.3 ± 7.2 | 20.2 ± 0.1 |
-| C=2 [10,10] | 151 | 1.17e-7 ± 3.45e-8 | 1.05e-7 ± 2.70e-8 | 2.35e-4 ± 2.99e-5 | 3.22e-4 ± 4.36e-5 | 1653 ± 315 | 41.8 ± 4.7 | 23.2 ± 1.0 |
-| C=3 [10,10,10] | 261 | 6.18e-8 ± 1.25e-8 | 6.02e-8 ± 2.07e-8 | 1.80e-4 ± 2.56e-5 | 2.43e-4 ± 4.20e-5 | 1667 ± 208 | 47.2 ± 4.2 | 25.7 ± 0.4 |
-| C=4 [10,10,10,10] | 371 | 9.09e-8 ± 7.47e-8 | 9.21e-8 ± 8.22e-8 | 2.25e-4 ± 1.11e-4 | 2.85e-4 ± 1.29e-4 | 1298 ± 442 | 45.5 ± 12.9 | 30.5 ± 1.7 |
-| Đối chứng [38] | 153 | 2.38e-6 ± 1.10e-6 | 2.42e-6 ± 1.56e-6 | 1.18e-3 ± 3.75e-4 | 1.50e-3 ± 4.84e-4 | 1378 ± 582 | 32.3 ± 13.2 | 20.9 ± 1.9 |
-| Đối chứng [65] | 261 | 1.87e-6 ± 9.53e-7 | 1.68e-6 ± 8.72e-7 | 9.95e-4 ± 2.56e-4 | 1.26e-3 ± 3.50e-4 | 1084 ± 221 | 26.0 ± 5.2 | 20.2 ± 0.6 |
-| Đối chứng [93] | 373 | 1.11e-6 ± 1.58e-7 | 1.46e-6 ± 4.32e-7 | 9.06e-4 ± 9.79e-5 | 1.20e-3 ± 1.88e-4 | 1266 ± 445 | 29.6 ± 9.1 | 20.2 ± 0.1 |
+| Mạng | Tham số | Train MSE | Validation MSE | Test MSE *(hậu kiểm)* | Validation MAE | Validation RMSE | Epoch tốt nhất | Thời gian (s) | ms/epoch |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| C=1 [10] | 41 | 2.21e-5 ± 6.15e-6 | 1.89e-5 ± 5.89e-6 | 2.28e-5 ± 1.43e-5 | 3.35e-3 ± 5.64e-4 | 4.31e-3 ± 6.83e-4 | 1653 ± 411 | 36.3 ± 7.2 | 20.2 ± 0.1 |
+| C=2 [10,10] | 151 | 1.17e-7 ± 3.45e-8 | 1.05e-7 ± 2.70e-8 | 1.07e-7 ± 3.91e-8 | 2.35e-4 ± 2.99e-5 | 3.22e-4 ± 4.36e-5 | 1653 ± 315 | 41.8 ± 4.7 | 23.2 ± 1.0 |
+| C=3 [10,10,10] | 261 | 6.18e-8 ± 1.25e-8 | 6.02e-8 ± 2.07e-8 | 7.13e-8 ± 2.36e-8 | 1.80e-4 ± 2.56e-5 | 2.43e-4 ± 4.20e-5 | 1667 ± 208 | 47.2 ± 4.2 | 25.7 ± 0.4 |
+| C=4 [10,10,10,10] | 371 | 9.09e-8 ± 7.47e-8 | 9.21e-8 ± 8.22e-8 | 7.30e-8 ± 5.87e-8 | 2.25e-4 ± 1.11e-4 | 2.85e-4 ± 1.29e-4 | 1298 ± 442 | 45.5 ± 12.9 | 30.5 ± 1.7 |
+| Đối chứng [38] | 153 | 2.38e-6 ± 1.10e-6 | 2.42e-6 ± 1.56e-6 | 2.96e-6 ± 1.83e-6 | 1.18e-3 ± 3.75e-4 | 1.50e-3 ± 4.84e-4 | 1378 ± 582 | 32.3 ± 13.2 | 20.9 ± 1.9 |
+| Đối chứng [65] | 261 | 1.87e-6 ± 9.53e-7 | 1.68e-6 ± 8.72e-7 | 1.92e-6 ± 1.20e-6 | 9.95e-4 ± 2.56e-4 | 1.26e-3 ± 3.50e-4 | 1084 ± 221 | 26.0 ± 5.2 | 20.2 ± 0.6 |
+| Đối chứng [93] | 373 | 1.11e-6 ± 1.58e-7 | 1.46e-6 ± 4.32e-7 | 1.41e-6 ± 2.01e-7 | 9.06e-4 ± 9.79e-5 | 1.20e-3 ± 1.88e-4 | 1266 ± 445 | 29.6 ± 9.1 | 20.2 ± 0.1 |
 
-**Hình 4.4.1.** Trái: train và validation MSE theo số tầng ẩn C, có error bar ± std. Phải: validation MSE của mạng sâu và mạng một tầng rộng theo số tham số.
+**Hình 4.4.1.** Trái: train, validation và test (hậu kiểm) MSE theo số tầng ẩn C, có error bar ± std. Phải: validation MSE của mạng sâu và mạng một tầng rộng theo số tham số.
 
 ![Lỗi theo độ sâu và so sánh sâu/rộng cùng số tham số](../figures/expC_error.png)
 
@@ -44,7 +44,7 @@ Baseline dự đoán hằng số (trung bình nhãn train) có validation MSE 2.
 
 ## Nhận xét
 
-**Thêm tầng làm lỗi giảm mạnh, nhưng chỉ đến C = 2–3.** Validation MSE giảm khoảng 180 lần từ C = 1 (1.89e-5) sang C = 2 (1.05e-7) (Bảng 4.4.1, Hình 4.4.1). Từ C = 2 đến C = 4 lỗi nằm cùng bậc 1e-7; khoảng ± std của C = 3 và C = 4 chồng nhau, nên không kết luận được C = 3 tốt hơn C = 4. Train và validation MSE gần bằng nhau ở mọi C: không thấy quá khớp, phù hợp với dữ liệu không nhiễu. Đường hội tụ cũng cho thấy điều này (Hình 4.4.2): với C ≥ 2, loss xuống dưới 1e-5 trong khoảng 200 epoch đầu rồi ba đường gần như chồng nhau, còn C = 1 chỉ giảm chậm về quanh 3e-5.
+**Thêm tầng làm lỗi giảm mạnh, nhưng chỉ đến C = 2–3.** Validation MSE giảm khoảng 180 lần từ C = 1 (1.89e-5) sang C = 2 (1.05e-7) (Bảng 4.4.1, Hình 4.4.1). Từ C = 2 đến C = 4 lỗi nằm cùng bậc 1e-7; khoảng ± std của C = 3 và C = 4 chồng nhau, nên không kết luận được C = 3 tốt hơn C = 4. Train, validation và test MSE gần bằng nhau ở mọi C (C = 3: 6.18e-8 / 6.02e-8 / 7.13e-8): không thấy quá khớp, phù hợp với dữ liệu không nhiễu. Test MSE của C = 4 (7.30e-8) và C = 3 (7.13e-8) gần như bằng nhau, khẳng định thêm là không phân biệt được hai độ sâu này. Đường hội tụ cũng cho thấy điều này (Hình 4.4.2): với C ≥ 2, loss xuống dưới 1e-5 trong khoảng 200 epoch đầu rồi ba đường gần như chồng nhau, còn C = 1 chỉ giảm chậm về quanh 3e-5.
 
 **Lợi ích đến từ độ sâu, không chỉ từ số tham số.** Ở cùng số tham số, mạng sâu có validation MSE thấp hơn mạng một tầng rộng 16–28 lần (Hình 4.4.1 phải; 151 so với 153 tham số: 1.05e-7 so với 2.42e-6; 261: 6.02e-8 so với 1.68e-6; 371/373: 9.21e-8 so với 1.46e-6). Mạng rộng cải thiện khi B tăng từ 10 lên 38 rồi gần như chững ở khoảng 1.5e-6. Cách giải thích: mỗi nơ-ron sigmoid ở tầng một chỉ tạo một "sườn dốc" theo một hướng; muốn ghép thành một đỉnh cục bộ hình elip cần rất nhiều sườn. Tầng thứ hai kết hợp các sườn này thành vùng lồi bao quanh đỉnh, nên biểu diễn được hình dạng đó bằng ít tham số hơn (DL07b p52, p54).
 
@@ -57,6 +57,6 @@ Baseline dự đoán hằng số (trung bình nhãn train) có validation MSE 2.
 ## Hạn chế
 
 - **Validation MSE của mạng sâu hơi lạc quan.** Đường validation loss gốc của C ≥ 2 dao động mạnh, từ khoảng 1e-7 đến 1e-5 giữa các epoch liền nhau; Hình 4.4.2 đã làm mượt nên không thể hiện hết dao động này. Lý do có thể là lr 0.01 quá lớn để tinh chỉnh khi lỗi đã rất nhỏ. Checkpoint được chọn đúng ở epoch có val loss thấp nhất, nên val MSE báo cáo nghiêng về phía tốt. Train MSE tại cùng checkpoint cũng ở bậc 1e-7, cho thấy checkpoint không chỉ tốt riêng trên val; dù vậy, đánh giá khách quan cần dùng tập test ở bước cuối.
-- Một số run vẫn cải thiện gần epoch 2.000 (ví dụ C = 2 seed 2: epoch tốt nhất 1941/2000), nên lỗi có thể còn giảm nếu cho chạy lâu hơn.
+- Một số run vẫn cải thiện gần epoch 2.000: 3/12 run C và 1/9 run đối chứng chạm trần với epoch tốt nhất trong 200 epoch cuối (ví dụ C = 2 seed 2: epoch tốt nhất 1941/2000; `results/stopping/epoch_cap.csv`), nên lỗi có thể còn giảm nếu cho chạy lâu hơn. Mô phỏng early stopping trên run baseline chạy đủ 2.000 epoch cho thấy patience 200 chỉ kém 0,7% so với không dừng sớm (`results/stopping/patience_sim.csv`), nên patience không phải nguyên nhân chính; giới hạn nằm ở trần epoch.
 - Chỉ xét sigmoid, Adam, lr 0.01 và tối đa 4 tầng; kết luận có thể đổi với activation, optimizer hoặc lr khác, và với mạng sâu hơn (5, 6, 8 tầng chưa chạy).
-- Không đánh giá test trong Thực nghiệm C, nhất quán với Thực nghiệm A; test dành cho mô hình cuối do nhóm chọn bằng validation.
+- Test chỉ được đo hậu kiểm để trình bày; mô hình cuối (mục 4.5) được chọn hoàn toàn theo validation trước khi xem số test.

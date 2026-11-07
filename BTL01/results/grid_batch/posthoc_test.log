@@ -1,0 +1,13 @@
+# post-hoc test trên best.pt đã đóng băng (không dùng để chọn cấu hình) — 2026-11-07T23:10:10
+[grid_batch] 16 seed=0  val_mse=2.140e-05  test_mse=1.849e-05  test_mae=3.302e-03  test_rmse=4.300e-03  test_r2=0.992134
+[grid_batch] 16 seed=1  val_mse=2.299e-05  test_mse=2.801e-05  test_mae=4.316e-03  test_rmse=5.292e-03  test_r2=0.988083
+[grid_batch] 16 seed=2  val_mse=1.548e-05  test_mse=1.403e-05  test_mae=2.830e-03  test_rmse=3.746e-03  test_r2=0.994029
+[grid_batch] 32 seed=0  val_mse=1.316e-05  test_mse=1.363e-05  test_mae=2.777e-03  test_rmse=3.692e-03  test_r2=0.994200
+[grid_batch] 32 seed=1  val_mse=1.863e-05  test_mse=1.545e-05  test_mae=3.074e-03  test_rmse=3.930e-03  test_r2=0.993428
+[grid_batch] 32 seed=2  val_mse=2.493e-05  test_mse=3.929e-05  test_mae=4.728e-03  test_rmse=6.268e-03  test_r2=0.983282
+[grid_batch] 64 seed=0  val_mse=2.619e-05  test_mse=2.743e-05  test_mae=3.951e-03  test_rmse=5.237e-03  test_r2=0.988329
+[grid_batch] 64 seed=1  val_mse=3.070e-05  test_mse=2.915e-05  test_mae=4.111e-03  test_rmse=5.399e-03  test_r2=0.987595
+[grid_batch] 64 seed=2  val_mse=1.455e-05  test_mse=1.416e-05  test_mae=2.967e-03  test_rmse=3.763e-03  test_r2=0.993976
+[grid_batch] 128 seed=0  val_mse=1.768e-05  test_mse=1.555e-05  test_mae=3.023e-03  test_rmse=3.943e-03  test_r2=0.993385
+[grid_batch] 128 seed=1  val_mse=3.313e-05  test_mse=3.646e-05  test_mae=4.594e-03  test_rmse=6.038e-03  test_r2=0.984486
+[grid_batch] 128 seed=2  val_mse=1.739e-05  test_mse=1.754e-05  test_mae=3.076e-03  test_rmse=4.189e-03  test_r2=0.992535

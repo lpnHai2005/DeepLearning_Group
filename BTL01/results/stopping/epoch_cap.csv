@@ -1,0 +1,9 @@
+exp,n_runs,hit_max_epochs,best_in_last_patience,pct_hit
+expA,30,11,11,36.666666666666664
+expA_steps,30,7,7,23.333333333333332
+expB,30,2,2,6.666666666666667
+expB_wide,9,3,3,33.333333333333336
+expB_A200,39,17,17,43.58974358974359
+expC,12,3,3,25.0
+expC_ctrl,9,1,1,11.11111111111111
+grid_batch,12,6,6,50.0

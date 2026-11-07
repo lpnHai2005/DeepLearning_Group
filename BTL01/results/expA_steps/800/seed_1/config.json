@@ -1,0 +1,13 @@
+{
+  "hidden_sizes": [
+    10
+  ],
+  "activation": "sigmoid",
+  "optimizer": "adam",
+  "lr": 0.01,
+  "batch_size": 32,
+  "n_train": 800,
+  "max_epochs": 2560,
+  "patience": 256,
+  "seed": 1
+}

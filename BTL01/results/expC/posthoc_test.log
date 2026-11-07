@@ -1,0 +1,13 @@
+# post-hoc test trên best.pt đã đóng băng (không dùng để chọn cấu hình) — 2026-11-07T23:10:09
+[C] 10 seed=0  val_mse=1.316e-05  test_mse=1.363e-05  test_mae=2.777e-03  test_rmse=3.692e-03  test_r2=0.994200
+[C] 10 seed=1  val_mse=1.863e-05  test_mse=1.545e-05  test_mae=3.074e-03  test_rmse=3.930e-03  test_r2=0.993428
+[C] 10 seed=2  val_mse=2.493e-05  test_mse=3.929e-05  test_mae=4.728e-03  test_rmse=6.268e-03  test_r2=0.983282
+[C] 10-10 seed=0  val_mse=1.201e-07  test_mse=1.512e-07  test_mae=2.485e-04  test_rmse=3.889e-04  test_r2=0.999936
+[C] 10-10 seed=1  val_mse=7.354e-08  test_mse=7.633e-08  test_mae=2.055e-04  test_rmse=2.763e-04  test_r2=0.999968
+[C] 10-10 seed=2  val_mse=1.204e-07  test_mse=9.462e-08  test_mae=2.271e-04  test_rmse=3.076e-04  test_r2=0.999960
+[C] 10-10-10 seed=0  val_mse=8.249e-08  test_mse=8.768e-08  test_mae=2.159e-04  test_rmse=2.961e-04  test_r2=0.999963
+[C] 10-10-10 seed=1  val_mse=5.683e-08  test_mse=8.206e-08  test_mae=2.111e-04  test_rmse=2.865e-04  test_r2=0.999965
+[C] 10-10-10 seed=2  val_mse=4.141e-08  test_mse=4.424e-08  test_mae=1.543e-04  test_rmse=2.103e-04  test_r2=0.999981
+[C] 10-10-10-10 seed=0  val_mse=1.865e-07  test_mse=1.397e-07  test_mae=2.933e-04  test_rmse=3.738e-04  test_r2=0.999941
+[C] 10-10-10-10 seed=1  val_mse=3.653e-08  test_mse=2.910e-08  test_mae=1.220e-04  test_rmse=1.706e-04  test_r2=0.999988
+[C] 10-10-10-10 seed=2  val_mse=5.336e-08  test_mse=5.025e-08  test_mae=1.614e-04  test_rmse=2.242e-04  test_r2=0.999979

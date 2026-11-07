@@ -4,10 +4,10 @@
 
 ## 1. Quy trình lựa chọn mô hình cuối (Chỉ dựa trên Validation)
 
-Để tuân thủ nghiêm ngặt nguyên tắc chống rò rỉ dữ liệu (data leakage), tập `test.csv` ($100$ mẫu độc lập, `seed = 2028`) được niêm phong trong suốt quá trình dò siêu tham số baseline và chạy ba nhóm thực nghiệm A, B, C. Việc lựa chọn cấu hình mô hình cuối được thực hiện hoàn toàn dựa trên **Validation MSE trung bình qua 3 seed** (`results/summary_all.csv`):
+Để tuân thủ nghiêm ngặt nguyên tắc chống rò rỉ dữ liệu (data leakage), tập `test.csv` ($100$ mẫu độc lập, `seed = 2028`) không tham gia bất kỳ quyết định nào: dò siêu tham số baseline, chọn checkpoint và chọn cấu hình đều chỉ dùng validation. Số test của A, B, C trong các mục 4.2–4.4 là hậu kiểm, chỉ để trình bày. Mô hình cuối là cấu hình có **Validation MSE trung bình qua 3 seed thấp nhất** trong toàn bộ 53 cấu hình của `results/summary_all.csv` (gồm cả các đối chứng `expA_steps`, `expB_wide`, `expB_A200`); quy tắc này được kiểm tra tự động bởi `tests/test_config_evidence.py`, nên nếu `configs/final.json` không khớp với log thì `pytest` báo lỗi:
 
 1. **Trong Thực nghiệm A** ($C = 1, B = 10$, thay đổi $A \in \{200 \dots 2000\}$): Cấu hình tốt nhất đạt tại $A = 1600$ với Validation MSE $= 1.52 \times 10^{-5} \pm 1.42 \times 10^{-6}$ (tại $A = 1000$ đạt $1.89 \times 10^{-5} \pm 5.89 \times 10^{-6}$).
-2. **Trong Thực nghiệm B** ($C = 1, A = 1000$, thay đổi độ rộng $B$): Trong dải $B = 1 \dots 10$, tốt nhất là $B = 10$ ($41$ tham số, Validation MSE $= 1.89 \times 10^{-5} \pm 5.89 \times 10^{-6}$). Khi mở rộng lên $B = 93$ ($373$ tham số), mạng 1 tầng ẩn đạt Validation MSE $= 1.46 \times 10^{-6} \pm 4.32 \times 10^{-7}$.
+2. **Trong Thực nghiệm B** ($C = 1, A = 1000$, thay đổi độ rộng $B$): Trong dải $B = 1 \dots 10$, tốt nhất là $B = 10$ ($41$ tham số, Validation MSE $= 1.89 \times 10^{-5} \pm 5.89 \times 10^{-6}$). Khi mở rộng tới $B = 16, 32, 64$ và $B = 93$ ($373$ tham số), mạng 1 tầng ẩn tốt nhất đạt Validation MSE $= 1.46 \times 10^{-6} \pm 4.32 \times 10^{-7}$ ($B = 93$). Các đối chứng ở $A = 200$ và đối chứng cùng ngân sách bước của A đều có Validation MSE cao hơn ($\ge 9.2 \times 10^{-6}$).
 3. **Trong Thực nghiệm C** ($A = 1000$, mỗi tầng $10$ nơ-ron, thay đổi độ sâu $C \in \{1, 2, 3, 4\}$):
    - $C = 1$ (`[10]`, $41$ tham số): Validation MSE $= 1.89 \times 10^{-5} \pm 5.89 \times 10^{-6}$
    - $C = 2$ (`[10, 10]`, $151$ tham số): Validation MSE $= 1.05 \times 10^{-7} \pm 2.70 \times 10^{-8}$
