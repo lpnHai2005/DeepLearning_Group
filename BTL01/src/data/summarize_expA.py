@@ -1,4 +1,8 @@
-"""Tổng hợp và vẽ kết quả Thực nghiệm A; không đọc tập test. (TV1 – T1.6)"""
+"""Tổng hợp và vẽ kết quả Thực nghiệm A. (TV1 – T1.6)
+
+Không tự đọc test.csv. Cột test_* trong summary.csv do src/posthoc_test.py điền (hậu kiểm best.pt
+đã đóng băng) và chỉ dùng để trình bày; cấu hình vẫn chọn theo validation. Chưa chạy posthoc thì bỏ qua test.
+"""
 import csv
 import sys
 from collections import defaultdict
@@ -19,6 +23,7 @@ from src.engine.evaluate import metrics  # noqa: E402
 from src.utils.io import write_csv  # noqa: E402
 
 METRICS = ("mse", "mae", "rmse")
+SPLITS = ("train", "val", "test")
 
 
 def read_runs(path):
@@ -48,7 +53,9 @@ def build_aggregate(grouped):
         aggregate = {"n_train": n_train, "n_seeds": len(grouped[n_train]),
                      "baseline_val_mse": base_metrics["mse"]}
         for metric in METRICS:
-            for split in ("train", "val"):
+            for split in SPLITS:
+                if grouped[n_train][0].get(f"{split}_{metric}") in (None, ""):
+                    continue
                 mean, std = mean_std([float(run[f"{split}_{metric}"]) for run in grouped[n_train]])
                 aggregate[f"{split}_{metric}_mean"] = mean
                 aggregate[f"{split}_{metric}_std"] = std
@@ -60,7 +67,10 @@ def plot_validation_mse(rows, out_path):
     x = np.asarray([r["n_train"] for r in rows])
     fig, ax = plt.subplots(figsize=(8.5, 5.5), constrained_layout=True)
     for split, label, color, marker in (("train", "Train MSE", "#2563eb", "o"),
-                                        ("val", "Validation MSE", "#f97316", "s")):
+                                        ("val", "Validation MSE", "#f97316", "s"),
+                                        ("test", "Test MSE (post-hoc)", "#16a34a", "^")):
+        if "test_mse_mean" not in rows[0] and split == "test":
+            continue
         means = np.asarray([r[f"{split}_mse_mean"] for r in rows])
         stds = np.asarray([r[f"{split}_mse_std"] for r in rows])
         ax.errorbar(x, means, yerr=stds, label=label, color=color, marker=marker,
@@ -91,18 +101,44 @@ def plot_train_val_gap(rows, out_path):
     plt.close(fig)
 
 
+def plot_equal_steps(rows, rows_steps, out_path):
+    """Đối chứng công bằng: expA (2000 epoch cố định) và expA_steps (cùng ~64k bước cập nhật)."""
+    fig, ax = plt.subplots(figsize=(8.5, 5.5), constrained_layout=True)
+    for rs, tag, ls in ((rows, "2000 epochs (fewer updates for small A)", "-"),
+                        (rows_steps, "equal update budget (~64k steps)", "--")):
+        x = np.asarray([r["n_train"] for r in rs])
+        for split, label, color, marker in (("val", "Val", "#f97316", "s"), ("test", "Test (post-hoc)", "#16a34a", "^")):
+            if f"{split}_mse_mean" not in rs[0]:
+                continue
+            ax.errorbar(x, [r[f"{split}_mse_mean"] for r in rs], yerr=[r[f"{split}_mse_std"] for r in rs],
+                        color=color, marker=marker, ls=ls, capsize=3, lw=1.5, label=f"{label}, {tag}")
+    ax.set_yscale("log")
+    ax.set_xlabel("Number of training samples A")
+    ax.set_ylabel("MSE on original y scale (log)")
+    ax.set_title("Experiment A: separating data size from number of optimizer updates")
+    ax.grid(True, which="both", alpha=0.22)
+    ax.legend(fontsize=8)
+    fig.savefig(out_path, dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+
 def main():
     results_dir = ROOT / "results" / "expA"
     figure_dir = ROOT / "figures"
     grouped = read_runs(results_dir / "summary.csv")
     rows = build_aggregate(grouped)
     fields = ["n_train", "n_seeds", "baseline_val_mse"]
-    fields += [f"{split}_{metric}_{stat}" for split in ("train", "val")
+    fields += [f"{split}_{metric}_{stat}" for split in SPLITS
                for metric in METRICS for stat in ("mean", "std")]
     write_csv(results_dir / "aggregate.csv", rows, fields)
     figure_dir.mkdir(parents=True, exist_ok=True)
     plot_validation_mse(rows, figure_dir / "expA_validation_mse.png")
     plot_train_val_gap(rows, figure_dir / "expA_train_val_gap.png")
+    steps_dir = ROOT / "results" / "expA_steps"          # đối chứng cùng ngân sách bước (configs/expA_steps.json)
+    if (steps_dir / "summary.csv").exists():
+        rows_steps = build_aggregate(read_runs(steps_dir / "summary.csv"))
+        write_csv(steps_dir / "aggregate.csv", rows_steps, fields)
+        plot_equal_steps(rows, rows_steps, figure_dir / "expA_steps.png")
     print(f"A aggregate: {results_dir / 'aggregate.csv'}")
     print(f"A figures: {figure_dir}")
 

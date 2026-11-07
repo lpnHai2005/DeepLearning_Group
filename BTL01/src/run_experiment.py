@@ -43,7 +43,15 @@ def fmt(v):
 
 
 def expand(cfg):
-    """-> (tên giá trị, tham số đầy đủ) cho từng tổ hợp trong 'vary'; vary rỗng -> ('base', base)."""
+    """-> (tên giá trị, tham số đầy đủ) cho từng tổ hợp trong 'vary'; vary rỗng -> ('base', base).
+
+    'cases' (danh sách dict) thay cho 'vary' khi các khóa phải đổi cùng nhau, không theo tích Descartes
+    (vd n_train cùng max_epochs/patience để giữ ngân sách bước cập nhật); tên giá trị lấy từ khóa đầu.
+    """
+    if "cases" in cfg:
+        for case in cfg["cases"]:
+            yield fmt(next(iter(case.values()))), {**cfg["base"], **case}
+        return
     keys = list(cfg["vary"])
     for combo in itertools.product(*(cfg["vary"][k] for k in keys)):
         yield "_".join(map(fmt, combo)) or "base", {**cfg["base"], **dict(zip(keys, combo))}

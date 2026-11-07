@@ -1,0 +1,7 @@
+{"_note": "Plan 1.4: minh chung chon batch size tren baseline [10] (sigmoid, adam, lr 0.01, A=1000). Chi xet val (khong --eval-test). Patience/max_epochs duoc minh chung bang src/analyze_stopping.py.",
+ "exp": "grid_batch",
+ "vary": {"batch_size": [16, 32, 64, 128]},
+ "base": {"n_train": 1000, "hidden_sizes": [10], "activation": "sigmoid", "optimizer": "adam",
+          "lr": 0.01, "max_epochs": 2000, "patience": 200},
+ "seeds": [0, 1, 2],
+ "out_dir": "results/grid_batch"}

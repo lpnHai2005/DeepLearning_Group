@@ -24,8 +24,9 @@ def test_import(name):
 @pytest.mark.parametrize("cfg", sorted((ROOT / "configs").glob("*.json")))
 def test_config_valid(cfg):
     d = json.loads(cfg.read_text(encoding="utf-8"))
-    for key in ("exp", "vary", "base", "seeds", "out_dir"):
+    for key in ("exp", "base", "seeds", "out_dir"):
         assert key in d, f"{cfg.name} thiếu khóa {key}"
+    assert ("vary" in d) != ("cases" in d), f"{cfg.name} cần đúng một trong 'vary' hoặc 'cases'"
 
 
 def test_no_forbidden_frameworks():

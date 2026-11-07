@@ -98,6 +98,26 @@ def _eval_posthoc_test_for_group(exp_dir, x_te, y_te):
     return out
 
 
+def _rows_from_summary(exp_name, label):
+    """Gom thực nghiệm bổ sung trực tiếp từ summary.csv (đã có test_* từng run nhờ posthoc_test.py)."""
+    path = RES / exp_name / "summary.csv"
+    if not path.exists():
+        return []
+    groups = defaultdict(list)
+    for r in _read_csv(path):
+        groups[r["value"]].append(r)
+    out = []
+    for value, runs in groups.items():
+        cfg = json.loads((RES / exp_name / value / f"seed_{runs[0]['seed']}" / "config.json").read_text(encoding="utf-8"))
+        hs = ",".join(map(str, cfg["hidden_sizes"]))
+        row = {"exp": label, "config": f"A={cfg['n_train']}, [{hs}]", "n_train": cfg["n_train"],
+               "hidden_sizes": hs.replace(",", "-"), "n_params": int(runs[0]["n_params"]), "n_seeds": len(runs)}
+        for s in ("train_mse", "val_mse", "test_mse", "val_mae", "test_mae", "val_rmse", "test_rmse", "test_r2"):
+            row[f"{s}_mean"], row[f"{s}_std"] = mean_std([float(r[s]) for r in runs])
+        out.append(row)
+    return sorted(out, key=lambda r: (r["n_train"], r["n_params"]))
+
+
 def build_summary_all():
     """Gom bảng tổng hợp của A, B, C (và C_ctrl) kèm hậu kiểm test về results/summary_all.csv."""
     x_te, y_te = load_split("test")
@@ -194,6 +214,9 @@ def build_summary_all():
             "test_r2_mean": tm["test_r2_mean"],
             "test_r2_std": tm["test_r2_std"],
         })
+
+    for exp_name, label in (("expA_steps", "A_steps"), ("expB_wide", "B"), ("expB_A200", "B_A200")):
+        rows_out += _rows_from_summary(exp_name, label)
 
     fields = [
         "exp", "config", "n_train", "hidden_sizes", "n_params", "n_seeds",

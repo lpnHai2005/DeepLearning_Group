@@ -38,22 +38,34 @@ Trên Windows, đặt `PYTHONUTF8=1` nếu `print` tiếng Việt báo lỗi mã
 ## Chạy
 
 ```
+python src/env_info.py                                       # ghi môi trường chạy -> results/env.txt
 python src/generate_data.py                                  # sinh data/*.csv
 python src/data/eda.py                                       # TV1: thống kê và hình dữ liệu
-python src/run_experiment.py --config configs/grid_baseline.json      # T2.5: lưới chốt baseline (chỉ xem val)
+# --- chọn baseline (chỉ xem val) ---
+python src/run_experiment.py --config configs/grid_baseline.json      # T2.5: lưới lr × activation
 python src/summarize_grid_baseline.py                        # T2.5: hình bằng chứng chọn lr, activation
+python src/run_experiment.py --config configs/grid_optimizer.json     # T2.8: 6 optimizer × 7 lr × 3 seed (~2 giờ tuần tự)
+python src/summarize_optimizer.py                            # TV2: chọn lr theo val, vẽ figures/optimizer_loss.png
+python src/run_experiment.py --config configs/grid_batch.json         # minh chứng batch size 16/32/64/128
 python src/run_experiment.py --config configs/baseline.json
+# --- ba nhóm thực nghiệm + đối chứng ---
 python src/run_experiment.py --config configs/expA.json
-python src/data/summarize_expA.py                            # TV1: tổng hợp/đồ thị A
+python src/run_experiment.py --config configs/expA_steps.json         # đối chứng A: cùng ngân sách ~64k bước cập nhật
 python src/run_experiment.py --config configs/expB.json
-python src/summarize_expB.py                                 # TV3: tổng hợp/đồ thị B + bề mặt theo B
+python src/run_experiment.py --config configs/expB_wide.json          # B = 16/32/64 ở A=1000
+python src/run_experiment.py --config configs/expB_A200.json          # B ở A=200 (kiểm tra quá khớp)
 python src/run_experiment.py --config configs/expC.json
 python src/run_experiment.py --config configs/expC_ctrl.json         # đối chứng C: 1 tầng, cùng số tham số
+# --- hậu kiểm test (sau khi đã chạy xong mọi run; chạy lại run_experiment thì chạy lại bước này) ---
+python src/posthoc_test.py                                   # điền test_* từng seed vào summary.csv/metrics.json + posthoc_test.log
+# --- tổng hợp, hình, bảng ---
+python src/analyze_stopping.py                               # minh chứng patience/max_epochs -> results/stopping/
+python src/data/summarize_expA.py                            # TV1: tổng hợp/đồ thị A (+ expA_steps)
+python src/summarize_expB.py                                 # TV3: tổng hợp/đồ thị B + bề mặt theo B (+ A=200, B rộng)
 python src/summarize_expC.py                                 # TV2: tổng hợp/đồ thị C + chuẩn gradient
-python src/run_experiment.py --config configs/grid_optimizer.json     # T2.8: 6 optimizer × 7 lr × 3 seed, chỉ xem val (~2 giờ nếu chạy tuần tự)
-python src/summarize_optimizer.py                            # TV2: chọn lr theo val, vẽ figures/optimizer_loss.png
+python src/make_report_assets.py                             # chọn mô hình cuối theo val, test 1 lần, hình final_*
+python src/make_tables.py                                    # bảng báo cáo tự động -> report/tables/*.md
 python src/run_experiment.py --config configs/demo.json      # demo trước lớp (~10 s)
-python src/make_report_assets.py                             # gom bảng/hình cho báo cáo
 ```
 
 Sơ đồ mạng vẽ từ model thật: `python src/visual/draw_mlp.py` (lưu vào `figures/`).
@@ -67,13 +79,15 @@ src/model/    mlp.py
 src/engine/   trainer.py, evaluate.py
 src/visual/   plots.py, draw_mlp.py
 src/utils/    seed.py, io.py, timer.py
-src/          generate_data.py, run_experiment.py, make_report_assets.py
+src/          generate_data.py, run_experiment.py, posthoc_test.py, analyze_stopping.py,
+              summarize_exp*.py, make_report_assets.py, make_tables.py, env_info.py
 tests/        test_skeleton.py, test_gaussian.py, test_dataset.py, test_evaluate.py, test_trainer.py, test_backprop.py
 notebooks/    EDA, demo
 data/         train_pool.csv, val.csv, test.csv, meta.json
-results/      <exp>/<giá trị>/seed_<k>/{config.json, history.csv, metrics.json, best.pt}, summary.csv
+results/      <exp>/<giá trị>/seed_<k>/{config.json, history.csv, metrics.json, best.pt}, summary.csv,
+              run.log (log train), posthoc_test.log (log test hậu kiểm), aggregate.csv; stopping/; env.txt
 figures/      hình dùng cho báo cáo/slide
-report/       báo cáo (.docx/.pdf), slide (.pptx/.pdf)
+report/       báo cáo (.docx/.pdf), slide (.pptx/.pdf); tables/ (bảng sinh tự động)
 ```
 
 ## Quy tắc chung

@@ -1,0 +1,71 @@
+{
+ "_note": "Plan 1.4 / doi chung cong bang cho A: batch 32 co dinh nen A nho co it buoc cap nhat/epoch (A=200: 7 buoc, A=1000: 32 buoc). O expA moi A=200..600 cham tran 2000 epoch voi best_epoch trong 200 epoch cuoi (results/stopping/epoch_cap.csv). Doi chung giu CUNG ngan sach ~64000 buoc cap nhat: max_epochs va patience nhan 32/ceil(A/32). A=1000 trung expA (kiem tra tai lap). Chi xet val; test hau kiem bang src/posthoc_test.py.",
+ "exp": "A_steps",
+ "cases": [
+  {
+   "n_train": 200,
+   "max_epochs": 9143,
+   "patience": 914
+  },
+  {
+   "n_train": 400,
+   "max_epochs": 4923,
+   "patience": 492
+  },
+  {
+   "n_train": 600,
+   "max_epochs": 3368,
+   "patience": 337
+  },
+  {
+   "n_train": 800,
+   "max_epochs": 2560,
+   "patience": 256
+  },
+  {
+   "n_train": 1000,
+   "max_epochs": 2000,
+   "patience": 200
+  },
+  {
+   "n_train": 1200,
+   "max_epochs": 1684,
+   "patience": 168
+  },
+  {
+   "n_train": 1400,
+   "max_epochs": 1455,
+   "patience": 145
+  },
+  {
+   "n_train": 1600,
+   "max_epochs": 1280,
+   "patience": 128
+  },
+  {
+   "n_train": 1800,
+   "max_epochs": 1123,
+   "patience": 112
+  },
+  {
+   "n_train": 2000,
+   "max_epochs": 1016,
+   "patience": 102
+  }
+ ],
+ "base": {
+  "hidden_sizes": [
+   10
+  ],
+  "activation": "sigmoid",
+  "optimizer": "adam",
+  "lr": 0.01,
+  "batch_size": 32
+ },
+ "seeds": [
+  0,
+  1,
+  2
+ ],
+ "out_dir": "results/expA_steps"
+}

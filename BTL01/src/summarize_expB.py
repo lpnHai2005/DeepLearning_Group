@@ -1,5 +1,8 @@
 """Tổng hợp và vẽ kết quả Thực nghiệm B (độ rộng tầng ẩn B = 1..10 + mở rộng). (TV3 – T3.3, T3.4)
 
+Nếu có results/expB_wide (B=16/32/64, A=1000) và results/expB_A200 (B ở A=200) thì gộp vào bảng
+aggregate.csv, expB_error.png và vẽ thêm figures/expB_A200.png (Plan 1.3).
+
 Lưu ý chống rò rỉ: quá trình huấn luyện (run_experiment.py) và chọn checkpoint (best.pt) chỉ dùng
 validation. Tập test chỉ được đánh giá hậu kiểm (post-hoc) trên các trọng số best.pt đã đóng băng
 để trình bày đủ 3 đường Train / Validation / Test theo yêu cầu của đề bài.
@@ -90,6 +93,44 @@ def build_aggregate(grouped, base_val_mse, base_test_mse, group_tag="main"):
     return out
 
 
+def _width_axis(ax, widths):
+    """B = 1..10 tuyến tính; có mở rộng 16/32/64 thì dùng trục log2 để vẫn đọc được vùng B nhỏ."""
+    if max(widths) > 10:
+        ax.set_xscale("log", base=2)
+    ax.set_xticks(widths)
+    ax.set_xticklabels([str(w) for w in widths])
+
+
+def plot_expB_data_size(rows_1000, rows_200, base_1000, base_200, out_path):
+    """So sánh B ở A=1000 và A=200: train/val/test MSE và khoảng cách val − train (kiểm tra quá khớp)."""
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13.4, 5.3), constrained_layout=True)
+    for rows, base, tag, ls in ((rows_1000, base_1000, "A=1000", "-"), (rows_200, base_200, "A=200", "--")):
+        b = np.asarray([r["width"] for r in rows])
+        for split, label, marker in (("train", "Train", "o"), ("val", "Val", "s"), ("test", "Test (post-hoc)", "^")):
+            ax1.errorbar(b, [r[f"{split}_mse_mean"] for r in rows], yerr=[r[f"{split}_mse_std"] for r in rows],
+                         color=SPLIT_COLORS[split], marker=marker, ls=ls, capsize=3, lw=1.4, alpha=0.9,
+                         label=f"{label}, {tag}")
+        ax2.errorbar(b, [r["gap_mse_mean"] for r in rows], yerr=[r["gap_mse_std"] for r in rows],
+                     color=SPLIT_COLORS["gap"], marker="o", ls=ls, capsize=3, lw=1.6, label=tag)
+    widths = sorted({r["width"] for r in rows_1000 + rows_200})
+    ax1.axhline(base_1000, ls=":", color=SPLIT_COLORS["baseline"], lw=1.4, label="Constant mean predictor (val)")
+    ax1.set_yscale("log")
+    ax2.axhline(0.0, color=SPLIT_COLORS["baseline"], lw=0.9, ls="--")
+    ax2.set_yscale("symlog", linthresh=1e-6)
+    for ax in (ax1, ax2):
+        _width_axis(ax, widths)
+        ax.set_xlabel("Number of hidden neurons B (1 hidden layer)")
+        ax.grid(True, which="both", alpha=0.22)
+    ax1.set_ylabel("MSE on original y scale (log)")
+    ax1.set_title("Experiment B at A=1000 (solid) and A=200 (dashed)")
+    ax1.legend(fontsize=7.5, ncol=2)
+    ax2.set_ylabel("Validation MSE − Train MSE (symlog)")
+    ax2.set_title("Generalization gap (> 0: validation worse than train)")
+    ax2.legend()
+    fig.savefig(out_path, dpi=DPI, bbox_inches="tight")
+    plt.close(fig)
+
+
 def plot_expB_error(main_rows, base_mse, out_path):
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13.4, 5.3), constrained_layout=True)
 
@@ -106,7 +147,7 @@ def plot_expB_error(main_rows, base_mse, out_path):
     ax1.axhline(base_mse, ls=":", color=SPLIT_COLORS["baseline"], lw=1.4,
                 label="Constant mean predictor (val)")
     ax1.set_yscale("log")
-    ax1.set_xticks(b_main)
+    _width_axis(ax1, b_main)
     ax1.set_xlabel("Number of hidden neurons B (1 hidden layer)")
     ax1.set_ylabel("MSE on original y scale (log)")
     ax1.set_title("Experiment B: Train, Validation & Test MSE vs. width B")
@@ -118,7 +159,7 @@ def plot_expB_error(main_rows, base_mse, out_path):
     ax2.axhline(0.0, color=SPLIT_COLORS["baseline"], lw=0.9, ls="--")
     ax2.errorbar(b_main, gaps_mean, yerr=gaps_std, color=SPLIT_COLORS["gap"], marker="o",
                  capsize=3, lw=1.6, label="Val MSE − Train MSE (mean ± std)")
-    ax2.set_xticks(b_main)
+    _width_axis(ax2, b_main)
     ax2.set_xlabel("Number of hidden neurons B (1 hidden layer)")
     ax2.set_ylabel("Validation MSE − Train MSE")
     ax2.set_title("Experiment B: train–validation gap across width B")
@@ -186,6 +227,9 @@ def main():
     ctrl_dir = RES / "expC_ctrl"
     grouped_main = read_summary(exp_dir / "summary.csv")
     grouped_ctrl = read_summary(ctrl_dir / "summary.csv") if (ctrl_dir / "summary.csv").exists() else {}
+    wide_dir, a200_dir = RES / "expB_wide", RES / "expB_A200"     # Plan 1.3: B=16/32/64 ở A=1000; B ở A=200
+    grouped_wide = read_summary(wide_dir / "summary.csv") if (wide_dir / "summary.csv").exists() else {}
+    grouped_200 = read_summary(a200_dir / "summary.csv") if (a200_dir / "summary.csv").exists() else {}
 
     x_pool, y_pool = load_split("train_pool")
     _, y_tr = subset(x_pool, y_pool, N_TRAIN)
@@ -197,10 +241,18 @@ def main():
     enrich_posthoc_test(grouped_main, exp_dir, x_te, y_te)
     if grouped_ctrl:
         enrich_posthoc_test(grouped_ctrl, ctrl_dir, x_te, y_te)
+    for g, d in ((grouped_wide, wide_dir), (grouped_200, a200_dir)):
+        if g:
+            enrich_posthoc_test(g, d, x_te, y_te)
+    _, y_tr200 = subset(x_pool, y_pool, 200)
+    base_val_200 = metrics(y_val, np.full_like(y_val, y_tr200.mean()))["mse"]
+    base_test_200 = metrics(y_te, np.full_like(y_te, y_tr200.mean()))["mse"]
 
     main_rows = build_aggregate(grouped_main, base_val_mse, base_test_mse, group_tag="expB")
     ctrl_rows = build_aggregate(grouped_ctrl, base_val_mse, base_test_mse, group_tag="expC_ctrl") if grouped_ctrl else []
-    all_rows = main_rows + ctrl_rows
+    wide_rows = build_aggregate(grouped_wide, base_val_mse, base_test_mse, group_tag="expB_wide") if grouped_wide else []
+    rows_200 = build_aggregate(grouped_200, base_val_200, base_test_200, group_tag="expB_A200") if grouped_200 else []
+    all_rows = main_rows + wide_rows + ctrl_rows + rows_200
 
     fields = ["group", "width", "n_params", "n_seeds", "baseline_val_mse", "baseline_test_mse"]
     fields += [f"{s}_{t}" for s in STATS for t in ("mean", "std")]
@@ -208,7 +260,9 @@ def main():
     write_csv(exp_dir / "aggregate.csv", all_rows, fields)
 
     FIG.mkdir(parents=True, exist_ok=True)
-    plot_expB_error(main_rows, base_val_mse, FIG / "expB_error.png")
+    plot_expB_error(main_rows + wide_rows, base_val_mse, FIG / "expB_error.png")
+    if rows_200:
+        plot_expB_data_size(main_rows + wide_rows, rows_200, base_val_mse, base_val_200, FIG / "expB_A200.png")
     plot_expB_surfaces(exp_dir, FIG / "expB_surfaces.png", seed=0, n=90)
 
     print(f"Constant-mean val MSE = {base_val_mse:.4e}, test MSE = {base_test_mse:.4e}")

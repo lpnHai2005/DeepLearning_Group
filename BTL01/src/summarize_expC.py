@@ -1,4 +1,7 @@
-"""Tổng hợp và vẽ kết quả Thực nghiệm C (độ sâu) + đối chứng cùng số tham số; không đọc tập test. (TV2 – T2.6)
+"""Tổng hợp và vẽ kết quả Thực nghiệm C (độ sâu) + đối chứng cùng số tham số. (TV2 – T2.6)
+
+Không tự đọc test.csv. Cột test_* trong summary.csv do src/posthoc_test.py điền (hậu kiểm best.pt
+đã đóng băng) và chỉ dùng để trình bày; cấu hình vẫn chọn theo validation. Chưa chạy posthoc thì bỏ qua test.
 
 Chạy sau expC.json và expC_ctrl.json:  python src/summarize_expC.py
 """
@@ -25,8 +28,8 @@ from src.utils.io import write_csv  # noqa: E402
 
 RES = ROOT / "results"
 FIG = ROOT / "figures"
-STATS = ("train_mse", "val_mse", "train_mae", "val_mae", "train_rmse", "val_rmse",
-         "best_epoch", "epochs_run", "train_time_s", "time_per_epoch_ms")
+STATS = ("train_mse", "val_mse", "test_mse", "train_mae", "val_mae", "test_mae",
+         "train_rmse", "val_rmse", "test_rmse", "test_r2", "best_epoch", "epochs_run", "train_time_s", "time_per_epoch_ms")
 N_TRAIN = 1000
 COLORS = {"deep": "#2563eb", "wide": "#f97316"}
 DEPTH_COLORS = ("#2a78d6", "#eb6834", "#1baf7a", "#e87ba4")     # C = 1..4
@@ -49,6 +52,8 @@ def aggregate(grouped, family):
         row = {"family": family, "value": value, "depth": len(widths), "width": widths[0],
                "n_params": int(runs[0]["n_params"]), "n_seeds": len(runs)}
         for s in STATS:
+            if runs[0].get(s) in (None, ""):      # test_* chưa có khi chưa chạy posthoc_test.py
+                continue
             row[f"{s}_mean"], row[f"{s}_std"] = mean_std([float(r[s]) for r in runs])
         out.append(row)
     return sorted(out, key=lambda r: r["n_params"])
@@ -87,9 +92,12 @@ def grad_table(exp_dir, grouped):
 def plot_error(deep, wide, base_mse, path):
     fig, (a, b) = plt.subplots(1, 2, figsize=(13, 5), constrained_layout=True)
     c = [r["depth"] for r in deep]
-    for split, color, marker in (("train", "#2563eb", "o"), ("val", "#f97316", "s")):
+    for split, label, color, marker in (("train", "Train MSE", "#2563eb", "o"), ("val", "Val MSE", "#f97316", "s"),
+                                        ("test", "Test MSE (post-hoc)", "#16a34a", "^")):
+        if f"{split}_mse_mean" not in deep[0]:
+            continue
         a.errorbar(c, [r[f"{split}_mse_mean"] for r in deep], yerr=[r[f"{split}_mse_std"] for r in deep],
-                   label=f"{split.capitalize()} MSE", color=color, marker=marker, capsize=3)
+                   label=label, color=color, marker=marker, capsize=3)
     a.axhline(base_mse, ls="--", color="#4b5563", label="Constant mean predictor (val)")
     a.set(yscale="log", xticks=c, xlabel="Number of hidden layers C (10 neurons each)",
           ylabel="MSE on original y scale (log)", title="Experiment C: error versus depth")
