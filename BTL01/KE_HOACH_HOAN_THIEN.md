@@ -9,8 +9,8 @@
 |---|---|---|
 | 1 | Lấp lỗ hổng minh chứng (code, chạy, log, hình, bảng) | ✅ Xong, đã push lên `main` (`246400d`, `0ae7bf6`) |
 | 2 | Nhật ký quyết định `report/NHAT_KY_QUYET_DINH.md` | ✅ Xong (D1–D17, số liệu đã đối chiếu CSV) |
-| 3 | Báo cáo `.docx` + `.pdf` (6 chương, 10–20 trang) | ❌ |
-| 4 | Slide `.pptx` + `.pdf` (10–15 slide), chuẩn bị demo | ❌ |
+| 3 | Báo cáo `.docx` + `.pdf` (6 chương, 10–20 trang) | 🟡 Có `report/BaoCao_Nhom10.docx` (nguồn nội dung `report/BAO_CAO.md`, nhóm tự dàn trang Word và xuất PDF). Còn: xuất PDF, điền họ tên/MSSV (nội dung chính ~24 trang, đề chỉ đề xuất 10–20 nên giữ nguyên) |
+| 4 | Slide `.pptx` + `.pdf` (10–15 slide), chuẩn bị demo | ✅ `report/Slide_Nhom10.pptx/.pdf`, 14 slide, có ghi chú người trình bày (build `src/build_slides.py`). Còn: điền họ tên |
 | 5 | QA tái lập, bảng % đóng góp, đóng gói zip | ❌ |
 
 Rubric chưa có minh chứng: **7. Báo cáo (15đ)**, **8. Slide (10đ)**. Các mục 1–6 đã có code, số liệu và log.
@@ -36,7 +36,7 @@ Rubric chưa có minh chứng: **7. Báo cáo (15đ)**, **8. Slide (10đ)**. Cá
 - Hàm Gaussian: μ = (0, 0), C = [[0.3, −0.5], [−0.5, 2]].
   - det(C) = 0.35, đỉnh y_max = 1/(2π√0.35) ≈ 0.2690.
   - Hệ số tương quan ρ ≈ −0.645.
-  - 99.56% thể tích nằm trong miền [−2, 2] × [−4, 4].
+  - 99.52% thể tích nằm trong miền [−2, 2] × [−4, 4].
   - 62.6% mẫu train có y < 0.01.
 - Dữ liệu: train_pool 2000 / val 200 / test 100, seed 2026 / 2027 / 2028. x lấy đều trên miền.
 - Baseline: `[10]`, sigmoid, Adam, lr 0.01, batch 32, 2000 epoch, patience 200, 3 seed.

@@ -9,13 +9,9 @@ Ba nhóm thí nghiệm: **A** thay đổi số mẫu huấn luyện (200…2000)
 
 ## Trạng thái
 
-Khung repo đã dựng sẵn; các thành viên hoàn thiện phần được giao theo `CHI_TIET_NHIEM_VU.md`.
-
-**TV1:** Đã sinh dữ liệu, hoàn thiện loader/EDA, chọn ứng viên baseline bằng validation và chạy đủ 30 run A. Ứng viên hiện tại là sigmoid/lr 0.01; chờ TV2/TV3 review và TV4 QA/bàn giao.
-
-**TV2:** Đã chạy đủ Thực nghiệm C (12 run) và đối chứng cùng số tham số (9 run) với baseline đã chốt; có bản nháp Ch.3, mục 4.4 và ghi chú slide; demo `configs/demo.json` chạy khoảng 10 giây.
-
-**TV3:** Đã hoàn thiện `src/engine/evaluate.py`, `src/visual/plots.py`, tổng hợp/vẽ biểu đồ Thực nghiệm B (`src/summarize_expB.py`), chọn mô hình cuối theo validation và đánh giá tập test + lưới 100×100 (`src/make_report_assets.py`, `results/final/`), cùng bản thảo mục 4.3, mục 4.5 và ghi chú slide TV3.
+Đã hoàn thành code, toàn bộ thí nghiệm (baseline, A, B, C và các đối chứng), hậu kiểm test và chọn mô hình cuối
+`[10, 10, 10]` (Test MSE 7.13e-8 ± 2.36e-8, R² = 0.99997; checkpoint `results/final/best.pt`).
+Báo cáo `report/BaoCao_Nhom10.docx/.pdf`, slide `report/Slide_Nhom10.pptx/.pdf`; `pytest -q`: 62 test pass.
 
 | Phần | Người | File |
 |---|---|---|
@@ -30,7 +26,7 @@ Khung repo đã dựng sẵn; các thành viên hoàn thiện phần được gi
 python -m venv .venv
 .venv\Scripts\activate          # Windows;  Linux/macOS: source .venv/bin/activate
 pip install -r requirements.txt
-pytest -q                       # kiểm tra khung repo
+pytest -q                       # 62 test
 ```
 
 Trên Windows, đặt `PYTHONUTF8=1` nếu `print` tiếng Việt báo lỗi mã hóa.
@@ -73,7 +69,7 @@ Sơ đồ mạng vẽ từ model thật: `python src/visual/draw_mlp.py` (lưu v
 ## Cấu trúc thư mục
 
 ```
-configs/      baseline.json, expA.json, expB.json, expC.json (ứng viên sigmoid/lr 0.01 chọn bằng validation; chờ nhóm duyệt)
+configs/      baseline.json, expA*.json, expB*.json, expC*.json, grid_*.json, final.json, demo.json
 src/data/     gaussian.py, dataset.py
 src/model/    mlp.py
 src/engine/   trainer.py, evaluate.py
@@ -81,13 +77,14 @@ src/visual/   plots.py, draw_mlp.py
 src/utils/    seed.py, io.py, timer.py
 src/          generate_data.py, run_experiment.py, posthoc_test.py, analyze_stopping.py,
               summarize_exp*.py, make_report_assets.py, make_tables.py, env_info.py
-tests/        test_skeleton.py, test_gaussian.py, test_dataset.py, test_evaluate.py, test_trainer.py, test_backprop.py
-notebooks/    EDA, demo
+tests/        test_skeleton.py, test_gaussian.py, test_dataset.py, test_evaluate.py, test_trainer.py, test_backprop.py,
+              test_run_experiment.py, test_config_evidence.py
 data/         train_pool.csv, val.csv, test.csv, meta.json
 results/      <exp>/<giá trị>/seed_<k>/{config.json, history.csv, metrics.json, best.pt}, summary.csv,
               run.log (log train), posthoc_test.log (log test hậu kiểm), aggregate.csv; stopping/; env.txt
 figures/      hình dùng cho báo cáo/slide
-report/       báo cáo (.docx/.pdf), slide (.pptx/.pdf); tables/ (bảng sinh tự động)
+report/       BaoCao_Nhom10.docx/.pdf, Slide_Nhom10.pptx/.pdf, BAO_CAO.md (nguồn nội dung),
+              NHAT_KY_QUYET_DINH.md, KICH_BAN_THUYET_TRINH.md; tables/ (bảng sinh tự động)
 ```
 
 ## Quy tắc chung
