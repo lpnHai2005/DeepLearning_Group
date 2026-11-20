@@ -1,0 +1,11 @@
+demo_code.html
+demo_report.pdf
+Emotion_Recognition.pdf
+code
+data/
+*.pt
+*.pth
+__pycache__/
+.ipynb_checkpoints/
+tracking/tracking.xlsx
+tracking/activity_log.csv

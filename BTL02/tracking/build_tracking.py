@@ -1,0 +1,299 @@
+"""Sinh các bảng theo dõi BTL02 (CSV + tracking.xlsx để nhập vào Google Sheets).
+
+Phụ trách: TV4 (nhóm trưởng).
+Nguồn duy nhất của ma trận phân công là TASKS bên dưới. Các CSV do thành viên điền (test_log,
+experiments, weights, figures_manifest) do thành viên điền; script chỉ tạo file nếu chưa có,
+KHÔNG ghi đè dữ liệu đã nhập. Chạy: python tracking/build_tracking.py
+"""
+import csv
+from pathlib import Path
+
+from openpyxl import Workbook
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.worksheet.datavalidation import DataValidation
+
+HERE = Path(__file__).resolve().parent
+MEMBERS = ["TV1", "TV2", "TV3", "TV4"]
+MEMBER_NAMES = {"TV1": "Đoàn Trung Kiên", "TV2": "Lê Phan Nguyên Hải", "TV3": "Võ Hoàng Bảo", "TV4": "Huỳnh Viễn Thông"}
+STATUS = ["Pending", "In Progress", "Completed", "Failed", "Verified"]
+TODAY = "2026-11-20"
+
+# Quy tắc kiểm thử dùng chung, mỗi nhiệm vụ nối thêm phần riêng.
+COMMON = "Làm trên bản clone sạch; không dựa vào lời báo cáo của người thực hiện."
+
+# id, module, giai đoạn, tên, R, việc của 2 người phối hợp (C), bằng chứng bắt buộc, cách tester kiểm tra, phụ thuộc
+TASKS = [
+    ("T01", "M0 Quản trị & truy vết", "G1", "Phân tích đề, lập kế hoạch và dựng khung theo dõi (Sheets, schema CSV, quy ước log)", "TV4",
+     "Mỗi C soát schema phần mình (TV1 dữ liệu, TV2 log huấn luyện/weights, TV3 đánh giá/hình) và ghi góp ý vào commit",
+     "PHAN_CONG_NHIEM_VU.md; tracking/*.csv; link Google Sheets và Slides",
+     "Mở Sheets, đối chiếu từng tab với CSV; kiểm mỗi nhiệm vụ có đúng 1 R, 2 C, 1 T và T khác R/C; chạy lại build_tracking.py ra CSV trùng", ""),
+    ("T03", "M1 Dữ liệu", "G1", "Tải fer2013.csv và kiểm tra toàn vẹn (số dòng, 3 giá trị Usage, sha256)", "TV1",
+     "Hai C tải file độc lập từ nguồn khác nhau (Kaggle/Drive) và so sha256 với R",
+     "results/data_check.json do script ghi (số dòng theo Usage, sha256, ngày tải)",
+     "Tester tự tính sha256 và đếm dòng theo Usage bằng lệnh riêng, so với data_check.json", "T02"),
+    ("T04", "M1 Dữ liệu", "G1", "fer2013.py, loader.py, augment.py và tests (nhãn, không rò rỉ test)", "TV1",
+     "Một C viết test nhãn/split/chuẩn hóa; một C dùng thử loader trên máy riêng",
+     "src/data/*.py; log pytest; commit",
+     "pytest trên bản clone sạch; tự gọi load_fer2013 xác nhận kích thước 3 tập và mean/std chỉ tính trên Training", "T03"),
+    ("T05", "M1 Dữ liệu", "G1", "EDA: phân bố lớp 3 tập, lưới ảnh mẫu, ảnh trung bình, ảnh lỗi, minh họa augmentation", "TV1",
+     "C thứ nhất soát nhãn lưới ảnh; C thứ hai soát kiểu hình và ghi vào Hinh_ve",
+     "src/data/eda.py; figures/eda_*.png kèm figures/eda_*.csv; dòng trong Hinh_ve",
+     "Chạy lại eda.py, so từng cột trong CSV với số đếm tính độc lập; xem nhãn lưới ảnh có khớp nhãn tập tương ứng", "T04"),
+    ("T06", "M2 Mô hình & hạ tầng huấn luyện", "G1", "cnn.py và transfer.py (in số tham số, kích thước bản đồ đặc trưng từng khối)", "TV2",
+     "Một C viết test shape/số tham số; một C kiểm tay kích thước feature map 48→24→12→6→3→1",
+     "src/models/*.py; results/model_summary.csv sinh từ code",
+     "pytest; tự đếm tham số bằng sum(p.numel()) và so với model_summary.csv", "T04"),
+    ("T07", "M2 Mô hình & hạ tầng huấn luyện", "G1-G2", "trainer.py và run_experiment.py (history.csv, run.log, ghi runs.csv, tự quyết giữ/xóa weights theo luật)", "TV2",
+     "Một C nối loader và chạy thử 1 epoch trên máy riêng; một C nối evaluate/plots vào run_dir",
+     "src/engine/trainer.py; 1 run_dir hoàn chỉnh trong results/_qa/ có config.json ghi member/hostname/giờ bắt đầu-kết thúc/tổng giây; test 1 bước train giảm loss",
+     "Chạy 2 epoch cùng seed hai lần, so history; tạo run lỗi cố ý (config sai) và kiểm có dòng Failed, không còn best.pt dở", "T04, T06"),
+    ("T08", "M2 Mô hình & hạ tầng huấn luyện", "G2", "evaluate.py và plots.py (Train/Val loss theo epoch, acc, confusion matrix, ca đúng/sai)", "TV3",
+     "Một C viết test metric (dữ liệu giả lập CHỈ trong unit test); một C thống nhất style hình",
+     "src/engine/evaluate.py; src/visual/plots.py; mỗi hình kèm file CSV dữ liệu vẽ",
+     "So metric với sklearn.metrics trên cùng dự đoán; so CSV dữ liệu vẽ với history.csv từng epoch", "T07"),
+    ("T09", "M2 Mô hình & hạ tầng huấn luyện", "G2", "make_tables.py: runs.csv → bảng báo cáo E1–E7, mean ± std", "TV3",
+     "Một C kiểm công thức mean/std; một C soát định dạng bảng đưa vào báo cáo",
+     "src/make_tables.py; report/tables/*.md|csv",
+     "Tính lại 3 bảng bất kỳ bằng pandas độc lập, diff với bảng sinh ra", "T07"),
+    ("T10", "M2 Mô hình & hạ tầng huấn luyện", "G2", "Notebook tái lập (Restart & Run All, log, output lưu lại)", "TV3",
+     "Một C chạy notebook trên máy mình; một C soát giải thích từng bước",
+     "notebooks/*.ipynb; notebooks/executed/<exp_id>.ipynb; file log liên kết",
+     "Kernel Restart & Run All trên máy tester, không lỗi, không dùng biến cũ; số trong output khớp history.csv", "T07, T08"),
+    ("T11", "M3 Baseline", "G2", "Baseline 3 seed (0/1/2) và đóng băng configs/baseline.json", "TV2",
+     "C1 chạy seed 1, C2 chạy seed 2 trên máy riêng với đúng config (R chạy seed 0)",
+     "3 run_dir; dòng trong experiments.csv; sha256 baseline.json; mean ± std",
+     "Chạy lại một seed rút gọn và so với epoch đầu của history; tính lại mean ± std; kiểm sha256 baseline.json. Dung sai tái lập = std 3 seed (chưa có số trước khi T11 xong)", "T04, T06, T07, T08"),
+    ("T12", "M4 Thực nghiệm E1–E6", "G3", "E1 Kiến trúc (SMALL/MEDIUM/MEDIUM_01/LARGE, ×0.5/×2, BN, GAP)", "TV2",
+     "Chia các cấu hình E1 cho hai C chạy trên máy riêng; mỗi C viết nhận xét độc lập cho ít nhất 1 kết quả",
+     "run_dir từng cấu hình; experiments.csv; Train/Val loss; mục nhận xét",
+     "Tester tự chọn 1 cấu hình (không do R chỉ định) chạy lại và so với metrics.json trong dung sai; tính lại bảng; kiểm nhận xét có khớp số", "T11"),
+    ("T13", "M4 Thực nghiệm E1–E6", "G3", "E2 Activation (ReLU, LeakyReLU, ELU, GELU, Tanh, Sigmoid) và chuẩn gradient từng lớp", "TV2",
+     "Chia cấu hình cho hai C; một C chạy phép đo chuẩn gradient",
+     "run_dir; experiments.csv; file CSV chuẩn gradient; hình sinh từ code",
+     "Chạy lại 1 activation do tester chọn; kiểm file chuẩn gradient bằng lệnh riêng", "T11"),
+    ("T14", "M4 Thực nghiệm E1–E6", "G3", "E3 Tối ưu (optimizer × lr, lịch lr, batch size)", "TV3",
+     "Chia lưới cấu hình cho hai C chạy trên máy riêng",
+     "run_dir; experiments.csv; hình so sánh run từ plots.py",
+     "Chạy lại 1 cấu hình do tester chọn; tính lại bảng; kiểm các run chỉ đổi 1 yếu tố so với baseline", "T11"),
+    ("T15", "M4 Thực nghiệm E1–E6", "G3", "E4 Augmentation và điều chuẩn (dropout, weight decay, label smoothing)", "TV1",
+     "Chia cấu hình cho hai C; một C vẽ đường cong train/val so overfit từ history.csv",
+     "run_dir; experiments.csv; hình overfit sinh từ code",
+     "Chạy lại 1 cấu hình do tester chọn; kiểm khoảng cách train/val trong CSV khớp hình", "T11"),
+    ("T16", "M4 Thực nghiệm E1–E6", "G3", "E5 Mất cân bằng lớp (CE thường / class weight / WeightedRandomSampler)", "TV1",
+     "Chia cấu hình cho hai C; một C tính recall từng lớp độc lập",
+     "run_dir; experiments.csv; recall từng lớp từ evaluate.py",
+     "Tính lại recall Disgust/Fear từ dự đoán lưu trong run_dir", "T11"),
+    ("T17", "M4 Thực nghiệm E1–E6", "G3", "E6 Transfer learning (VGG16 ở 48 px, ResNet18 từ đầu/pretrained, đóng băng/fine-tune)", "TV2",
+     "Chia cấu hình cho hai C; một C kiểm giải thích kích thước feature map của VGG16",
+     "run_dir; experiments.csv; model_summary cho VGG16 48 px",
+     "Tester tự tính kích thước feature map VGG16 ở 48 px; chạy lại 1 cấu hình; kiểm weights pretrained tải đúng nguồn", "T11"),
+    ("T18", "M5 Mô hình cuối & trực quan hóa", "G4", "E7 Mô hình cuối: cấu hình tốt nhất theo val × 3 seed, TTA, ensemble", "TV3",
+     "C1 chạy seed 1, C2 chạy seed 2; một C kiểm TTA/ensemble độc lập",
+     "3 run_dir; experiments.csv; bảng mean ± std; kiểm TTA",
+     "Tính lại mean ± std và ensemble từ dự đoán lưu; chạy lại 1 seed rút gọn", "T12, T13, T14, T15, T16, T17"),
+    ("T19", "M5 Mô hình cuối & trực quan hóa", "G4", "Đánh giá PrivateTest đúng 1 lần với mô hình cuối", "TV3",
+     "Hai C chứng kiến lệnh --eval-test và ghi nhật ký",
+     "results/E7/TEST_DONE.json; run.log lệnh test; dòng trong experiments.csv",
+     "Xác nhận chỉ có 1 lần gọi test (file khóa và log); tính lại acc/macro-F1 từ dự đoán đã lưu", "T18"),
+    ("T20", "M5 Mô hình cuối & trực quan hóa", "G4", "Trực quan hóa bộ lọc conv cuối (trọng số, feature map, activation maximization, Grad-CAM)", "TV4",
+     "C1 cung cấp hook/lớp conv cuối; C2 chọn ca đúng/sai cho Grad-CAM từ dự đoán đã lưu",
+     "src/visual/filters.py; figures/filters_*.png kèm CSV/npz đầu vào; Hinh_ve",
+     "Chạy lại visualize_filters.py với best.pt, so hình; kiểm tên lớp và shape trọng số", "T18"),
+    ("T25", "M6 Báo cáo, slide, QA, nộp", "G5", "Báo cáo Ch.1, 5, 6, 7, 8 và ghép toàn bộ", "TV4",
+     "Mỗi C review chéo một chương và dò từng số về nguồn",
+     "report/BaoCao_BTL02.docx/.pdf; bảng phân công % đóng góp lấy từ Tien_do",
+     "Chọn ngẫu nhiên ít nhất 10 số liệu/hình, truy vết về runs.csv hoặc Hinh_ve; số không truy vết = Fail", "T20, T21, T22, T23, T24"),
+    ("T21", "M6 Báo cáo, slide, QA, nộp", "G5", "Báo cáo Ch.2 Dữ liệu và mục E4, E5", "TV1",
+     "Mỗi C review chéo và dò số liệu về nguồn", "Chương 2 + bảng/hình sinh từ code",
+     "Chọn ngẫu nhiên ít nhất 10 số liệu/hình truy vết về nguồn; số không truy vết = Fail", "T05, T15, T16"),
+    ("T22", "M6 Báo cáo, slide, QA, nộp", "G5", "Báo cáo Ch.3 Mô hình & huấn luyện và mục E1, E2, E6", "TV2",
+     "Mỗi C review chéo và dò số liệu về nguồn", "Chương 3 + bảng/hình sinh từ code",
+     "Chọn ngẫu nhiên ít nhất 10 số liệu/hình truy vết về nguồn; số không truy vết = Fail", "T12, T13, T17"),
+    ("T23", "M6 Báo cáo, slide, QA, nộp", "G5", "Báo cáo Ch.4 Đánh giá, mục E3, E7 và phân tích lỗi", "TV3",
+     "Mỗi C review chéo và dò số liệu về nguồn", "Chương 4 + bảng/hình sinh từ code",
+     "Chọn ngẫu nhiên ít nhất 10 số liệu/hình truy vết về nguồn; số không truy vết = Fail", "T14, T18, T19"),
+    ("T26", "M6 Báo cáo, slide, QA, nộp", "G5", "Slide .pptx/.pdf (Google Slides), kịch bản thuyết trình và chuẩn bị demo chạy code", "TV4",
+     "Mỗi C viết 2–3 slide phần mình và dò số liệu về nguồn; một C cùng R tập demo chạy code",
+     "report/Slide_BTL02.pptx/.pdf; link Google Slides; kịch bản; demo chạy được từ bản clone sạch",
+     "Dò mọi số/hình trên slide về nguồn; kiểm không còn slide minh họa số giả", "T25"),
+    ("T27", "M6 Báo cáo, slide, QA, nộp", "G5", "QA tái lập toàn repo (clone sạch, venv mới, theo README, pytest, chạy notebook)", "TV4",
+     "Mỗi C chạy lại một phần quy trình trên máy riêng và báo lỗi",
+     "Biên bản QA trong Kiem_thu; danh sách lỗi và commit sửa",
+     "Tester không tham gia viết code được QA; tự clone và chạy theo README, báo lỗi", "T19, T20"),
+    ("T28", "M6 Báo cáo, slide, QA, nộp", "G5", "Đóng gói BTLON02_Emotion_HoTen_MaSV.zip (họ tên, MSSV nhóm trưởng) và nộp bài", "TV2",
+     "Mỗi C kiểm mục checklist được giao", "File zip (gồm code, report, slide, nhật ký thực nghiệm, tracking/*.csv, runs.csv + log); checklist mục 8",
+     "Giải nén vào thư mục trống, chạy checklist; kiểm không có fer2013.csv và checkpoint trung gian", "T25, T26, T27"),
+    ("T02", "M0 Quản trị & truy vết", "G1", "Khung repo: cây thư mục, requirements.txt, README (cài đặt, tải dữ liệu, lệnh chạy, bảng phân công theo file), quy ước docstring Phụ trách và commit", "TV1",
+     "Hai C cài đặt và chạy theo README trên máy riêng, báo chỗ sai; một C kiểm bảng phân công theo file khớp tab Phan_cong",
+     "README.md; requirements.txt; cây thư mục theo mục 4; docstring mẫu",
+     "Clone sạch, venv mới, pip install -r requirements.txt, chạy lệnh trong README; kiểm mỗi file code có dòng Phụ trách khớp Phan_cong", "T01"),
+    ("T24", "M6 Báo cáo, slide, QA, nộp", "G5", "Nhật ký thực nghiệm NHAT_KY_THUC_NGHIEM.md (giả thuyết, nhận xét, quyết định; kết quả tự điền từ experiments.csv) và sơ đồ kiến trúc/pipeline vẽ từ model thật", "TV4",
+     "Mỗi C viết nhận xét và quyết định cho các run của nhóm mình, đối chiếu số với experiments.csv",
+     "report/NHAT_KY_THUC_NGHIEM.md; hình sơ đồ kèm script và dòng Hinh_ve",
+     "Chọn ngẫu nhiên ít nhất 10 run trong nhật ký, so từng số với experiments.csv và history.csv; kiểm có nhận xét cho cả run lỗi hoặc metric thấp", "T12, T13, T14, T15, T16, T17, T19, T20"),
+]
+
+TASKS.sort(key=lambda t: t[0])
+
+# Trạng thái hiện tại chỉ theo bằng chứng thật. Chưa nhiệm vụ nào được Verified.
+CURRENT_STATUS = {"T01": "In Progress"}
+
+HEADERS = {
+    "Kiem_thu": ["test_id", "thoi_gian", "task_id", "exp_id", "nguoi_kiem_thu", "nguoi_thuc_hien",
+                 "phuong_phap", "lenh_da_chay", "so_lieu_goc", "so_lieu_tai_tinh", "ket_qua", "bang_chung", "nhan_xet"],
+    "Thuc_nghiem": ["exp_id", "task_id", "thanh_vien", "bat_dau", "ket_thuc", "tong_thoi_gian_s", "may_chay", "config_path", "hyperparams_json",
+                    "dataset_sha256", "seed", "git_commit", "train_loss_cuoi", "val_loss_cuoi", "best_val_loss",
+                    "best_epoch", "val_acc", "val_macro_f1", "test_acc", "trang_thai_ky_thuat", "so_voi_baseline_tu_tinh",
+                    "weights_path", "weights_sha256", "weights_size_mb", "weights_quyet_dinh", "weights_ma_ly_do", "run_dir", "log_path", "history_path", "curve_path", "notebook_path", "nguoi_kiem_thu", "nhan_xet"],
+    "Hinh_ve": ["fig_id", "file_hinh", "file_du_lieu_dau_vao", "script_sinh_hinh", "lenh_chay", "exp_ids",
+                "task_id", "thoi_gian_sinh", "sha256_hinh", "dung_o"],
+}
+LOG_FILES = {"Kiem_thu": "test_log.csv", "Thuc_nghiem": "experiments.csv", "Hinh_ve": "figures_manifest.csv"}
+
+
+def assign_testers():
+    """T xoay vòng: mỗi nhiệm vụ chọn người ít được giao test nhất trong 3 người không phải R."""
+    count = {m: 0 for m in MEMBERS}
+    rows = []
+    for i, t in enumerate(TASKS):
+        r = t[4]
+        others = [m for m in MEMBERS if m != r]
+        order = others[i % 3:] + others[:i % 3]
+        tester = min(order, key=lambda m: (count[m], order.index(m)))
+        count[tester] += 1
+        cs = [m for m in MEMBERS if m not in (r, tester)]
+        rows.append(t + (cs[0], cs[1], tester))
+    return rows
+
+
+def check(rows):
+    for t in rows:
+        assert len({t[4], t[-3], t[-2], t[-1]}) == 4, f"{t[0]}: R/C/C/T phải là 4 người khác nhau"
+    ids = [t[0] for t in rows]
+    assert len(ids) == len(set(ids))
+    for t in rows:
+        for d in [x.strip() for x in t[8].split(",") if x.strip()]:
+            assert d in ids and d < t[0], f"{t[0]}: phụ thuộc {d} không hợp lệ"
+    t_cnt = {m: sum(1 for t in rows if t[-1] == m) for m in MEMBERS}
+    assert max(t_cnt.values()) - min(t_cnt.values()) <= 1, t_cnt
+
+
+def write_csv(path, header, rows):
+    with open(path, "w", newline="", encoding="utf-8-sig") as f:
+        w = csv.writer(f)
+        w.writerow(header)
+        w.writerows(rows)
+
+
+def main():
+    rows = assign_testers()
+    check(rows)
+    pc_header = ["task_id", "module", "giai_doan", "ten_nhiem_vu", "R_chiu_trach_nhiem", "C1", "C2", "T_kiem_thu",
+                 "viec_cua_C", "bang_chung_can_co", "cach_tester_kiem_tra", "phu_thuoc", "trang_thai", "ngay_cap_nhat"]
+    pc = [[t[0], t[1], t[2], t[3], t[4], t[-3], t[-2], t[-1], t[5], t[6], t[7] + " " + COMMON,
+           t[8], CURRENT_STATUS.get(t[0], "Pending"), TODAY] for t in rows]
+    write_csv(HERE / "tasks.csv", pc_header, pc)
+
+    for name, fn in LOG_FILES.items():
+        p = HERE / fn
+        if not p.exists():
+            write_csv(p, HEADERS[name], [])
+
+    wb = Workbook()
+    wb.remove(wb.active)
+    bold = Font(bold=True, color="FFFFFF")
+    fill = PatternFill("solid", fgColor="1F4E78")
+
+    def sheet(name, header, data, widths):
+        ws = wb.create_sheet(name)
+        ws.append(header)
+        for r in data:
+            ws.append(list(r))
+        for c in ws[1]:
+            c.font, c.fill = bold, fill
+            c.alignment = Alignment(wrap_text=True, vertical="center")
+        for i, w in enumerate(widths):
+            ws.column_dimensions[ws.cell(1, i + 1).column_letter].width = w
+        for row in ws.iter_rows(min_row=2):
+            for c in row:
+                c.alignment = Alignment(wrap_text=True, vertical="top")
+        ws.freeze_panes = "A2"
+        return ws
+
+    # Huong_dan
+    guide = [
+        ("Thanh_vien", "Mã TV1–TV4 ↔ họ tên; MSSV, máy, GPU do từng người điền (run_experiment đối chiếu hostname với tab này)."),
+        ("Phan_cong", "Nguồn gốc của ma trận. Mỗi nhiệm vụ đúng 1 R, 2 C, 1 T là 4 người khác nhau; T xoay vòng."),
+        ("Ma_tran", "Chiều ngang = module/giai đoạn, chiều dọc = vai trò R/C/T từng người. Công thức lấy từ Phan_cong."),
+        ("Tien_do", "Đếm bằng công thức từ Phan_cong và Kiem_thu. Không nhập tay."),
+        ("Nhật ký hoạt động", "Không có tab nhập tay. Tự sinh từ git (tracking/git_activity.py; mã nhiệm vụ nằm trong thông điệp commit) và từ run.log/Thuc_nghiem do code tự ghi."),
+        ("Kiem_thu", "Tester ghi lệnh đã chạy, số liệu gốc, số tái tính, Pass/Fail. Nhiệm vụ chỉ thành Verified khi có dòng Pass."),
+        ("Thuc_nghiem", "Mỗi lần train một dòng, kể cả run lỗi hoặc metric thấp. trang_thai_ky_thuat tách khỏi danh_gia_chat_luong."),
+        ("Weights", "Không có tab riêng: code tự quyết giữ/xóa weights theo luật và ghi vào các cột weights_* của Thuc_nghiem (xem PHAN_CONG_NHIEM_VU.md mục 9.3)."),
+        ("Hinh_ve", "Mỗi hình kèm script, file dữ liệu đầu vào và lệnh chạy."),
+        ("Trạng thái", " / ".join(STATUS)),
+        ("Dữ liệu giả", "Cấm. Ô chưa có kết quả để trống hoặc ghi 'chưa thực hiện'."),
+    ]
+    sheet("Huong_dan", ["Tab", "Ý nghĩa / quy tắc"], guide, [18, 110])
+
+    ws = sheet("Phan_cong", pc_header, pc, [8, 28, 9, 50, 12, 8, 8, 10, 45, 40, 55, 14, 12, 12])
+    dv = DataValidation(type="list", formula1='"' + ",".join(STATUS) + '"', allow_blank=False)
+    ws.add_data_validation(dv)
+    dv.add(f"M2:M{len(pc) + 1}")
+
+    # Ma_tran bằng công thức
+    ws = sheet("Ma_tran", ["task_id", "module", "giai_doan", "ten_nhiem_vu"] + MEMBERS, [], [8, 28, 9, 55, 7, 7, 7, 7])
+    for i in range(len(pc)):
+        r = i + 2
+        ws.append([f"=Phan_cong!A{r}", f"=Phan_cong!B{r}", f"=Phan_cong!C{r}", f"=Phan_cong!D{r}"] +
+                  [f'=IF(Phan_cong!E{r}={c}$1,"R",IF(Phan_cong!H{r}={c}$1,"T","C"))' for c in "EFGH"])
+    for row in ws.iter_rows(min_row=2):
+        for c in row:
+            c.alignment = Alignment(wrap_text=True, vertical="top")
+
+    mem_head = ["ma", "ho_ten", "vai_tro", "mssv", "may_chay_chinh (hostname)", "gpu", "git_user"]
+    mp = HERE / "members.csv"
+    if mp.exists():  # thành viên đã điền MSSV/hostname/GPU/git_user: giữ nguyên, không ghi đè
+        with open(mp, encoding="utf-8-sig") as f:
+            mem_rows = [[r[h] for h in mem_head] for r in csv.DictReader(f)]
+    else:
+        mem_rows = [(m, MEMBER_NAMES[m], "Nhóm trưởng" if m == "TV2" else "", "", "", "", "") for m in MEMBERS]
+        write_csv(mp, mem_head, mem_rows)
+    sheet("Thanh_vien", mem_head, mem_rows, [8, 26, 14, 14, 28, 24, 20])
+    sheet("Kiem_thu", HEADERS["Kiem_thu"], [], [8, 12, 8, 10, 14, 14, 30, 30, 20, 20, 10, 30, 30])
+    sheet("Thuc_nghiem", HEADERS["Thuc_nghiem"], [], [10, 8, 10] + [14] * 26)
+    sheet("Hinh_ve", HEADERS["Hinh_ve"], [], [8, 32, 32, 28, 30, 14, 8, 14, 20, 16])
+
+    # Tien_do: công thức đếm
+    mods = []
+    for t in TASKS:
+        if t[1] not in mods:
+            mods.append(t[1])
+    ws = sheet("Tien_do", ["Module"] + STATUS + ["Tổng"], [], [36, 10, 12, 12, 10, 10, 8])
+    for i, m in enumerate(mods, start=2):
+        ws.append([m] + [f'=COUNTIFS(Phan_cong!$B:$B,$A{i},Phan_cong!$M:$M,{c}$1)' for c in "BCDEF"] + [f"=SUM(B{i}:F{i})"])
+    n = len(mods) + 1
+    ws.append(["TỔNG"] + [f"=SUM({c}2:{c}{n})" for c in "BCDEFG"])
+    ws.append([])
+    head = ["Thành viên", "Số nhiệm vụ làm R", "Số nhiệm vụ làm C", "Số nhiệm vụ làm T",
+            "Dòng kiểm thử Pass (với tư cách tester)", "Dòng kiểm thử Fail"]
+    ws.append(head)
+    hr = ws.max_row
+    for c in ws[hr]:
+        c.font, c.fill = bold, fill
+        c.alignment = Alignment(wrap_text=True)
+    for m in MEMBERS:
+        r = ws.max_row + 1
+        ws.append([m, f'=COUNTIF(Phan_cong!E:E,A{r})', f'=COUNTIF(Phan_cong!F:F,A{r})+COUNTIF(Phan_cong!G:G,A{r})',
+                   f'=COUNTIF(Phan_cong!H:H,A{r})',
+                   f'=COUNTIFS(Kiem_thu!E:E,A{r},Kiem_thu!K:K,"Pass")', f'=COUNTIFS(Kiem_thu!E:E,A{r},Kiem_thu!K:K,"Fail")'])
+    ws.append([])
+    ws.append(["Số run trong Thuc_nghiem", "=COUNTA(Thuc_nghiem!A:A)-1"])
+    ws.append(["Số hình trong Hinh_ve", "=COUNTA(Hinh_ve!A:A)-1"])
+    wb.move_sheet("Huong_dan", offset=-wb.index(wb["Huong_dan"]))
+    wb.save(HERE / "tracking.xlsx")
+    print("OK:", len(rows), "nhiệm vụ;", {m: sum(1 for t in rows if t[-1] == m) for m in MEMBERS}, "lượt T")
+
+
+if __name__ == "__main__":
+    main()
