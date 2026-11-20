@@ -4,7 +4,7 @@ Phụ trách: TV2 – Lê Phan Nguyên Hải (nhóm trưởng).
 Mỗi commit thành một dòng: giờ, tác giả, thành viên (đối chiếu cột git_user của members.csv; một người có nhiều tên git thì ngăn cách bằng dấu ;),
 mã nhiệm vụ (lấy từ thông điệp commit dạng `feat(T07): ...`), số file, danh sách file.
 Chạy: python tracking/git_activity.py [đường_dẫn_trong_repo] [file_ra.csv]
-Mặc định đọc thư mục BTL02 và ghi tracking/activity_log.csv (file sinh ra, không commit).
+Mặc định đọc thư mục BTL02 và ghi tracking/activity_log.csv. File này được commit; workflow .github/workflows/activity-log.yml tự sinh lại sau mỗi push.
 """
 import csv
 import re
@@ -27,11 +27,13 @@ def main(path=ROOT, out=HERE / "activity_log.csv"):
     for rec in filter(None, raw.split(SEP)):
         head, *files = rec.strip("\n").split("\n")
         h, author, when, subject = head.split("\x1f")
+        if author == "github-actions[bot]":  # commit của chính workflow sinh log: bỏ qua
+            continue
         files = [x for x in files if x]
-        task = re.search(r"\bT\d{2}\b", subject)
+        task =re.search(r"\bT\d{2}\b", subject)
         rows.append([h[:8], when, author, git_user.get(author.lower(), "(chưa gán trong members.csv)"),
                      task.group(0) if task else "(không có mã nhiệm vụ)", subject, len(files), "; ".join(files)])
-    with open(out, "w", newline="", encoding="utf-8-sig") as f:
+    with open(out, "w", newline="", encoding="utf-8") as f:  # không BOM để IMPORTDATA của Sheets đọc đúng tên cột
         w = csv.writer(f)
         w.writerow(["commit", "thoi_gian", "tac_gia_git", "thanh_vien", "task_id", "thong_diep", "so_file", "files"])
         w.writerows(rows)

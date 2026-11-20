@@ -319,14 +319,15 @@ Thành viên (nhóm xác nhận 2026-11-20): **TV1 Đoàn Trung Kiên, TV2 Lê P
 | `Ma_tran` | Ngang × dọc: từng người giữ vai R/C/T ở từng nhiệm vụ (công thức từ `Phan_cong`) | – |
 | `Tien_do` | Đếm theo module và theo thành viên bằng công thức, không nhập tay | – |
 | `Kiem_thu` | Nhật ký kiểm thử và đánh giá chéo | `tracking/test_log.csv` |
-| `Thuc_nghiem` | Mỗi lần train một dòng (kể cả run lỗi) | `tracking/experiments.csv` |
+| `Hoat_dong` | Nhật ký git (bản sao chỉ đọc, IMPORTDATA) | `tracking/activity_log.csv` |
+| `Thuc_nghiem` | Mỗi lần train một dòng (kể cả run lỗi); bản sao chỉ đọc, IMPORTDATA | `tracking/experiments.csv` |
 | `Hinh_ve` | Mỗi hình: script, dữ liệu đầu vào, lệnh, experiment liên quan | `tracking/figures_manifest.csv` |
 
 Liên kết giữa các bảng: `task_id` (T01–T28) nối Phan_cong ↔ Kiem_thu ↔ commit git (mã nhiệm vụ trong thông điệp); `exp_id` nối Thuc_nghiem ↔ Hinh_ve (weights nằm ngay trong dòng Thuc_nghiem); `weights_id`, `fig_id` là khóa của từng bảng.
 
 Chuỗi truy vết: **nhiệm vụ → thành viên → source code (commit) → log (`run.log`) → kết quả (`experiments.csv`, `history.csv`) → kiểm thử (`Kiem_thu`) → báo cáo/slide**.
 
-Đồng bộ: nhập trên Sheets; cuối mỗi buổi làm, xuất từng tab ra CSV (File → Download → CSV) ghi đè `tracking/*.csv` và commit. `build_tracking.py` chỉ **khởi tạo** bảng (ghi đè `tasks.csv`, `tracking.xlsx`; không ghi đè các CSV nhật ký đã có).
+Đồng bộ lên Sheets (tự động một chiều, không nhập tay): tab `Hoat_dong` và `Thuc_nghiem` là **bản sao chỉ đọc** của `tracking/activity_log.csv` và `tracking/experiments.csv` trên GitHub, kéo về bằng `=IMPORTDATA(<đường dẫn raw>)`. Dữ liệu chỉ lên Sheets sau khi file được **commit và push**; Google làm mới bộ nhớ đệm sau khoảng vài chục phút đến vài giờ, nên có độ trễ. Không sửa tay hai tab này (sẽ bị công thức ghi đè). `Phan_cong` và `Kiem_thu` vẫn nhập trên Sheets; cuối mỗi buổi xuất CSV ghi đè `tracking/*.csv` và commit nếu muốn giữ bản lưu vết. `build_tracking.py` chỉ **khởi tạo** bảng (ghi đè `tasks.csv`, `tracking.xlsx`; không ghi đè `members.csv` và các CSV nhật ký đã có).
 
 Liên kết Google Sheets/Slides: xem mục 10 (quyền chia sẻ cho 3 thành viên còn lại do nhóm trưởng cấp).
 
@@ -336,7 +337,7 @@ Không có tab nhật ký để điền. Nhật ký hoạt động lấy từ ba
 
 | Nguồn | Có gì | Ai/cái gì ghi |
 |---|---|---|
-| Lịch sử git | Giờ, tác giả, file sửa, mã nhiệm vụ | Tự có khi commit; `python tracking/git_activity.py` gom thành `tracking/activity_log.csv` (file sinh ra, không commit) |
+| Lịch sử git | Giờ, tác giả, file sửa, mã nhiệm vụ | Tự có khi commit; `git_activity.py` gom thành `tracking/activity_log.csv`; workflow `.github/workflows/activity-log.yml` tự chạy sau mỗi push lên `main` và commit lại file này (bỏ qua commit của bot) |
 | `run.log`, `history.csv`, `config.json`, dòng `Thuc_nghiem` | Ai chạy, giờ, máy, tổng thời gian, loss từng epoch | `run_experiment.py` tự ghi (mục 9.1) |
 | Tab `Kiem_thu` | Pass/Fail, lệnh, số tái tính | Người kiểm thử (một dòng khi kiểm xong) |
 

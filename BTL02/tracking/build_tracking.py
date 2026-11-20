@@ -179,7 +179,7 @@ def check(rows):
 
 
 def write_csv(path, header, rows):
-    with open(path, "w", newline="", encoding="utf-8-sig") as f:
+    with open(path, "w", newline="", encoding="utf-8") as f:  # không BOM: Sheets IMPORTDATA đọc trực tiếp các CSV này
         w = csv.writer(f)
         w.writerow(header)
         w.writerows(rows)

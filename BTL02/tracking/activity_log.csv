@@ -1,0 +1,2 @@
+commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+dadb5d48,2026-11-20T22:42:56+07:00,HiCyclone,TV2,T01,"docs(T01): khung phân công ngang/dọc BTL02, hệ thống theo dõi và slide tiến độ",11,BTL02/.gitignore; BTL02/PHAN_CONG_NHIEM_VU.md; BTL02/report/Slide_TienDo_BTL02.pptx; BTL02/tracking/build_slides.py; BTL02/tracking/build_tracking.py; BTL02/tracking/experiments.csv; BTL02/tracking/figures_manifest.csv; BTL02/tracking/git_activity.py; BTL02/tracking/members.csv; BTL02/tracking/tasks.csv; BTL02/tracking/test_log.csv
