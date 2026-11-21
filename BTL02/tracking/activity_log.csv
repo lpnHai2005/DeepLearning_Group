@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+b8b9e271,2026-11-21T23:29:18+07:00,hoangbao2908,TV3,T01,chore(T01): bổ sung .venv/ vào .gitignore đúng quy ước,1,BTL02/.gitignore
 92123384,2026-11-21T23:27:03+07:00,HiCyclone,TV2,T06,feat(T06): thêm transfer.py (ResNet18/VGG16) và test,4,BTL02/results/transfer_summary.csv; BTL02/src/models/__init__.py; BTL02/src/models/transfer.py; BTL02/tests/test_transfer.py
 5f66cbbf,2026-11-21T23:03:18+07:00,hoangbao2908,TV3,T01,docs(T01): điền thông tin máy TV3 và soát schema đánh giá/hình/kiểm thử,1,BTL02/tracking/members.csv
 07f887ae,2026-11-21T22:42:34+07:00,HiCyclone,TV2,T06,feat(T06): thêm cnn.py với 4 cấu hình mẫu và baseline,5,BTL02/results/model_summary.csv; BTL02/src/__init__.py; BTL02/src/models/__init__.py; BTL02/src/models/cnn.py; BTL02/tests/test_cnn.py
