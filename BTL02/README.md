@@ -2,9 +2,35 @@
 
 Kế hoạch, phân công và quy chuẩn: [`PHAN_CONG_NHIEM_VU.md`](PHAN_CONG_NHIEM_VU.md). Bảng theo dõi: `tracking/` và Google Sheets (link ở mục 10 của file kế hoạch).
 
-**Trạng thái (2026-11-20):** mới có khung thư mục và hệ thống theo dõi. **Chưa có code, dữ liệu, kết quả.** Các mục "chưa có" dưới đây sẽ được bổ sung khi nhiệm vụ tương ứng xong. Bản khung này do TV2 dựng; TV1 hoàn thiện README ở nhiệm vụ T02.
+**Hiện trạng (2026-11-21):** repo có tài liệu và tracking; các module huấn luyện/đánh giá, FER2013 gốc và kết quả chạy chưa được thêm. T01 vẫn `In Progress`; T02 phụ thuộc T01 và cần TV3 kiểm tra độc lập trước khi nghiệm thu.
 
 ## Cấu trúc thư mục
+
+Cây mục tiêu theo mục 4 của kế hoạch. Các tệp mã và cấu hình sẽ xuất hiện khi hoàn thành nhiệm vụ tương ứng.
+
+```text
+BTL02/
+├── README.md, requirements.txt, PHAN_CONG_NHIEM_VU.md
+├── configs/                    baseline.json, E1_arch.json … E7_final.json
+├── src/
+│   ├── data/                   fer2013.py, loader.py, augment.py, eda.py
+│   ├── models/                 cnn.py, transfer.py
+│   ├── engine/                 trainer.py, evaluate.py
+│   ├── visual/                 plots.py, filters.py
+│   ├── utils/                  seed.py, io.py
+│   ├── run_experiment.py, make_tables.py, visualize_filters.py
+├── tests/
+├── data/                       fer2013.csv (chỉ lưu cục bộ, không commit/nộp)
+├── results/                    config, log, metrics, history, weights của từng run
+├── figures/                    hình sinh từ dữ liệu run thật
+├── notebooks/                  notebook nguồn và bằng chứng đã chạy
+│   └── executed/               notebook đã chạy và lưu output
+├── report/                     báo cáo, slide, nhật ký thực nghiệm
+│   └── tables/                 bảng sinh từ kết quả run
+└── tracking/                   phân công, kiểm thử, thực nghiệm, nhật ký git
+```
+
+`tracking/` lưu bản phân công và các script sinh bảng; TV4 phụ trách khu vực này trong T01.
 
 | Thư mục | Nội dung | Phụ trách chính | Nhiệm vụ |
 |---|---|---|---|
@@ -20,24 +46,48 @@ Kế hoạch, phân công và quy chuẩn: [`PHAN_CONG_NHIEM_VU.md`](PHAN_CONG_N
 | `figures/` | hình + file CSV dữ liệu đã vẽ (sinh từ code) | tự sinh | |
 | `notebooks/`, `notebooks/executed/` | notebook, bản đã chạy giữ output làm bằng chứng | TV3 | T10 |
 | `report/` | báo cáo, slide, nhật ký thực nghiệm, `tables/` | TV4 (ghép), mỗi người một chương | T20–T26 |
-| `tracking/` | phân công, thành viên, kiểm thử, thực nghiệm, nhật ký git; script sinh bảng | TV2 | T01 |
+| `tracking/` | phân công, thành viên, kiểm thử, thực nghiệm, nhật ký git; script sinh bảng | TV4 | T01 |
+
+## Phân công theo tệp và nhiệm vụ
+
+| Tệp/thư mục bàn giao | Phụ trách | Nhiệm vụ chính |
+|---|---|---|
+| `README.md`, `requirements.txt`, khung thư mục | TV1 – Đoàn Trung Kiên | T02 |
+| `data/fer2013.csv`, `results/data_check.json`, `src/data/{fer2013,loader,augment,eda}.py` | TV1 – Đoàn Trung Kiên | T03–T05, T15–T16, T21 |
+| `src/models/{cnn,transfer}.py`, `src/engine/trainer.py`, `src/run_experiment.py`, `src/utils/` | TV2 – Lê Phan Nguyên Hải | T06–T07, T11–T13, T17, T22 |
+| `src/engine/evaluate.py`, `src/visual/plots.py`, `src/make_tables.py`, `notebooks/` | TV3 – Võ Hoàng Bảo | T08–T10, T14, T18–T19, T23 |
+| `src/visual/filters.py`, `src/visualize_filters.py`, `tracking/`, `report/` | TV4 – Huỳnh Viễn Thông | T01, T20, T24–T27 |
+| Đóng gói repo và nộp zip | TV2 – Lê Phan Nguyên Hải | T28 |
+| `configs/`, `results/`, `figures/`, `tests/` | Người phụ trách từng nhiệm vụ; ghi trong file và commit | T04–T28 theo ma trận phân công |
+
+Ma trận R/C/T đầy đủ và nội dung C cụ thể nằm trong mục 5 của [`PHAN_CONG_NHIEM_VU.md`](PHAN_CONG_NHIEM_VU.md) và `tracking/tasks.csv`.
 
 ## Quy ước bắt buộc
 
-- Thông điệp commit mang **mã nhiệm vụ**: `feat(T07): ...`, `fix(T04): ...`, `docs(T01): ...`. Nhật ký hoạt động tự sinh từ đây.
-- Mỗi file code mở đầu bằng docstring có dòng `Phụ trách: TVx – Họ tên`.
+- Thông điệp commit viết tiếng Việt và có mã nhiệm vụ trong ngoặc, ví dụ `feat(T04): thêm loader FER2013`, `fix(T07): sửa lỗi ghi history.csv`, `docs(T02): cập nhật README`. Thiếu mã nhiệm vụ được ghi là “không có mã nhiệm vụ” và tính là thiếu.
+- Mỗi commit chỉ chứa một việc nhỏ của một nhiệm vụ; commit sớm, thường xuyên.
+- Mỗi file code mở đầu bằng docstring ghi người phụ trách theo mẫu `Phụ trách: TVx – Họ tên`. Ví dụ Python: `"""Phụ trách: TV1 – Đoàn Trung Kiên. Đọc và tách dữ liệu FER2013."""`.
+- Không commit `data/fer2013.csv`, file `*.pt`/`*.pth`, hoặc thư mục `.venv/`.
+- Trước mỗi lần push chạy `git pull --rebase origin main` để nhận commit nhật ký bot; không tự sửa `tracking/activity_log.csv`.
 - Không dùng TensorFlow/Keras. Không đường dẫn tuyệt đối.
 - Mọi hình và số trong báo cáo sinh từ code; không số minh họa.
 - `fit()` không nhận PrivateTest; PrivateTest chỉ chạy 1 lần ở `--eval-test`.
 
 ## Cài đặt
 
+Các lệnh trong README giả định terminal đang ở thư mục `BTL02/`.
+
+Môi trường tham chiếu của nhóm: Python 3.12, Windows 11, PyTorch 2.6.0, torchvision 0.21.0 và CUDA 12.4. Tạo môi trường ảo trong thư mục `BTL02/` bằng PowerShell:
+
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
+python -m pip install -r requirements.txt
 ```
-python -m venv .venv
-.venv\Scripts\activate
-pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
-pip install -r requirements.txt
-```
+
+Nếu PowerShell chặn kích hoạt môi trường, chạy lệnh trong Command Prompt (`.venv\Scripts\activate.bat`) hoặc gọi trực tiếp `.venv\Scripts\python.exe -m pip ...`. Danh sách thư viện và phiên bản giữ tại [`requirements.txt`](requirements.txt). Chưa có kết quả cài đặt độc lập từ TV2/TV4; họ cần báo lỗi nếu lệnh không chạy trên máy riêng.
 
 Kiểm tra cài đặt (chạy từ thư mục `BTL02/`, venv đã kích hoạt):
 
@@ -47,11 +97,30 @@ python -m pytest -q
 
 ## Dữ liệu
 
-Tải `fer2013.csv` (Kaggle hoặc Drive, link ở mục 2.1 của file kế hoạch), đặt vào `data/fer2013.csv`. Lệnh kiểm toàn vẹn: **chưa có** (T03).
+Tải file `fer2013.csv` từ một trong các nguồn chính thức dưới đây, giải nén nếu tải gói Kaggle, rồi đặt tại `data/fer2013.csv`:
+
+- [Kaggle – Facial Expression Recognition Challenge](https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data) (cần tài khoản và chấp nhận quy định cuộc thi).
+- [Google Drive do giảng viên cung cấp](https://drive.google.com/open?id=0BxINLo5jshCRbXpRcnl2SjJkdlk).
+
+Không dùng mirror đã gộp `PublicTest` và `PrivateTest`. File khoảng 290 MB gồm 35.887 dòng và các cột `emotion`, `pixels`, `Usage`; các split dự kiến là `Training` 28.709, `PublicTest` 3.589 (validation), `PrivateTest` 3.589 (chỉ đánh giá một lần ở mô hình cuối). T03 sẽ bổ sung script kiểm tra và SHA-256. Không commit hoặc đưa CSV gốc vào gói nộp.
 
 ## Lệnh chạy
 
-Huấn luyện, đánh giá, sinh bảng, hình: **chưa có** (T07, T08, T09).
+Các lệnh huấn luyện/đánh giá/bảng/hình dưới đây là giao diện dự kiến theo mục 4; `src/` và `configs/` chưa được triển khai nên hiện chưa chạy được. Không chạy hàng loạt E1–E6 trước khi T04, T06, T07, T08 và T11 được Verified. Lệnh `--eval-test` chỉ chạy một lần trên mô hình cuối, sau khi chọn cấu hình bằng validation:
+
+```powershell
+# Baseline và các nhóm E1–E7 (T07 trở đi)
+python src/run_experiment.py --config configs/baseline.json
+python src/run_experiment.py --config configs/E1_arch.json
+python src/run_experiment.py --config configs/E3_optim.json --only adamw_1e-3
+python src/run_experiment.py --config configs/E7_final.json --eval-test
+python src/make_tables.py
+python src/visualize_filters.py
+```
+
+Khi các test được thêm từ T04 trở đi, chạy bộ kiểm tra bằng `python -m pytest`.
+
+PrivateTest chỉ được đọc bởi lệnh đánh giá mô hình cuối đúng một lần; các lệnh khác phải giới hạn dữ liệu ở Training/PublicTest.
 
 Lệnh sinh bảng theo dõi và nhật ký (đã có):
 
