@@ -30,7 +30,7 @@ BTL02/
 └── tracking/                   phân công, kiểm thử, thực nghiệm, nhật ký git
 ```
 
-`tracking/` lưu bản phân công và các script sinh bảng; TV4 phụ trách khu vực này trong T01.
+TV2 đã khởi tạo các script tracking. Theo ma trận hiện tại, TV4 là R của T01; đây là vai trò nghiệm thu và quản trị nhiệm vụ, khác với tác giả ban đầu của script.
 
 | Thư mục | Nội dung | Phụ trách chính | Nhiệm vụ |
 |---|---|---|---|
@@ -46,7 +46,7 @@ BTL02/
 | `figures/` | hình + file CSV dữ liệu đã vẽ (sinh từ code) | tự sinh | |
 | `notebooks/`, `notebooks/executed/` | notebook, bản đã chạy giữ output làm bằng chứng | TV3 | T10 |
 | `report/` | báo cáo, slide, nhật ký thực nghiệm, `tables/` | TV4 (ghép), mỗi người một chương | T20–T26 |
-| `tracking/` | phân công, thành viên, kiểm thử, thực nghiệm, nhật ký git; script sinh bảng | TV4 | T01 |
+| `tracking/` | phân công, thành viên, kiểm thử, thực nghiệm, nhật ký git; script sinh bảng | TV2 (script ban đầu); TV4 (R T01) | T01 |
 
 ## Phân công theo tệp và nhiệm vụ
 
@@ -56,7 +56,9 @@ BTL02/
 | `data/fer2013.csv`, `results/data_check.json`, `src/data/{fer2013,loader,augment,eda}.py` | TV1 – Đoàn Trung Kiên | T03–T05, T15–T16, T21 |
 | `src/models/{cnn,transfer}.py`, `src/engine/trainer.py`, `src/run_experiment.py`, `src/utils/` | TV2 – Lê Phan Nguyên Hải | T06–T07, T11–T13, T17, T22 |
 | `src/engine/evaluate.py`, `src/visual/plots.py`, `src/make_tables.py`, `notebooks/` | TV3 – Võ Hoàng Bảo | T08–T10, T14, T18–T19, T23 |
-| `src/visual/filters.py`, `src/visualize_filters.py`, `tracking/`, `report/` | TV4 – Huỳnh Viễn Thông | T01, T20, T24–T27 |
+| `src/visual/filters.py`, `src/visualize_filters.py`, `report/` | TV4 – Huỳnh Viễn Thông | T20, T24–T27 |
+| `tracking/*.csv`, Google Sheets và nghiệm thu T01 | TV4 – Huỳnh Viễn Thông | T01 (R theo ma trận) |
+| `tracking/*.py`, workflow nhật ký hoạt động | TV2 – Lê Phan Nguyên Hải | Script tracking được TV2 khởi tạo; TV2 là C1 ở T01 |
 | Đóng gói repo và nộp zip | TV2 – Lê Phan Nguyên Hải | T28 |
 | `configs/`, `results/`, `figures/`, `tests/` | Người phụ trách từng nhiệm vụ; ghi trong file và commit | T04–T28 theo ma trận phân công |
 
