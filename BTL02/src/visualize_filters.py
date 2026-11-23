@@ -56,6 +56,7 @@ def load_or_build_model(model_name: str = "baseline", checkpoint_path: str = Non
 
 
 def main():
+    sys.stdout.reconfigure(encoding="utf-8")  # console Windows mặc định cp1252, print tiếng Việt sẽ lỗi khi chạy qua pipe/subprocess
     parser = argparse.ArgumentParser(description="Trực quan hóa bộ lọc Conv (Nhiệm vụ T20 - TV4)")
     parser.add_argument("--model", default="baseline", choices=sorted(PRESETS), help="Tên kiến trúc CNN")
     parser.add_argument("--checkpoint", default=None, help="Đường dẫn file best.pt (nếu có)")

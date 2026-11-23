@@ -11,3 +11,5 @@ pytest==9.1.1
 ipykernel==7.3.0
 nbconvert
 nbformat
+openpyxl==3.1.5      # tracking/build_tracking.py
+python-pptx==1.0.2   # tracking/build_slides.py

@@ -39,6 +39,12 @@ pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorc
 pip install -r requirements.txt
 ```
 
+Kiểm tra cài đặt (chạy từ thư mục `BTL02/`, venv đã kích hoạt):
+
+```
+python -m pytest -q
+```
+
 ## Dữ liệu
 
 Tải `fer2013.csv` (Kaggle hoặc Drive, link ở mục 2.1 của file kế hoạch), đặt vào `data/fer2013.csv`. Lệnh kiểm toàn vẹn: **chưa có** (T03).
