@@ -77,46 +77,58 @@ Ma trận R/C/T đầy đủ và nội dung C cụ thể nằm trong mục 5 c�
 
 ## Cài đặt
 
-Các lệnh trong README giả định terminal đang ở thư mục `BTL02/`.
+Các lệnh trong README giả định terminal đang ở thư mục `BTL02/`. Nếu PowerShell đang ở thư mục gốc repo `DeepLearning_Group-1/`, chạy trước:
+
+```powershell
+Set-Location .\BTL02
+```
 
 Môi trường tham chiếu của nhóm: Python 3.12, Windows 11, PyTorch 2.6.0, torchvision 0.21.0 và CUDA 12.4. Tạo môi trường ảo trong thư mục `BTL02/` bằng PowerShell:
 
 ```powershell
 py -3.12 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
-python -X utf8 -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
+.\.venv\Scripts\python.exe -X utf8 -m pip install -r requirements.txt
 ```
 
-`-X utf8` giúp pip đọc các chú thích tiếng Việt trong `requirements.txt` trên Windows. Nếu PowerShell chặn kích hoạt môi trường, chạy lệnh trong Command Prompt (`.venv\Scripts\activate.bat`) hoặc gọi trực tiếp `.venv\Scripts\python.exe -X utf8 -m pip ...`. Danh sách thư viện và phiên bản giữ tại [`requirements.txt`](requirements.txt). Chưa có kết quả cài đặt độc lập từ TV2/TV4; họ cần báo lỗi nếu lệnh không chạy trên máy riêng.
+Các lệnh gọi thẳng Python trong `.venv` để không vô tình dùng một Python khác trên PATH. `-X utf8` giúp pip đọc các chú thích tiếng Việt trong `requirements.txt` trên Windows. Nếu `.venv` đã được tạo và cài thư viện, bỏ qua phần cài đặt. Danh sách thư viện và phiên bản giữ tại [`requirements.txt`](requirements.txt). Chưa có kết quả cài đặt độc lập từ TV2/TV4; họ cần báo lỗi nếu lệnh không chạy trên máy riêng.
 
-Kiểm tra cài đặt (chạy từ thư mục `BTL02/`, venv đã kích hoạt):
+Kiểm tra cài đặt (chạy từ thư mục `BTL02/`, dùng Python trong `.venv`):
 
 ```
-python -m pytest -q
+.\.venv\Scripts\python.exe -m pytest -q
 ```
 
 ## Dữ liệu
 
-Tải file `fer2013.csv` từ một trong các nguồn chính thức dưới đây, giải nén nếu tải gói Kaggle, rồi đặt tại `data/fer2013.csv`:
+Tải bộ dữ liệu FER2013 từ trang dữ liệu chính thức của cuộc thi Kaggle. Sau khi đăng nhập và chấp nhận điều khoản, tải gói `fer2013.tar.gz`, giải nén file `fer2013.csv` bên trong và đặt chính xác tại `BTL02/data/fer2013.csv` (tức `data/fer2013.csv` nếu terminal đang ở `BTL02/`):
 
 - [Kaggle – Facial Expression Recognition Challenge](https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data) (cần tài khoản và chấp nhận quy định cuộc thi).
 - [Google Drive do giảng viên cung cấp](https://drive.google.com/open?id=0BxINLo5jshCRbXpRcnl2SjJkdlk).
 
-Không dùng mirror đã gộp `PublicTest` và `PrivateTest`. File khoảng 290 MB gồm 35.887 dòng và các cột `emotion`, `pixels`, `Usage`; các split dự kiến là `Training` 28.709, `PublicTest` 3.589 (validation), `PrivateTest` 3.589 (chỉ đánh giá một lần ở mô hình cuối). Sau khi đặt file, chạy kiểm tra cột, split và SHA-256:
+Không dùng `train.csv`/`test.csv` ghép thủ công hoặc mirror đã gộp `PublicTest` và `PrivateTest`; phải giữ nguyên ba split gốc. File cần có các cột `emotion`, `pixels`, `Usage` và 35.887 mẫu: `Training` 28.709, `PublicTest` 3.589 (validation), `PrivateTest` 3.589 (chỉ đánh giá một lần ở mô hình cuối). CSV gốc chỉ lưu cục bộ, không commit.
+
+Từ thư mục gốc repo, vào đúng thư mục dự án và xác nhận CSV đã có trước khi chạy:
 
 ```powershell
-python -m src.data.check_fer2013 --csv data/fer2013.csv --output results/data_check.json
+Set-Location .\BTL02
+Test-Path .\data\fer2013.csv
+```
+
+Lệnh `Test-Path` phải trả về `True`. Nếu trả về `False`, hãy chép `fer2013.csv` vào `BTL02/data/` trước. Sau đó chạy kiểm tra cột, split và SHA-256:
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 -m src.data.check_fer2013 --csv data/fer2013.csv --output results/data_check.json
 ```
 
 Nếu kiểm tra đạt, có thể sinh EDA và các CSV dữ liệu cho hình:
 
 ```powershell
-python -m src.data.eda --csv data/fer2013.csv --output-dir figures
+.\.venv\Scripts\python.exe -X utf8 -m src.data.eda --csv data/fer2013.csv --output-dir figures
 ```
 
-Hai lệnh cần file FER2013 gốc tại chỗ; chúng không tải dữ liệu. Không commit hoặc đưa CSV gốc vào gói nộp.
+Hai lệnh cần file FER2013 gốc tại chỗ; chúng không tải dữ liệu. Lệnh kiểm tra tạo `results/data_check.json`, còn EDA tạo hình và CSV nguồn trong `figures/`. Không thêm dấu `\` ở cuối lệnh PowerShell và không commit hoặc đưa CSV gốc vào gói nộp.
 
 ## Lệnh chạy
 
