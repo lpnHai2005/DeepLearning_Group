@@ -1,4 +1,12 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+d6351e5b,2026-11-23T22:12:27+07:00,TrungKien2005,TV1,T02,docs(T02): sửa lệnh pip đọc requirements UTF-8,1,BTL02/README.md
+3abf7140,2026-11-23T22:00:34+07:00,TrungKien2005,TV1,T09,test(T09): kiểm tra mean và độ lệch chuẩn,1,BTL02/tests/test_tv1_t09_mean_std_check.py
+25b3b204,2026-11-23T22:00:33+07:00,TrungKien2005,TV1,T08,test(T08): đối chiếu metric với sklearn,1,BTL02/tests/test_tv1_t08_metric_check.py
+22965384,2026-11-23T22:00:33+07:00,TrungKien2005,TV1,T07,test(T07): kiểm tra tái lập và xóa checkpoint lỗi,1,BTL02/tests/test_tv1_t07_acceptance.py
+43ea8d39,2026-11-23T22:00:33+07:00,TrungKien2005,TV1,T05,feat(T05): thêm script EDA kèm CSV nguồn,2,BTL02/src/data/eda.py; BTL02/tests/test_eda.py
+c501b35b,2026-11-23T22:00:32+07:00,TrungKien2005,TV1,T04,feat(T04): hoàn thiện loader và augmentation,6,BTL02/src/data/__init__.py; BTL02/src/data/augment.py; BTL02/src/data/fer2013.py; BTL02/src/data/loader.py; BTL02/src/engine/evaluate.py; BTL02/tests/test_fer2013_data.py
+5fa19cce,2026-11-23T22:00:32+07:00,TrungKien2005,TV1,T03,feat(T03): thêm script kiểm tra FER2013,2,BTL02/src/data/check_fer2013.py; BTL02/tests/test_check_fer2013.py
+bb4dc9ba,2026-11-23T22:00:32+07:00,TrungKien2005,TV1,T02,docs(T02): cập nhật hướng dẫn dữ liệu,1,BTL02/README.md
 83574980,2026-11-23T20:59:18+07:00,TrungKien2005,TV1,T02,docs(T02): cập nhật hiện trạng mã nguồn,1,BTL02/README.md
 fe86610a,2026-11-21T15:16:27+07:00,TrungKien2005,TV1,T02,docs(T02): làm rõ vai trò tracking,1,BTL02/README.md
 64cb8495,2026-11-21T15:05:10+07:00,TrungKien2005,TV1,T02,docs(T02): cập nhật README và khung repo,2,BTL02/.gitignore; BTL02/README.md
