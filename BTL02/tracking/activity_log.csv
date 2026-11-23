@@ -1,4 +1,6 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+f5d3ae16,2026-11-23T23:31:50+07:00,HiCyclone,TV2,T07,"feat(T07): chạy QA 2 epoch qua run_experiment.py, lưu run_dir results/_qa",6,BTL02/results/_qa/_qa-001_s0/config.json; BTL02/results/_qa/_qa-001_s0/history.csv; BTL02/results/_qa/_qa-001_s0/metrics.json; BTL02/results/_qa/_qa-001_s0/run.log; BTL02/tracking/experiments.csv; BTL02/tracking/tasks.csv
+f2cb839b,2026-11-23T23:30:46+07:00,HiCyclone,TV2,T07,feat(T07): thêm config QA 2 epoch cho run kiểm tra pipeline,1,BTL02/configs/qa_T07.json
 40f42308,2026-11-23T23:00:28+07:00,hoangbao2908,TV3,T07,feat(T07): chạy thử 1 epoch với loader thật và ghi benchmark RTX 3050 (C1),2,BTL02/results/_bench/bench.csv; BTL02/src/benchmark.py
 699745ce,2026-11-23T23:00:28+07:00,hoangbao2908,TV3,T04,"test(T04): thêm test bảo toàn nhãn, split và chống rò rỉ dữ liệu (C1)",1,BTL02/tests/test_tv3_t04_data_guard.py
 dd819121,2026-11-23T23:00:28+07:00,hoangbao2908,TV3,T03,feat(T03): kiểm tra toàn vẹn fer2013.csv và ghi results/data_check.json (C2),1,BTL02/results/data_check.json
