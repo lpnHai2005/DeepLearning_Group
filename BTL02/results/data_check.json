@@ -1,0 +1,29 @@
+{
+  "status": "PASS",
+  "file": "fer2013.csv",
+  "size_bytes": 301072766,
+  "sha256": "3b8d9617d1017f34733c8f2474d7784c563ce86c40a86ac12c2d37cc968f871b",
+  "columns": [
+    "emotion",
+    "pixels",
+    "Usage"
+  ],
+  "required_columns": [
+    "Usage",
+    "emotion",
+    "pixels"
+  ],
+  "unexpected_columns": [],
+  "expected_split_counts": {
+    "Training": 28709,
+    "PublicTest": 3589,
+    "PrivateTest": 3589
+  },
+  "observed_split_counts": {
+    "Training": 28709,
+    "PublicTest": 3589,
+    "PrivateTest": 3589
+  },
+  "unexpected_usage": [],
+  "total_rows": 35887
+}
