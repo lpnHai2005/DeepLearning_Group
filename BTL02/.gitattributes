@@ -1,0 +1,2 @@
+# experiments.csv chỉ nối thêm dòng; union tránh conflict khi nhiều người cùng push
+tracking/experiments.csv merge=union

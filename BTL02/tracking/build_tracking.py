@@ -43,7 +43,7 @@ TASKS = [
      "{C1}: viết test shape đầu ra và số tham số; {C2}: kiểm tay kích thước feature map 48→24→12→6→3→1",
      "src/models/*.py; results/model_summary.csv sinh từ code",
      "pytest; tự đếm tham số bằng sum(p.numel()) và so với model_summary.csv", "T04"),
-    ("T07", "M2 Mô hình & hạ tầng huấn luyện", "G1-G2", "trainer.py và run_experiment.py (history.csv, run.log, ghi runs.csv, tự quyết giữ/xóa weights theo luật)", "TV2",
+    ("T07", "M2 Mô hình & hạ tầng huấn luyện", "G1-G2", "trainer.py và run_experiment.py (history.csv, run.log, ghi experiments.csv, tự quyết giữ/xóa weights theo luật)", "TV2",
      "{C1}: nối loader và chạy thử 1 epoch trên máy riêng; {C2}: nối evaluate/plots vào run_dir",
      "src/engine/trainer.py; 1 run_dir hoàn chỉnh trong results/_qa/ có config.json ghi member/hostname/giờ bắt đầu-kết thúc/tổng giây; test 1 bước train giảm loss",
      "Chạy 2 epoch cùng seed hai lần, so history; tạo run lỗi cố ý (config sai) và kiểm có dòng Failed, không còn best.pt dở", "T04, T06"),
@@ -51,7 +51,7 @@ TASKS = [
      "{C1}: viết test metric (dữ liệu giả lập chỉ nằm trong unit test); {C2}: thống nhất style hình cho mọi người dùng",
      "src/engine/evaluate.py; src/visual/plots.py; mỗi hình kèm file CSV dữ liệu vẽ",
      "So metric với sklearn.metrics trên cùng dự đoán; so CSV dữ liệu vẽ với history.csv từng epoch", "T07"),
-    ("T09", "M2 Mô hình & hạ tầng huấn luyện", "G2", "make_tables.py: runs.csv → bảng báo cáo E1–E7, mean ± std", "TV3",
+    ("T09", "M2 Mô hình & hạ tầng huấn luyện", "G2", "make_tables.py: experiments.csv → bảng báo cáo E1–E7, mean ± std", "TV3",
      "{C1}: kiểm công thức mean/std; {C2}: soát định dạng bảng đưa vào báo cáo",
      "src/make_tables.py; report/tables/*.md|csv",
      "Tính lại 3 bảng bất kỳ bằng pandas độc lập, diff với bảng sinh ra", "T07"),
@@ -102,7 +102,7 @@ TASKS = [
     ("T25", "M6 Báo cáo, slide, QA, nộp", "G5", "Báo cáo Ch.1, 5, 6, 7, 8 và ghép toàn bộ", "TV4",
      "{C1}: review chéo Ch.2–4 và dò từng số về nguồn; {C2}: review chéo Ch.5–8 và dò từng số về nguồn",
      "report/BaoCao_BTL02.docx/.pdf; bảng phân công % đóng góp lấy từ Tien_do",
-     "Chọn ngẫu nhiên ít nhất 10 số liệu/hình, truy vết về runs.csv hoặc Hinh_ve; số không truy vết = Fail", "T20, T21, T22, T23, T24"),
+     "Chọn ngẫu nhiên ít nhất 10 số liệu/hình, truy vết về experiments.csv hoặc Hinh_ve; số không truy vết = Fail", "T20, T21, T22, T23, T24"),
     ("T21", "M6 Báo cáo, slide, QA, nộp", "G5", "Báo cáo Ch.2 Dữ liệu và mục E4, E5", "TV1",
      "{C1}: review chéo Ch.2 và dò số liệu về nguồn; {C2}: review chéo mục E4, E5 và dò số liệu về nguồn", "Chương 2 + bảng/hình sinh từ code",
      "Chọn ngẫu nhiên ít nhất 10 số liệu/hình truy vết về nguồn; số không truy vết = Fail", "T05, T15, T16"),
@@ -121,7 +121,7 @@ TASKS = [
      "Biên bản QA trong Kiem_thu; danh sách lỗi và commit sửa",
      "Tester không tham gia viết code được QA; tự clone và chạy theo README, báo lỗi", "T19, T20"),
     ("T28", "M6 Báo cáo, slide, QA, nộp", "G5", "Đóng gói BTLON02_Emotion_HoTen_MaSV.zip (họ tên, MSSV nhóm trưởng) và nộp bài", "TV2",
-     "{C1}: kiểm checklist mục 8 phần code, README, requirements, không có fer2013.csv và checkpoint trung gian; {C2}: kiểm phần report, slide, nhật ký thực nghiệm, tracking/*.csv, runs.csv", "File zip (gồm code, report, slide, nhật ký thực nghiệm, tracking/*.csv, runs.csv + log); checklist mục 8",
+     "{C1}: kiểm checklist mục 8 phần code, README, requirements, không có fer2013.csv và checkpoint trung gian; {C2}: kiểm phần report, slide, nhật ký thực nghiệm, tracking/*.csv", "File zip (gồm code, report, slide, nhật ký thực nghiệm, tracking/*.csv + log); checklist mục 8",
      "Giải nén vào thư mục trống, chạy checklist; kiểm không có fer2013.csv và checkpoint trung gian", "T25, T26, T27"),
     ("T02", "M0 Quản trị & truy vết", "G1", "Khung repo: cây thư mục, requirements.txt, README (cài đặt, tải dữ liệu, lệnh chạy, bảng phân công theo file), quy ước docstring Phụ trách và commit", "TV1",
      "{C1}: cài đặt và chạy theo README trên máy riêng, báo chỗ sai; {C2}: cài trên máy thứ hai và kiểm bảng phân công theo file khớp tab Phan_cong",
@@ -140,12 +140,12 @@ VIEC_R = {  # việc chính của R, tên điền khi sinh bảng
     "T04": "{R}: viết fer2013.py (EMOTIONS, load_fer2013), loader.py (mean/std chỉ từ Training, nạp RAM), augment.py (HFlip, RandomAffine), sửa theo test và góp ý của hai C",
     "T05": "{R}: viết eda.py: phân bố lớp 3 tập, lưới ảnh mẫu, ảnh trung bình, thống kê độ sáng, đếm ảnh lỗi, minh họa augmentation, mỗi hình kèm CSV",
     "T06": "{R}: viết cnn.py (VGG-style cấu hình được, 4 cấu hình mẫu) và transfer.py (ResNet18/VGG16 thay lớp cuối 7 lớp), in số tham số và kích thước feature map từng khối, ghi model_summary.csv",
-    "T07": "{R}: viết trainer.py (train/eval, AMP, scheduler, early stopping, best.pt, history.csv, run.log) và run_experiment.py (đọc config JSON, lặp giá trị × seed, ghi runs.csv và config.json)",
+    "T07": "{R}: viết trainer.py (train/eval, AMP, scheduler, early stopping, best.pt, history.csv, run.log) và run_experiment.py (đọc config JSON, lặp giá trị × seed, ghi experiments.csv và config.json)",
     "T08": "{R}: viết evaluate.py (accuracy, macro-F1, recall từng lớp, ma trận nhầm lẫn, TTA) và plots.py (đường cong loss/acc, confusion, lưới ca đúng/sai, histogram ca sai), mỗi hình kèm CSV",
-    "T09": "{R}: viết make_tables.py đọc runs.csv và sinh bảng E1–E7 dạng markdown/Word với mean ± std",
+    "T09": "{R}: viết make_tables.py đọc experiments.csv và sinh bảng E1–E7 dạng markdown/Word với mean ± std",
     "T10": "{R}: viết notebook tái lập gọi code trong src/, chạy Restart & Run All và lưu bản có output vào notebooks/executed/",
     "T11": "{R}: chạy baseline seed 0 trên máy mình, tổng hợp 3 seed (mean ± std), cùng nhóm chốt cấu hình theo val và đóng băng configs/baseline.json",
-    "T12": "{R}: viết configs/E1_arch.json, chia cấu hình cho hai C, gom run của cả ba người vào runs.csv, tổng hợp bảng và kết luận E1",
+    "T12": "{R}: viết configs/E1_arch.json, chia cấu hình cho hai C, gom run của cả ba người vào experiments.csv, tổng hợp bảng và kết luận E1",
     "T13": "{R}: viết configs/E2_activation.json (có và không BN), gom run, tổng hợp bảng, kết luận về vanishing gradient của Sigmoid",
     "T14": "{R}: viết configs/E3_optim.json (optimizer × lr, lịch lr, batch size), gom run, tổng hợp bảng, chọn optimizer và lr tốt nhất theo val",
     "T15": "{R}: viết configs/E4_aug_reg.json, gom run, tổng hợp bảng và kết luận mức giảm overfit của augmentation, dropout, weight decay, label smoothing",
@@ -172,10 +172,10 @@ CURRENT_STATUS = {"T01": "In Progress"}
 HEADERS = {
     "Kiem_thu": ["test_id", "thoi_gian", "task_id", "exp_id", "nguoi_kiem_thu", "nguoi_thuc_hien",
                  "phuong_phap", "lenh_da_chay", "so_lieu_goc", "so_lieu_tai_tinh", "ket_qua", "bang_chung", "nhan_xet"],
-    "Thuc_nghiem": ["exp_id", "task_id", "thanh_vien", "bat_dau", "ket_thuc", "tong_thoi_gian_s", "may_chay", "config_path", "hyperparams_json",
-                    "dataset_sha256", "seed", "git_commit", "train_loss_cuoi", "val_loss_cuoi", "best_val_loss",
-                    "best_epoch", "val_acc", "val_macro_f1", "test_acc", "trang_thai_ky_thuat", "so_voi_baseline_tu_tinh",
-                    "weights_path", "weights_sha256", "weights_size_mb", "weights_quyet_dinh", "weights_ma_ly_do", "run_dir", "log_path", "history_path", "curve_path", "notebook_path", "nguoi_kiem_thu", "nhan_xet"],
+    "Thuc_nghiem": ["exp_id", "task_id", "thanh_vien", "bat_dau", "ket_thuc", "tong_thoi_gian_s", "epoch_time_s_tb", "may_chay", "config_path", "hyperparams_json",
+                    "dataset_sha256", "seed", "git_commit", "n_params", "train_loss_cuoi", "train_acc_cuoi", "val_loss_cuoi", "best_val_loss", "best_epoch", "val_acc",
+                    "val_macro_f1", "test_acc", "trang_thai_ky_thuat", "so_voi_baseline_tu_tinh", "weights_path", "weights_sha256", "weights_size_mb", "weights_quyet_dinh", "weights_ma_ly_do", "run_dir",
+                    "log_path", "history_path", "curve_path", "notebook_path"],
     "Hinh_ve": ["fig_id", "file_hinh", "file_du_lieu_dau_vao", "script_sinh_hinh", "lenh_chay", "exp_ids",
                 "task_id", "thoi_gian_sinh", "sha256_hinh", "dung_o"],
 }
@@ -293,7 +293,7 @@ def main():
         write_csv(mp, mem_head, mem_rows)
     sheet("Thanh_vien", mem_head, mem_rows, [8, 26, 14, 14, 28, 24, 20])
     sheet("Kiem_thu", HEADERS["Kiem_thu"], [], [8, 12, 8, 10, 14, 14, 30, 30, 20, 20, 10, 30, 30])
-    sheet("Thuc_nghiem", HEADERS["Thuc_nghiem"], [], [10, 8, 10] + [14] * 26)
+    sheet("Thuc_nghiem", HEADERS["Thuc_nghiem"], [], [10, 8, 10] + [14] * 31)
     sheet("Hinh_ve", HEADERS["Hinh_ve"], [], [8, 32, 32, 28, 30, 14, 8, 14, 20, 16])
 
     # Tien_do: công thức đếm

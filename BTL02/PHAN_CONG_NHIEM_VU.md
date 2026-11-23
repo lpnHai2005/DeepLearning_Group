@@ -136,7 +136,7 @@ Hệ quả:
 - Train trên Training, chọn epoch/cấu hình theo **val accuracy trên PublicTest**, PrivateTest chỉ chạy ở bước `--eval-test` cuối cùng.
 - Mỗi lần chỉ đổi **một yếu tố** so với baseline; mọi thứ khác giữ nguyên (cùng số epoch, cùng seed).
 - Chỉ số: accuracy, macro-F1, loss (train/val); thêm recall từng lớp, ma trận nhầm lẫn cho các run quan trọng; thời gian/epoch, số tham số.
-- Mỗi run tự ghi 1 dòng vào `results/runs.csv` (nguồn số liệu cho nhật ký và bảng báo cáo).
+- Mỗi run tự ghi 1 dòng vào `tracking/experiments.csv` (file duy nhất, nguồn số liệu cho nhật ký và bảng báo cáo).
 
 ### 3.2. Baseline đề xuất (chốt ở G2 chỉ dựa trên val, sau đó **đóng băng**)
 
@@ -180,7 +180,7 @@ BTL02/
 │   ├── run_experiment.py, make_tables.py, visualize_filters.py
 ├── tests/          test nhỏ: shape đầu ra, thứ tự nhãn, không rò rỉ test, 1 bước train giảm loss
 ├── data/           fer2013.csv (KHÔNG commit, KHÔNG đưa vào zip)
-├── results/        <exp>/<run_id>/{config.json, history.csv, metrics.json, best.pt, curves.png}; runs.csv
+├── results/        <exp>/<run_id>/{config.json, history.csv, metrics.json, best.pt, curves.png}
 ├── figures/        hình cho báo cáo/slide
 └── report/         BaoCao_BTL02.docx/.pdf, Slide_BTL02.pptx/.pdf, NHAT_KY_THUC_NGHIEM.md, KICH_BAN_THUYET_TRINH.md
 ```
@@ -222,7 +222,7 @@ Quy tắc bắt buộc:
 
 ### 5.2. Quy tắc của người kiểm thử (T)
 
-1. T **tự chạy** trên bản clone sạch và **tự tính lại** số liệu từ file gốc (`history.csv`, `runs.csv`, dự đoán đã lưu). Không xác nhận dựa trên báo cáo hay lời của R.
+1. T **tự chạy** trên bản clone sạch và **tự tính lại** số liệu từ file gốc (`history.csv`, `experiments.csv`, dự đoán đã lưu). Không xác nhận dựa trên báo cáo hay lời của R.
 2. Với nhiệm vụ có huấn luyện, T tự chọn ít nhất 1 cấu hình (không do R chỉ định) để chạy lại và so với `metrics.json`. **Dung sai tái lập = độ lệch chuẩn 3 seed của baseline**; con số này chưa có cho đến khi T11 xong, không được đặt trước.
 3. T ghi 1 dòng `Kiem_thu`: lệnh đã chạy, số liệu gốc, số tái tính, `Pass`/`Fail`, bằng chứng. T khác `nguoi_thuc_hien`.
 4. Chỉ T mới đưa nhiệm vụ lên **Verified**, và chỉ khi có dòng `Pass`. R không tự đặt Verified.
@@ -243,12 +243,12 @@ Vòng đời trạng thái: `Pending → In Progress → Completed (R, có bằn
 | T04 | M1 Dữ liệu | G1 | fer2013.py, loader.py, augment.py và tests (nhãn, không rò rỉ test) | TV1 | **TV1**: viết fer2013.py (EMOTIONS, load_fer2013), loader.py (mean/std chỉ từ Training, nạp RAM), augment.py (HFlip, RandomAffine), sửa theo test và góp ý của hai C | **TV3**: viết test nhãn, split, chuẩn hóa trong tests/ | **TV4**: dùng thử loader trên máy riêng và báo lỗi | **TV2** | T03 |
 | T05 | M1 Dữ liệu | G1 | EDA: phân bố lớp 3 tập, lưới ảnh mẫu, ảnh trung bình, ảnh lỗi, minh họa augmentation | TV1 | **TV1**: viết eda.py: phân bố lớp 3 tập, lưới ảnh mẫu, ảnh trung bình, thống kê độ sáng, đếm ảnh lỗi, minh họa augmentation, mỗi hình kèm CSV | **TV2**: soát nhãn của lưới ảnh khớp nhãn từng tập | **TV4**: soát kiểu hình và ghi vào Hinh_ve | **TV3** | T04 |
 | T06 | M2 Mô hình & hạ tầng huấn luyện | G1 | cnn.py và transfer.py (in số tham số, kích thước bản đồ đặc trưng từng khối) | TV2 | **TV2**: viết cnn.py (VGG-style cấu hình được, 4 cấu hình mẫu) và transfer.py (ResNet18/VGG16 thay lớp cuối 7 lớp), in số tham số và kích thước feature map từng khối, ghi model_summary.csv | **TV1**: viết test shape đầu ra và số tham số | **TV3**: kiểm tay kích thước feature map 48→24→12→6→3→1 | **TV4** | T04 |
-| T07 | M2 Mô hình & hạ tầng huấn luyện | G1-G2 | trainer.py và run_experiment.py (history.csv, run.log, ghi runs.csv, tự quyết giữ/xóa weights theo luật) | TV2 | **TV2**: viết trainer.py (train/eval, AMP, scheduler, early stopping, best.pt, history.csv, run.log) và run_experiment.py (đọc config JSON, lặp giá trị × seed, ghi runs.csv và config.json) | **TV3**: nối loader và chạy thử 1 epoch trên máy riêng | **TV4**: nối evaluate/plots vào run_dir | **TV1** | T04, T06 |
+| T07 | M2 Mô hình & hạ tầng huấn luyện | G1-G2 | trainer.py và run_experiment.py (history.csv, run.log, ghi experiments.csv, tự quyết giữ/xóa weights theo luật) | TV2 | **TV2**: viết trainer.py (train/eval, AMP, scheduler, early stopping, best.pt, history.csv, run.log) và run_experiment.py (đọc config JSON, lặp giá trị × seed, ghi experiments.csv và config.json) | **TV3**: nối loader và chạy thử 1 epoch trên máy riêng | **TV4**: nối evaluate/plots vào run_dir | **TV1** | T04, T06 |
 | T08 | M2 Mô hình & hạ tầng huấn luyện | G2 | evaluate.py và plots.py (Train/Val loss theo epoch, acc, confusion matrix, ca đúng/sai) | TV3 | **TV3**: viết evaluate.py (accuracy, macro-F1, recall từng lớp, ma trận nhầm lẫn, TTA) và plots.py (đường cong loss/acc, confusion, lưới ca đúng/sai, histogram ca sai), mỗi hình kèm CSV | **TV1**: viết test metric (dữ liệu giả lập chỉ nằm trong unit test) | **TV4**: thống nhất style hình cho mọi người dùng | **TV2** | T07 |
-| T09 | M2 Mô hình & hạ tầng huấn luyện | G2 | make_tables.py: runs.csv → bảng báo cáo E1–E7, mean ± std | TV3 | **TV3**: viết make_tables.py đọc runs.csv và sinh bảng E1–E7 dạng markdown/Word với mean ± std | **TV1**: kiểm công thức mean/std | **TV2**: soát định dạng bảng đưa vào báo cáo | **TV4** | T07 |
+| T09 | M2 Mô hình & hạ tầng huấn luyện | G2 | make_tables.py: experiments.csv → bảng báo cáo E1–E7, mean ± std | TV3 | **TV3**: viết make_tables.py đọc experiments.csv và sinh bảng E1–E7 dạng markdown/Word với mean ± std | **TV1**: kiểm công thức mean/std | **TV2**: soát định dạng bảng đưa vào báo cáo | **TV4** | T07 |
 | T10 | M2 Mô hình & hạ tầng huấn luyện | G2 | Notebook tái lập (Restart & Run All, log, output lưu lại) | TV3 | **TV3**: viết notebook tái lập gọi code trong src/, chạy Restart & Run All và lưu bản có output vào notebooks/executed/ | **TV2**: chạy notebook Restart & Run All trên máy mình | **TV4**: soát lời giải thích từng bước | **TV1** | T07, T08 |
 | T11 | M3 Baseline | G2 | Baseline 3 seed (0/1/2) và đóng băng configs/baseline.json | TV2 | **TV2**: chạy baseline seed 0 trên máy mình, tổng hợp 3 seed (mean ± std), cùng nhóm chốt cấu hình theo val và đóng băng configs/baseline.json | **TV1**: chạy seed 1 trên máy riêng với đúng config | **TV4**: chạy seed 2 trên máy riêng với đúng config (R chạy seed 0) | **TV3** | T04, T06, T07, T08 |
-| T12 | M4 Thực nghiệm E1–E6 | G3 | E1 Kiến trúc (SMALL/MEDIUM/MEDIUM_01/LARGE, ×0.5/×2, BN, GAP) | TV2 | **TV2**: viết configs/E1_arch.json, chia cấu hình cho hai C, gom run của cả ba người vào runs.csv, tổng hợp bảng và kết luận E1 | **TV1**: chạy SMALL, MEDIUM, MEDIUM_01, LARGE | **TV3**: chạy ×0.5/×2 kênh, có/không BN, Flatten vs GAP, mỗi người viết nhận xét độc lập cho ít nhất 1 kết quả của mình | **TV4** | T11 |
+| T12 | M4 Thực nghiệm E1–E6 | G3 | E1 Kiến trúc (SMALL/MEDIUM/MEDIUM_01/LARGE, ×0.5/×2, BN, GAP) | TV2 | **TV2**: viết configs/E1_arch.json, chia cấu hình cho hai C, gom run của cả ba người vào experiments.csv, tổng hợp bảng và kết luận E1 | **TV1**: chạy SMALL, MEDIUM, MEDIUM_01, LARGE | **TV3**: chạy ×0.5/×2 kênh, có/không BN, Flatten vs GAP, mỗi người viết nhận xét độc lập cho ít nhất 1 kết quả của mình | **TV4** | T11 |
 | T13 | M4 Thực nghiệm E1–E6 | G3 | E2 Activation (ReLU, LeakyReLU, ELU, GELU, Tanh, Sigmoid) và chuẩn gradient từng lớp | TV2 | **TV2**: viết configs/E2_activation.json (có và không BN), gom run, tổng hợp bảng, kết luận về vanishing gradient của Sigmoid | **TV3**: chạy ReLU, LeakyReLU, ELU, GELU | **TV4**: chạy Tanh, Sigmoid và đo chuẩn gradient từng lớp | **TV1** | T11 |
 | T14 | M4 Thực nghiệm E1–E6 | G3 | E3 Tối ưu (optimizer × lr, lịch lr, batch size) | TV3 | **TV3**: viết configs/E3_optim.json (optimizer × lr, lịch lr, batch size), gom run, tổng hợp bảng, chọn optimizer và lr tốt nhất theo val | **TV1**: chạy lưới optimizer × lr của SGD, SGD+Nesterov, Adam | **TV4**: chạy AdamW, RMSprop, lịch lr và batch size | **TV2** | T11 |
 | T15 | M4 Thực nghiệm E1–E6 | G3 | E4 Augmentation và điều chuẩn (dropout, weight decay, label smoothing) | TV1 | **TV1**: viết configs/E4_aug_reg.json, gom run, tổng hợp bảng và kết luận mức giảm overfit của augmentation, dropout, weight decay, label smoothing | **TV3**: chạy nhóm augmentation (không aug, flip, flip+affine, +RandomErasing) và dropout | **TV4**: chạy weight decay, label smoothing và vẽ đường cong train/val so overfit từ history.csv | **TV2** | T11 |
@@ -264,7 +264,7 @@ Vòng đời trạng thái: `Pending → In Progress → Completed (R, có bằn
 | T25 | M6 Báo cáo, slide, QA, nộp | G5 | Báo cáo Ch.1, 5, 6, 7, 8 và ghép toàn bộ | TV4 | **TV4**: viết Ch.1, 5, 6, 7, 8, ghép toàn bộ vào BaoCao_BTL02, xuất .docx/.pdf, điền bảng % đóng góp từ Tien_do | **TV2**: review chéo Ch.2–4 và dò từng số về nguồn | **TV3**: review chéo Ch.5–8 và dò từng số về nguồn | **TV1** | T20, T21, T22, T23, T24 |
 | T26 | M6 Báo cáo, slide, QA, nộp | G5 | Slide .pptx/.pdf (Google Slides), kịch bản thuyết trình và chuẩn bị demo chạy code | TV4 | **TV4**: làm slide 12–15 trang, kịch bản thuyết trình, bộ câu hỏi Q&A dự kiến, chuẩn bị demo chạy code | **TV1**: viết 2–3 slide phần mình phụ trách và dò số liệu về nguồn | **TV3**: viết 2–3 slide phần mình phụ trách, cùng R tập demo chạy code | **TV2** | T25 |
 | T27 | M6 Báo cáo, slide, QA, nộp | G5 | QA tái lập toàn repo (clone sạch, venv mới, theo README, pytest, chạy notebook) | TV4 | **TV4**: clone sạch, tạo venv mới, chạy theo README, pytest, chạy notebook, ghi biên bản QA và danh sách lỗi | **TV1**: chạy clone sạch, venv mới, theo README và pytest trên máy riêng | **TV2**: chạy các notebook trên máy riêng, mỗi người báo lỗi cho người phụ trách | **TV3** | T19, T20 |
-| T28 | M6 Báo cáo, slide, QA, nộp | G5 | Đóng gói BTLON02_Emotion_HoTen_MaSV.zip (họ tên, MSSV nhóm trưởng) và nộp bài | TV2 | **TV2**: gom file theo checklist mục 8, tạo BTLON02_Emotion_HoTen_MaSV.zip (họ tên, MSSV của nhóm trưởng) và nộp bài | **TV1**: kiểm checklist mục 8 phần code, README, requirements, không có fer2013.csv và checkpoint trung gian | **TV3**: kiểm phần report, slide, nhật ký thực nghiệm, tracking/*.csv, runs.csv | **TV4** | T25, T26, T27 |
+| T28 | M6 Báo cáo, slide, QA, nộp | G5 | Đóng gói BTLON02_Emotion_HoTen_MaSV.zip (họ tên, MSSV nhóm trưởng) và nộp bài | TV2 | **TV2**: gom file theo checklist mục 8, tạo BTLON02_Emotion_HoTen_MaSV.zip (họ tên, MSSV của nhóm trưởng) và nộp bài | **TV1**: kiểm checklist mục 8 phần code, README, requirements, không có fer2013.csv và checkpoint trung gian | **TV3**: kiểm phần report, slide, nhật ký thực nghiệm, tracking/*.csv | **TV4** | T25, T26, T27 |
 
 Tỷ lệ đóng góp ghi trong báo cáo (thay cho 25% dự kiến) lấy từ số liệu thật của tab `Tien_do` (số R/C/T, số commit gắn mã nhiệm vụ (từ `git_activity.py`), số lần kiểm thử Pass); nhóm thống nhất công thức ở G5.
 
@@ -284,7 +284,7 @@ Thành viên (nhóm xác nhận 2026-11-20): **TV1 Đoàn Trung Kiên, TV2 Lê P
 ### TV2 – Mô hình CNN, vòng huấn luyện; E1, E2, E6; nhóm trưởng (đóng gói và nộp zip)
 - `src/models/cnn.py`: VGG-style cấu hình được (số khối, số conv/khối, số kênh, BN, activation, dropout, Flatten/GAP); 4 cấu hình tái hiện mẫu; in số tham số và kích thước bản đồ đặc trưng từng khối.
 - `src/models/transfer.py`: ResNet18/VGG16 torchvision, thay lớp cuối 7 lớp, tùy chọn đóng băng backbone.
-- `src/engine/trainer.py`: `train()/eval()`, `torch.no_grad()`, AMP, scheduler, early stopping, `best.pt`/`last.pt`, `history.csv`, đo thời gian, ghi `runs.csv`. **Ưu tiên xong sớm nhất** vì mọi người phụ thuộc.
+- `src/engine/trainer.py`: `train()/eval()`, `torch.no_grad()`, AMP, scheduler, early stopping, `best.pt`/`last.pt`, `history.csv`, đo thời gian, ghi `experiments.csv`. **Ưu tiên xong sớm nhất** vì mọi người phụ thuộc.
 - `src/run_experiment.py`: đọc config JSON, lặp các giá trị khảo sát × seed.
 - Chạy baseline 3 seed, chốt baseline cùng nhóm (theo val).
 - **E1** (kiến trúc), **E2** (activation, kèm chuẩn gradient từng lớp để chứng minh/phủ định vanishing gradient), **E6** (transfer learning, giải thích "fail case" VGG16 bằng kích thước feature map 48→24→12→6→3→1).
@@ -294,7 +294,7 @@ Thành viên (nhóm xác nhận 2026-11-20): **TV1 Đoàn Trung Kiên, TV2 Lê P
 ### TV3 – Đánh giá, hình kết quả, tối ưu; E3, E7
 - `src/engine/evaluate.py`: accuracy, macro-F1, precision/recall từng lớp, ma trận nhầm lẫn (số lượng + chuẩn hóa), TTA (flip, ten-crop).
 - `src/visual/plots.py`: đường cong loss/acc/lr theo epoch, ma trận nhầm lẫn, lưới ca đúng/sai (nhãn đoán/nhãn thật), histogram ca sai theo lớp, đồ thị so sánh các run (thống nhất style cho mọi người dùng).
-- `src/make_tables.py`: đọc `results/runs.csv` → bảng markdown/Word cho từng nhóm E1–E7 (số liệu báo cáo truy vết được).
+- `src/make_tables.py`: đọc `tracking/experiments.csv` → bảng markdown/Word cho từng nhóm E1–E7 (số liệu báo cáo truy vết được).
 - **E3** (optimizer × lr, lịch lr, batch size).
 - **E7**: chọn mô hình cuối theo val, 3 seed, TTA, ensemble; **chạy test PrivateTest đúng 1 lần**; so sánh với mốc 69%/71% và với báo cáo mẫu.
 - Báo cáo: **Ch.4 Phương pháp đánh giá**, mục **E3, E7**, phần **phân tích lỗi** (cặp lớp hay nhầm, ca sai điển hình); slide: kết quả tổng + ma trận nhầm lẫn.
@@ -303,7 +303,7 @@ Thành viên (nhóm xác nhận 2026-11-20): **TV1 Đoàn Trung Kiên, TV2 Lê P
 - `src/visual/filters.py` + `src/visualize_filters.py`: 4 cách ở mục 2.4 (trọng số conv đầu/cuối, feature maps, activation maximization, Grad-CAM) trên mô hình cuối và so sánh với baseline/mô hình chưa huấn luyện.
 - Template Word (bìa, mục lục tự động, đánh số hình/bảng) theo bố cục `demo_report.pdf`; gửi nhóm ngay G1.
 - Sơ đồ kiến trúc CNN của nhóm và pipeline train/val/test (vẽ từ model thật).
-- **Nhật ký thực nghiệm** `report/NHAT_KY_THUC_NGHIEM.md`: lập mẫu (mục 6), nhắc mọi người ghi sau mỗi run, kiểm tra khớp với `runs.csv`.
+- **Nhật ký thực nghiệm** `report/NHAT_KY_THUC_NGHIEM.md`: lập mẫu (mục 6), nhắc mọi người ghi sau mỗi run, kiểm tra khớp với `experiments.csv`.
 - **QA tái lập**: clone repo sang thư mục mới, venv mới, chạy theo README; chạy `pytest`; báo lỗi cho người phụ trách.
 - Báo cáo: **Ch.1 Giới thiệu** (bài toán, mục tiêu, bảng phân công % đóng góp), **Ch.5 Tóm tắt mã nguồn** (ghép từ phần mỗi người), **Ch.6 Trực quan hóa bộ lọc**, **Ch.7 Thảo luận tổng hợp** (ý kiến riêng của nhóm, trường hợp không như kỳ vọng, hạn chế, hướng cải tiến), **Ch.8 Kết luận**, TLTK, phụ lục lệnh chạy; xuất .docx/.pdf.
 - Slide .pptx 12–15 trang + kịch bản thuyết trình, phân vai, bộ câu hỏi Q&A dự kiến.
@@ -367,7 +367,7 @@ Mục đầu ghi môi trường (GPU, phiên bản torch, sha256 `fer2013.csv`),
 |---|---|---|
 | G1 – Khởi động | Tải dữ liệu, khung repo, chốt interface (mục 4), template báo cáo, mẫu nhật ký | TV1: `load_fer2013` + loader; TV2: `fit()` chạy được 1 epoch; TV4: template |
 | G2 – Baseline | Baseline 3 seed, chốt và **đóng băng** `configs/baseline.json`; xong evaluate/plots | Mọi người dùng chung baseline |
-| G3 – Thực nghiệm | E1–E6 song song trên máy từng người, ghi nhật ký sau mỗi run | `results/runs.csv` đủ các nhóm |
+| G3 – Thực nghiệm | E1–E6 song song trên máy từng người, ghi nhật ký sau mỗi run | `tracking/experiments.csv` đủ các nhóm |
 | G4 – Mô hình cuối | E7 + test 1 lần; TV4 trực quan hóa bộ lọc trên mô hình cuối | `results/E7/…/best.pt`, hình filters |
 | G5 – Viết & nộp | Mỗi người viết phần mình + slide; TV4 ghép; review chéo (TV1↔TV3, TV2↔TV4); QA tái lập; tập thuyết trình; zip | Nộp bài |
 
@@ -380,11 +380,11 @@ Phụ thuộc chính: mọi nhóm thực nghiệm cần `fit()` của TV2 và lo
 - [ ] Code PyTorch chạy lại được theo README, không TF/Keras, không đường dẫn tuyệt đối
 - [ ] Mỗi file code có dòng **Phụ trách: TVx – Họ tên**; README có bảng phân công theo file
 - [ ] PublicTest chỉ để chọn mô hình; PrivateTest đánh giá đúng 1 lần ở mô hình cuối
-- [ ] Bảng kết quả E1–E7 sinh từ `results/runs.csv`; baseline và mô hình cuối có mean ± std 3 seed
+- [ ] Bảng kết quả E1–E7 sinh từ `tracking/experiments.csv`; baseline và mô hình cuối có mean ± std 3 seed
 - [ ] Báo cáo có đủ: tóm tắt mã nguồn, nhiều thực nghiệm, **trực quan hóa bộ lọc conv cuối**, phân tích của nhóm
 - [ ] Báo cáo `.docx` + `.pdf`, slide `.pptx` + `.pdf`, `NHAT_KY_THUC_NGHIEM.md`
 - [ ] Bảng thành viên – nhiệm vụ – % đóng góp (tổng 100%) trong báo cáo, slide và README
-- [ ] Zip `BTLON02_Emotion_<HoTen>_<MaSV>.zip` (nhóm trưởng TV2): code, configs, report, slide, `NHAT_KY_THUC_NGHIEM.md`, `tracking/*.csv` (phân công, kiểm thử, thực nghiệm) và `activity_log.csv` đã sinh từ git, `runs.csv` + log; **không** kèm `fer2013.csv` và checkpoint trung gian (chỉ giữ `best.pt` mô hình cuối nếu dung lượng cho phép)
+- [ ] Zip `BTLON02_Emotion_<HoTen>_<MaSV>.zip` (nhóm trưởng TV2): code, configs, report, slide, `NHAT_KY_THUC_NGHIEM.md`, `tracking/*.csv` (phân công, kiểm thử, thực nghiệm) và `activity_log.csv` đã sinh từ git, `experiments.csv` + log; **không** kèm `fer2013.csv` và checkpoint trung gian (chỉ giữ `best.pt` mô hình cuối nếu dung lượng cho phép)
 - [ ] Mọi nhiệm vụ trong `Phan_cong` ở trạng thái Verified, hoặc ghi rõ lý do nếu không
 - [ ] Mọi số liệu/hình trong báo cáo và slide truy vết được về `experiments.csv` hoặc `Hinh_ve`; không có hình/số minh họa
 - [ ] Mỗi hình có file CSV dữ liệu vẽ và script sinh; có hình Train/Val loss theo epoch cho các run chính
@@ -406,7 +406,9 @@ Phụ thuộc chính: mọi nhóm thực nghiệm cần `fit()` của TV2 và lo
   - `metrics.json`: kết quả cuối, `best_epoch`, thời gian tổng, trạng thái.
   - `curves.png` + `curves.csv`: Train/Val loss (và acc) theo epoch, sinh bởi `plots.py` từ `history.csv`.
   - `best.pt` chỉ khi run hợp lệ (mục 9.2).
-- Ai chạy và chạy lúc nào do **code tự ghi** (không gõ tay): `run_experiment.py` tự thêm dòng vào `results/runs.csv` và `tracking/experiments.csv` với `thanh_vien`, `bat_dau`, `ket_thuc`, `tong_thoi_gian_s`, `may_chay` (hostname + GPU), lấy từ `config.json`/`metrics.json`. Người kiểm thử đối chiếu `hostname` với tab `Thanh_vien` và `git log` (tác giả commit).
+- Ai chạy và chạy lúc nào do **code tự ghi** (không gõ tay): `run_experiment.py` tự thêm dòng vào `tracking/experiments.csv` (file duy nhất; không còn `results/experiments.csv`) với `thanh_vien`, `bat_dau`, `ket_thuc`, `tong_thoi_gian_s`, `may_chay` (hostname + GPU), lấy từ `config.json`/`metrics.json`. Người kiểm thử đối chiếu `hostname` với tab `Thanh_vien` và `git log` (tác giả commit).
+- Định nghĩa cột `experiments.csv` (tránh hiểu khác nhau): `val_acc`, `val_macro_f1`, `best_epoch` lấy tại epoch chọn theo val acc (cùng epoch với `best.pt`); `train_loss_cuoi`, `train_acc_cuoi`, `val_loss_cuoi` lấy ở epoch cuối đã chạy; `best_val_loss` là loss val thấp nhất qua các epoch (chỉ tham khảo, có thể khác `best_epoch`); `n_params` đếm bằng `sum(p.numel())`; `epoch_time_s_tb` là trung bình `epoch_time_s` trong `history.csv`; mọi đường dẫn (`config_path`, `weights_path`, `run_dir`, …) là **đường dẫn tương đối từ `BTL02/`**. File **không có** cột người kiểm thử hay nhận xét: người kiểm ghi ở `Kiem_thu`, nhận xét ở `NHAT_KY_THUC_NGHIEM.md`, vì tab `Thuc_nghiem` là bản sao chỉ đọc.
+- Nhiều người cùng push: `experiments.csv` chỉ được nối thêm dòng, `BTL02/.gitattributes` đặt `merge=union` để git tự gộp, không conflict. Sau khi gộp kiểm lại không có `exp_id` trùng.
 - Giới hạn: thông tin này khai báo qua `--member` và dấu vết máy, không chống giả mạo; độ tin cậy dựa vào việc T đối chiếu với commit và hostname.
 - Seed cố định; PublicTest chỉ để chọn mô hình; PrivateTest chỉ ở `--eval-test` (ghi `TEST_DONE.json`, lệnh từ chối nếu file đã tồn tại).
 
@@ -431,7 +433,7 @@ Cuối mỗi run (khối `finally` của `fit`), hàm `finalize_weights(run_dir)
 
 - **Luật không xét metric**: run có val_acc thấp mà chạy đúng vẫn KEEP và vẫn nằm trong bảng để phân tích.
 - DISCARD: xóa mọi `*.pt` của run đó, **giữ** `config.json`, `run.log`, `history.csv`.
-- Cột tự ghi: `weights_path`, `weights_sha256`, `weights_size_mb`, `weights_quyet_dinh`, `weights_ma_ly_do`. Run bị xóa weights thì `weights_path` trống.
+- Cột tự ghi: `weights_path`, `weights_sha256`, `weights_size_mb`, `weights_quyet_dinh`, `weights_ma_ly_do`. Run bị xóa weights thì `weights_path`, `weights_sha256`, `weights_size_mb` trống.
 - Ghi weights qua file tạm rồi đổi tên (`best.pt.tmp` → `best.pt`) để không để lại file dở.
 - **Không bao giờ xóa weights của run khác**: `finalize_weights` chỉ đụng thư mục của chính run đang kết thúc và không có đường xóa nào khác, nên baseline, E7 và mô hình dùng cho hình bộ lọc không thể bị xóa nhầm khi chạy các run sau.
 - Process bị kill cứng (mất điện, `taskkill`) thì khối `finally` không chạy. Khi chạy `make_tables.py` hoặc run kế tiếp, mọi `run_dir` có dòng START mà không có END được quét, đánh `INTERRUPTED@epoch<N cuối trong history.csv>` và xóa `*.pt` dở. Việc này cũng tự động.
