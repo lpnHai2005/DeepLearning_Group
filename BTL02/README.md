@@ -86,10 +86,10 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 python -m pip install --upgrade pip
 python -m pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
-python -m pip install -r requirements.txt
+python -X utf8 -m pip install -r requirements.txt
 ```
 
-Nếu PowerShell chặn kích hoạt môi trường, chạy lệnh trong Command Prompt (`.venv\Scripts\activate.bat`) hoặc gọi trực tiếp `.venv\Scripts\python.exe -m pip ...`. Danh sách thư viện và phiên bản giữ tại [`requirements.txt`](requirements.txt). Chưa có kết quả cài đặt độc lập từ TV2/TV4; họ cần báo lỗi nếu lệnh không chạy trên máy riêng.
+`-X utf8` giúp pip đọc các chú thích tiếng Việt trong `requirements.txt` trên Windows. Nếu PowerShell chặn kích hoạt môi trường, chạy lệnh trong Command Prompt (`.venv\Scripts\activate.bat`) hoặc gọi trực tiếp `.venv\Scripts\python.exe -X utf8 -m pip ...`. Danh sách thư viện và phiên bản giữ tại [`requirements.txt`](requirements.txt). Chưa có kết quả cài đặt độc lập từ TV2/TV4; họ cần báo lỗi nếu lệnh không chạy trên máy riêng.
 
 Kiểm tra cài đặt (chạy từ thư mục `BTL02/`, venv đã kích hoạt):
 
