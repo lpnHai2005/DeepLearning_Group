@@ -1,4 +1,7 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+40f42308,2026-11-23T23:00:28+07:00,hoangbao2908,TV3,T07,feat(T07): chạy thử 1 epoch với loader thật và ghi benchmark RTX 3050 (C1),2,BTL02/results/_bench/bench.csv; BTL02/src/benchmark.py
+699745ce,2026-11-23T23:00:28+07:00,hoangbao2908,TV3,T04,"test(T04): thêm test bảo toàn nhãn, split và chống rò rỉ dữ liệu (C1)",1,BTL02/tests/test_tv3_t04_data_guard.py
+dd819121,2026-11-23T23:00:28+07:00,hoangbao2908,TV3,T03,feat(T03): kiểm tra toàn vẹn fer2013.csv và ghi results/data_check.json (C2),1,BTL02/results/data_check.json
 78d7ad6a,2026-11-23T22:50:30+07:00,HiCyclone,TV2,T04,test(T04): kiểm thử độc lập loader FER2013 trên bản clone sạch,2,BTL02/tracking/tasks.csv; BTL02/tracking/test_log.csv
 d6351e5b,2026-11-23T22:12:27+07:00,TrungKien2005,TV1,T02,docs(T02): sửa lệnh pip đọc requirements UTF-8,1,BTL02/README.md
 3abf7140,2026-11-23T22:00:34+07:00,TrungKien2005,TV1,T09,test(T09): kiểm tra mean và độ lệch chuẩn,1,BTL02/tests/test_tv1_t09_mean_std_check.py
