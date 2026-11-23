@@ -1,0 +1,4 @@
+model_name,hostname,gpu,input_shape,batch_size,amp,n_params,epoch_time_s,total_run_s,peak_vram_alloc_mb,peak_vram_reserved_mb,val_acc_ep1,status
+baseline_48x48x1,Hbao,NVIDIA GeForce RTX 3050 Laptop GPU,48x48x1,128,True,5867847,22.098,22.885,439.6,654.0,0.3129,Completed
+medium_01_bn_48x48x1,Hbao,NVIDIA GeForce RTX 3050 Laptop GPU,48x48x1,128,True,12103623,30.782,31.849,704.1,882.0,0.2647,Completed
+resnet18_96x96x3,Hbao,NVIDIA GeForce RTX 3050 Laptop GPU,96x96x3,128,True,11180103,38.542,40.081,459.6,504.0,0.2862,Completed
