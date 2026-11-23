@@ -1,3 +1,4 @@
+# Phụ trách: TV3 – Võ Hoàng Bảo
 """Đánh giá mô hình FER2013: dự đoán (hỗ trợ TTA), chỉ số accuracy/macro-F1/per-class và ma trận nhầm lẫn.
 
 Phụ trách: TV3 – Võ Hoàng Bảo. Nhiệm vụ T08.
@@ -14,7 +15,7 @@ import torch
 import torch.nn.functional as F
 
 # Thứ tự nhãn chuẩn Kaggle (0..6); dùng thống nhất trên toàn bộ repo để tránh lệch tên lớp.
-EMOTIONS = ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral"]
+from src.data.fer2013 import EMOTIONS
 
 
 def _ten_crops(x: torch.Tensor) -> list[torch.Tensor]:
