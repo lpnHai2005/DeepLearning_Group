@@ -2,7 +2,7 @@
 
 Kế hoạch, phân công và quy chuẩn: [`PHAN_CONG_NHIEM_VU.md`](PHAN_CONG_NHIEM_VU.md). Bảng theo dõi: `tracking/` và Google Sheets (link ở mục 10 của file kế hoạch).
 
-**Hiện trạng (2026-11-21):** repo có tài liệu và tracking; các module huấn luyện/đánh giá, FER2013 gốc và kết quả chạy chưa được thêm. T01 vẫn `In Progress`; T02 phụ thuộc T01 và cần TV3 kiểm tra độc lập trước khi nghiệm thu.
+**Hiện trạng (2026-11-23):** repo đã có model (`src/models/`), trainer/evaluate/plots (`src/engine/`, `src/visual/`), bảng (`src/make_tables.py`), trực quan hóa bộ lọc (`src/visual/filters.py`) và test tương ứng. Theo `tracking/tasks.csv`, T06 là `Verified`; T01 đang `In Progress`, T02/T07–T09 đang `Pending`, T20 đang `In Progress`. FER2013 gốc chưa có trong repo; không commit file này.
 
 ## Cấu trúc thư mục
 
