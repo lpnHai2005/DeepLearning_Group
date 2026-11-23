@@ -2,7 +2,7 @@
 
 Kế hoạch, phân công và quy chuẩn: [`PHAN_CONG_NHIEM_VU.md`](PHAN_CONG_NHIEM_VU.md). Bảng theo dõi: `tracking/` và Google Sheets (link ở mục 10 của file kế hoạch).
 
-**Hiện trạng (2026-11-23):** repo đã có model (`src/models/`), trainer/evaluate/plots (`src/engine/`, `src/visual/`), bảng (`src/make_tables.py`), trực quan hóa bộ lọc (`src/visual/filters.py`) và test tương ứng. Theo `tracking/tasks.csv`, T06 là `Verified`; T01 đang `In Progress`, T02/T07–T09 đang `Pending`, T20 đang `In Progress`. FER2013 gốc chưa có trong repo; không commit file này.
+**Hiện trạng (2026-11-23):** repo có loader/augmentation và kiểm tra dữ liệu (`src/data/`), model (`src/models/`), trainer/evaluate/plots (`src/engine/`, `src/visual/`), bảng (`src/make_tables.py`), trực quan hóa bộ lọc (`src/visual/filters.py`) và pytest. Theo `tracking/tasks.csv`, T06 là `Verified`; T01 đang `In Progress`, T02/T03–T05/T07–T09 đang `Pending`, T20 đang `In Progress`. Mã T03/T04/T05 có thể chạy kiểm tra bằng fixture; cần FER2013 gốc để tạo `results/data_check.json` và EDA thật. Không commit file dữ liệu gốc.
 
 ## Cấu trúc thư mục
 
@@ -104,11 +104,23 @@ Tải file `fer2013.csv` từ một trong các nguồn chính thức dưới đ�
 - [Kaggle – Facial Expression Recognition Challenge](https://www.kaggle.com/c/challenges-in-representation-learning-facial-expression-recognition-challenge/data) (cần tài khoản và chấp nhận quy định cuộc thi).
 - [Google Drive do giảng viên cung cấp](https://drive.google.com/open?id=0BxINLo5jshCRbXpRcnl2SjJkdlk).
 
-Không dùng mirror đã gộp `PublicTest` và `PrivateTest`. File khoảng 290 MB gồm 35.887 dòng và các cột `emotion`, `pixels`, `Usage`; các split dự kiến là `Training` 28.709, `PublicTest` 3.589 (validation), `PrivateTest` 3.589 (chỉ đánh giá một lần ở mô hình cuối). T03 sẽ bổ sung script kiểm tra và SHA-256. Không commit hoặc đưa CSV gốc vào gói nộp.
+Không dùng mirror đã gộp `PublicTest` và `PrivateTest`. File khoảng 290 MB gồm 35.887 dòng và các cột `emotion`, `pixels`, `Usage`; các split dự kiến là `Training` 28.709, `PublicTest` 3.589 (validation), `PrivateTest` 3.589 (chỉ đánh giá một lần ở mô hình cuối). Sau khi đặt file, chạy kiểm tra cột, split và SHA-256:
+
+```powershell
+python -m src.data.check_fer2013 --csv data/fer2013.csv --output results/data_check.json
+```
+
+Nếu kiểm tra đạt, có thể sinh EDA và các CSV dữ liệu cho hình:
+
+```powershell
+python -m src.data.eda --csv data/fer2013.csv --output-dir figures
+```
+
+Hai lệnh cần file FER2013 gốc tại chỗ; chúng không tải dữ liệu. Không commit hoặc đưa CSV gốc vào gói nộp.
 
 ## Lệnh chạy
 
-Các lệnh huấn luyện/đánh giá/bảng/hình dưới đây là giao diện dự kiến theo mục 4; `src/` và `configs/` chưa được triển khai nên hiện chưa chạy được. Không chạy hàng loạt E1–E6 trước khi T04, T06, T07, T08 và T11 được Verified. Lệnh `--eval-test` chỉ chạy một lần trên mô hình cuối, sau khi chọn cấu hình bằng validation:
+`src/` đã có các module triển khai từng phần, nhưng `configs/` và FER2013 gốc hiện chưa có; các lệnh huấn luyện dưới đây chưa chạy được cho đến khi cấu hình và dữ liệu sẵn sàng. Không chạy hàng loạt E1–E6 trước khi T04, T06, T07, T08 và T11 được Verified. Lệnh `--eval-test` chỉ chạy một lần trên mô hình cuối, sau khi chọn cấu hình bằng validation:
 
 ```powershell
 # Baseline và các nhóm E1–E7 (T07 trở đi)
@@ -120,7 +132,7 @@ python src/make_tables.py
 python src/visualize_filters.py
 ```
 
-Khi các test được thêm từ T04 trở đi, chạy bộ kiểm tra bằng `python -m pytest`.
+Chạy các kiểm tra bằng `python -m pytest -q`. Test dữ liệu dùng fixture tổng hợp nằm trong thư mục tạm của pytest; fixture không dùng cho báo cáo, slide hoặc kết quả thực nghiệm.
 
 PrivateTest chỉ được đọc bởi lệnh đánh giá mô hình cuối đúng một lần; các lệnh khác phải giới hạn dữ liệu ở Training/PublicTest.
 
