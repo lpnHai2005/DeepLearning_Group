@@ -1,4 +1,7 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+83574980,2026-11-23T20:59:18+07:00,TrungKien2005,TV1,T02,docs(T02): cập nhật hiện trạng mã nguồn,1,BTL02/README.md
+fe86610a,2026-11-21T15:16:27+07:00,TrungKien2005,TV1,T02,docs(T02): làm rõ vai trò tracking,1,BTL02/README.md
+64cb8495,2026-11-21T15:05:10+07:00,TrungKien2005,TV1,T02,docs(T02): cập nhật README và khung repo,2,BTL02/.gitignore; BTL02/README.md
 d6780387,2026-11-23T20:40:23+07:00,hoangbao2908,TV3,T09,feat(T09): thêm make_tables.py đọc tracking/experiments.csv và test_make_tables.py,2,BTL02/src/make_tables.py; BTL02/tests/test_make_tables.py
 ee7ed024,2026-11-23T20:40:23+07:00,hoangbao2908,TV3,T08,"feat(T08): thêm plots.py (hình kèm CSV, ghi figures_manifest.csv) và test_evaluate.py",2,BTL02/src/visual/plots.py; BTL02/tests/test_evaluate.py
 c6256075,2026-11-23T20:40:23+07:00,hoangbao2908,TV3,T08,"feat(T08): thêm evaluate.py (predict TTA flip/ten_crop, metrics, save_predictions)",1,BTL02/src/engine/evaluate.py
