@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+49d533df,2026-11-23T19:32:43+07:00,HiCyclone,TV2,T01,docs(T01): sửa schema Thuc_nghiem theo góp ý của TV2,5,BTL02/.gitattributes; BTL02/PHAN_CONG_NHIEM_VU.md; BTL02/tracking/build_tracking.py; BTL02/tracking/experiments.csv; BTL02/tracking/tasks.csv
 66bae25e,2026-11-23T19:21:46+07:00,HiCyclone,TV2,T01,"docs(T01): ghi rõ việc cụ thể của R, C1, C2 từng nhiệm vụ trong bảng phân công",3,BTL02/PHAN_CONG_NHIEM_VU.md; BTL02/tracking/build_tracking.py; BTL02/tracking/tasks.csv
 a926e63d,2026-11-22T19:18:23+07:00,VthongVthongVthong,TV4,T20,feat(T20): thêm module trực quan hóa bộ lọc filters.py và visualize_filters.py,5,BTL02/src/visual/__init__.py; BTL02/src/visual/filters.py; BTL02/src/visualize_filters.py; BTL02/tests/test_filters.py; BTL02/tracking/tasks.csv
 3ddd106e,2026-11-22T18:37:50+07:00,VthongVthongVthong,TV4,T06,test(T06): kiểm thử độc lập cnn.py và transfer.py trên bản clone sạch,2,BTL02/tracking/tasks.csv; BTL02/tracking/test_log.csv
