@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+b2ce42e1,2026-11-24T02:11:56+07:00,TrungKien2005,TV1,T20,test(T20): kiểm tra hook lớp Conv cuối,1,BTL02/tests/test_tv1_t20_hook.py
 94be961a,2026-11-24T00:24:56+07:00,TrungKien2005,TV1,T05,feat(T05): cải thiện EDA và lưới ảnh,12,BTL02/figures/eda_augmentation.csv; BTL02/figures/eda_augmentation.png; BTL02/figures/eda_class_distribution.csv; BTL02/figures/eda_class_distribution.png; BTL02/figures/eda_image_quality.csv; BTL02/figures/eda_image_quality.png; BTL02/figures/eda_mean_images.csv; BTL02/figures/eda_mean_images.png; BTL02/figures/eda_samples.csv; BTL02/figures/eda_samples.png; BTL02/src/data/eda.py; BTL02/tests/test_eda.py
 419c079c,2026-11-24T00:09:26+07:00,TrungKien2005,TV1,T03,feat(T03): ghi ngày và SHA-256 FER2013,4,BTL02/README.md; BTL02/results/data_check.json; BTL02/src/data/check_fer2013.py; BTL02/tests/test_check_fer2013.py
 8892d600,2026-11-23T23:37:12+07:00,TrungKien2005,TV1,T02,docs(T02): sửa hướng dẫn chạy FER2013,1,BTL02/README.md
