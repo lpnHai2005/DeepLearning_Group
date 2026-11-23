@@ -1,0 +1,7 @@
+{
+  "group": "_qa",
+  "task_id": "T07",
+  "base": {"model": "baseline", "epochs": 2, "batch_size": 128, "optimizer": "sgd", "lr": 0.01, "augmentation": "flip_affine"},
+  "variants": {"baseline_2ep": {}},
+  "seeds": [0]
+}
