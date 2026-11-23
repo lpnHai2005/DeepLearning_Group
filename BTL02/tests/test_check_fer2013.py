@@ -3,6 +3,7 @@
 
 import csv
 import hashlib
+from datetime import date
 
 from src.data.check_fer2013 import inspect_fer2013
 
@@ -33,6 +34,17 @@ def test_check_reports_split_counts_and_sha256_for_fixture(tmp_path):
     assert report["total_rows"] == 4
     assert report["observed_split_counts"] == {"Training": 2, "PublicTest": 1, "PrivateTest": 1}
     assert report["sha256"] == hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def test_check_records_download_date(tmp_path):
+    path = _fixture(tmp_path / "fixture.csv")
+    report = inspect_fer2013(
+        path,
+        expected_counts={"Training": 2, "PublicTest": 1, "PrivateTest": 1},
+        downloaded_on=date(2026, 11, 24),
+    )
+
+    assert report["download_date"] == "2026-11-24"
 
 
 def test_check_flags_unexpected_split(tmp_path):

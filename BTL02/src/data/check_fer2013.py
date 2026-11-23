@@ -9,6 +9,7 @@ import hashlib
 import json
 import sys
 from collections import Counter
+from datetime import date
 from pathlib import Path
 
 EXPECTED_COUNTS = {"Training": 28_709, "PublicTest": 3_589, "PrivateTest": 3_589}
@@ -27,6 +28,7 @@ def _sha256(path: Path) -> str:
 def inspect_fer2013(
     csv_path: str | Path,
     expected_counts: dict[str, int] | None = None,
+    downloaded_on: date | None = None,
 ) -> dict:
     """Đếm Usage và kiểm tra schema; không nạp ảnh vào RAM hoặc sửa dữ liệu."""
     path = Path(csv_path)
@@ -56,6 +58,7 @@ def inspect_fer2013(
     return {
         "status": "PASS" if valid else "FAIL",
         "file": path.name,
+        "download_date": downloaded_on.isoformat() if downloaded_on else None,
         "size_bytes": path.stat().st_size,
         "sha256": _sha256(path),
         "columns": columns,
@@ -72,10 +75,16 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--csv", type=Path, default=DEFAULT_ROOT / "data" / "fer2013.csv")
     parser.add_argument("--output", type=Path, default=DEFAULT_ROOT / "results" / "data_check.json")
+    parser.add_argument(
+        "--download-date",
+        type=date.fromisoformat,
+        required=True,
+        help="Ngày tải/đưa bản FER2013 này vào dự án, định dạng YYYY-MM-DD.",
+    )
     args = parser.parse_args(argv)
 
     try:
-        result = inspect_fer2013(args.csv)
+        result = inspect_fer2013(args.csv, downloaded_on=args.download_date)
     except (FileNotFoundError, ValueError) as exc:
         print(f"Lỗi kiểm tra FER2013: {exc}", file=sys.stderr)
         return 2

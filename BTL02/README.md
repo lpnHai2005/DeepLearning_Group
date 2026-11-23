@@ -116,10 +116,10 @@ Set-Location .\BTL02
 Test-Path .\data\fer2013.csv
 ```
 
-Lệnh `Test-Path` phải trả về `True`. Nếu trả về `False`, hãy chép `fer2013.csv` vào `BTL02/data/` trước. Sau đó chạy kiểm tra cột, split và SHA-256:
+Lệnh `Test-Path` phải trả về `True`. Nếu trả về `False`, hãy chép `fer2013.csv` vào `BTL02/data/` trước. Sau đó chạy kiểm tra cột, split, SHA-256 và ghi ngày tải/đưa file vào dự án (thay ngày nếu khác):
 
 ```powershell
-.\.venv\Scripts\python.exe -X utf8 -m src.data.check_fer2013 --csv data/fer2013.csv --output results/data_check.json
+.\.venv\Scripts\python.exe -X utf8 -m src.data.check_fer2013 --csv data/fer2013.csv --output results/data_check.json --download-date 2026-11-24
 ```
 
 Nếu kiểm tra đạt, có thể sinh EDA và các CSV dữ liệu cho hình:
