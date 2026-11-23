@@ -1,0 +1,4 @@
+split,n_images,mean_brightness_0_255,black_images,white_images,near_black_images,near_white_images
+Training,28709,129.474335,11,0,11,0
+PublicTest,3589,128.981033,1,0,1,0
+PrivateTest,3589,129.082886,0,0,0,0

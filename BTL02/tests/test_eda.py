@@ -40,7 +40,17 @@ def test_eda_writes_png_and_source_csv_for_all_figures(tmp_path):
         rows = list(csv.DictReader(handle))
     assert len(rows) == 21
     assert sum(int(row["count"]) for row in rows if row["split"] == "Training") == 2
+    assert {"percent"}.issubset(rows[0])
+    totals = {}
+    for split in {row["split"] for row in rows}:
+        totals[split] = sum(float(row["percent"]) for row in rows if row["split"] == split)
+    assert all(abs(total - 100.0) < 1e-5 for total in totals.values())
     with (output / "eda_samples.csv").open(encoding="utf-8", newline="") as handle:
         sample_pixels = list(csv.DictReader(handle))
     assert len(sample_pixels) == 4 * 48 * 48
     assert {row["split"] for row in sample_pixels} == {"Training", "PublicTest", "PrivateTest"}
+    with (output / "eda_image_quality.csv").open(encoding="utf-8", newline="") as handle:
+        quality = {row["split"]: row for row in csv.DictReader(handle)}
+    assert quality["Training"]["black_images"] == "1"
+    assert quality["Training"]["white_images"] == "1"
+    assert quality["PublicTest"]["mean_brightness_0_255"] == "128.0"

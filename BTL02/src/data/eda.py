@@ -51,7 +51,7 @@ def generate_eda(
     output_dir: str | Path,
     *,
     seed: int = 0,
-    samples_per_class: int = 3,
+    samples_per_class: int = 1,
 ) -> list[Path]:
     """Tạo năm hình và các CSV dữ liệu tương ứng; không ghi vào tracking."""
     output = Path(output_dir)
@@ -64,57 +64,98 @@ def generate_eda(
             raise ValueError(f"Ảnh {split} phải có dạng uint8 (N, 48, 48)")
         if labels.ndim != 1 or len(images) != len(labels):
             raise ValueError(f"Nhãn {split} không khớp số ảnh")
+    if samples_per_class < 1:
+        raise ValueError("samples_per_class phải ít nhất là 1")
 
     created: list[Path] = []
 
-    # Phân bố lớp theo ba split.
-    count_rows = [
-        {"split": SPLIT_LABELS[split], "label": i, "emotion": EMOTIONS[i], "count": int((labels == i).sum())}
-        for split, (_, labels) in data.items()
-        for i in range(len(EMOTIONS))
-    ]
-    fig, ax = plt.subplots(figsize=(10, 5))
-    x = np.arange(len(EMOTIONS))
-    width = 0.25
-    for j, split in enumerate(SPLITS):
+    # Tỷ lệ chuẩn hóa riêng theo từng split để Training không lấn át hai tập test.
+    count_rows: list[dict] = []
+    counts_by_split: dict[str, list[int]] = {}
+    percentages_by_split: dict[str, list[float]] = {}
+    for split in SPLITS:
         _, labels = data[split]
-        counts = [(labels == i).sum() for i in range(len(EMOTIONS))]
-        ax.bar(x + (j - 1) * width, counts, width, label=SPLIT_LABELS[split])
-    ax.set_xticks(x, EMOTIONS, rotation=20, ha="right")
-    ax.set_ylabel("Số ảnh")
-    ax.set_title("Phân bố nhãn FER2013 theo split")
-    ax.legend()
+        total = len(labels)
+        counts = [int((labels == label).sum()) for label in range(len(EMOTIONS))]
+        percentages = [100.0 * count / total if total else 0.0 for count in counts]
+        counts_by_split[split] = counts
+        percentages_by_split[split] = percentages
+        count_rows.extend(
+            {
+                "split": SPLIT_LABELS[split],
+                "label": label,
+                "emotion": EMOTIONS[label],
+                "count": counts[label],
+                "percent": round(percentages[label], 6),
+            }
+            for label in range(len(EMOTIONS))
+        )
+
+    fig, axes = plt.subplots(1, len(SPLITS), figsize=(16, 5), sharey=True, squeeze=False)
+    colors = [plt.get_cmap("tab10")(i) for i in range(len(EMOTIONS))]
+    for ax, split in zip(axes[0], SPLITS):
+        percentages = percentages_by_split[split]
+        bars = ax.bar(np.arange(len(EMOTIONS)), percentages, color=colors, width=0.78)
+        labels = [
+            f"{counts_by_split[split][i]:,}".replace(",", ".") + f"\n{percentages[i]:.1f}%"
+            for i in range(len(EMOTIONS))
+        ]
+        ax.bar_label(bars, labels=labels, padding=2, fontsize=7)
+        ax.set_xticks(np.arange(len(EMOTIONS)), EMOTIONS, rotation=35, ha="right")
+        ax.set_title(f"{SPLIT_LABELS[split]}\nn={len(data[split][1]):,}".replace(",", "."))
+        ax.set_ylim(0, max(30.0, max(percentages, default=0.0) * 1.22))
+        ax.grid(axis="y", alpha=0.25)
+        ax.set_axisbelow(True)
+    axes[0, 0].set_ylabel("Tỷ lệ trong split (%)")
     paths = [output / "eda_class_distribution.png", output / "eda_class_distribution.csv"]
-    _save(fig, *paths, ["split", "label", "emotion", "count"], count_rows)
+    _save(fig, *paths, ["split", "label", "emotion", "count", "percent"], count_rows)
     created.extend(paths)
 
-    # Ảnh mẫu có nhãn; CSV chứa từng pixel để làm nguồn trực tiếp của lưới ảnh.
+    # Mỗi split có một lưới theo lớp; mặc định một ảnh/lớp để nhãn và khuôn mặt đủ lớn.
     sample_rows: list[dict] = []
-    selected_by_split: dict[str, list[int]] = {}
+    selected_by_split: dict[str, dict[int, list[int]]] = {}
     for split in SPLITS:
         images, labels = data[split]
         selected = _sample_indices(labels, samples_per_class, seed)
-        selected_by_split[split] = selected
+        by_label = {label: [] for label in range(len(EMOTIONS))}
         for idx in selected:
             label = int(labels[idx])
+            by_label[label].append(idx)
             sample_rows.extend(
                 {"split": SPLIT_LABELS[split], "index_in_split": idx, "label": label,
                  "emotion": EMOTIONS[label], "y": y, "x": x, "pixel": int(images[idx, y, x])}
                 for y in range(48) for x in range(48)
             )
-    columns = max(1, max((len(v) for v in selected_by_split.values()), default=0))
-    fig, axes = plt.subplots(len(SPLITS), columns, figsize=(max(8, columns * 1.4), 6), squeeze=False)
+        selected_by_split[split] = by_label
+    columns = len(EMOTIONS) * samples_per_class
+    fig, axes = plt.subplots(
+        len(SPLITS), columns,
+        figsize=(max(10, columns * 1.65), 6.5),
+        squeeze=False,
+    )
     for row_idx, split in enumerate(SPLITS):
-        images, labels = data[split]
-        selected = selected_by_split[split]
-        for col_idx in range(columns):
-            ax = axes[row_idx, col_idx]
-            ax.axis("off")
-            if col_idx < len(selected):
-                idx = selected[col_idx]
-                label = int(labels[idx])
-                ax.imshow(images[idx], cmap="gray", vmin=0, vmax=255)
-                ax.set_title(f"{SPLIT_LABELS[split]}\n{EMOTIONS[label]} (y={label})", fontsize=8)
+        images, _ = data[split]
+        for label, emotion in enumerate(EMOTIONS):
+            examples = selected_by_split[split][label]
+            for sample_idx in range(samples_per_class):
+                col_idx = label * samples_per_class + sample_idx
+                ax = axes[row_idx, col_idx]
+                ax.set_xticks([])
+                ax.set_yticks([])
+                for spine in ax.spines.values():
+                    spine.set_visible(False)
+                if row_idx == 0:
+                    suffix = f" #{sample_idx + 1}" if samples_per_class > 1 else ""
+                    ax.set_title(f"{emotion}{suffix} (y={label})", fontsize=9)
+                if col_idx == 0:
+                    ax.set_ylabel(
+                        SPLIT_LABELS[split], rotation=0, fontsize=9,
+                        labelpad=12, va="center",
+                    )
+                if sample_idx < len(examples):
+                    ax.imshow(images[examples[sample_idx]], cmap="gray", vmin=0, vmax=255)
+                else:
+                    ax.text(0.5, 0.5, "không có mẫu", ha="center", va="center", fontsize=7)
     paths = [output / "eda_samples.png", output / "eda_samples.csv"]
     _save(fig, *paths, ["split", "index_in_split", "label", "emotion", "y", "x", "pixel"], sample_rows)
     created.extend(paths)
@@ -141,7 +182,7 @@ def generate_eda(
     _save(fig, *paths, ["split", "label", "emotion", "y", "x", "mean_pixel"], mean_rows)
     created.extend(paths)
 
-    # Độ sáng và ảnh toàn đen/trắng theo split.
+    # Độ sáng toàn thang 0–255 cùng số ảnh toàn đen/trắng theo split.
     quality_rows = []
     for split, (images, _) in data.items():
         pixel_means = images.astype(np.float32).mean(axis=(1, 2))
@@ -153,14 +194,45 @@ def generate_eda(
             "near_black_images": int(((images <= 2).mean(axis=(1, 2)) >= 0.99).sum()),
             "near_white_images": int(((images >= 253).mean(axis=(1, 2)) >= 0.99).sum()),
         })
-    fig, ax = plt.subplots(figsize=(8, 4))
-    labels = [r["split"] for r in quality_rows]
-    brightness = [r["mean_brightness_0_255"] or 0 for r in quality_rows]
-    ax.bar(labels, brightness, color="#4c78a8")
-    ax.set_ylabel("Cường độ pixel trung bình (0–255)")
-    ax.set_title("Độ sáng trung bình theo split")
-    for i, row in enumerate(quality_rows):
-        ax.text(i, brightness[i], f"đen={row['black_images']}  trắng={row['white_images']}", ha="center", va="bottom", fontsize=8)
+    fig, (ax_brightness, ax_defects) = plt.subplots(
+        2, 1, figsize=(9, 6), gridspec_kw={"height_ratios": [1.5, 1]}
+    )
+    split_names = [row["split"] for row in quality_rows]
+    brightness = [float(row["mean_brightness_0_255"] or 0) for row in quality_rows]
+    x = np.arange(len(split_names))
+    ax_brightness.plot(x, brightness, color="#315f8c", marker="o", linewidth=1.8)
+    ax_brightness.set_xticks(x, split_names)
+    ax_brightness.set_ylim(0, 255)
+    ax_brightness.set_ylabel("Trung bình pixel (0–255)")
+    ax_brightness.set_title("Độ sáng trung bình theo split")
+    ax_brightness.grid(axis="y", alpha=0.25)
+    for idx, value in enumerate(brightness):
+        ax_brightness.annotate(f"{value:.3f}", (idx, value), xytext=(0, 8),
+                               textcoords="offset points", ha="center", fontsize=9)
+    spread = max(brightness) - min(brightness) if brightness else 0.0
+    ax_brightness.text(
+        0.99, 0.96, f"Khoảng chênh: {spread:.3f}/255",
+        transform=ax_brightness.transAxes, ha="right", va="top", fontsize=8,
+    )
+
+    width = 0.34
+    black_bars = ax_defects.bar(
+        x - width / 2, [row["black_images"] for row in quality_rows],
+        width, label="Toàn đen", color="#343a40",
+    )
+    white_bars = ax_defects.bar(
+        x + width / 2, [row["white_images"] for row in quality_rows],
+        width, label="Toàn trắng", color="#cbd2d9", edgecolor="#7b8794",
+    )
+    ax_defects.bar_label(black_bars, padding=2, fontsize=8)
+    ax_defects.bar_label(white_bars, padding=2, fontsize=8)
+    ax_defects.set_xticks(x, split_names)
+    ax_defects.set_ylabel("Số ảnh")
+    ax_defects.set_ylim(0, max(2, max((row["black_images"] for row in quality_rows), default=0) * 1.3))
+    ax_defects.set_title("Ảnh toàn đen và toàn trắng")
+    ax_defects.legend(frameon=False, ncols=2)
+    ax_defects.grid(axis="y", alpha=0.25)
+    ax_defects.set_axisbelow(True)
     paths = [output / "eda_image_quality.png", output / "eda_image_quality.csv"]
     _save(fig, *paths, ["split", "n_images", "mean_brightness_0_255", "black_images", "white_images",
                         "near_black_images", "near_white_images"], quality_rows)
