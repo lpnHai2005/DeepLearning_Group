@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+78d7ad6a,2026-11-23T22:50:30+07:00,HiCyclone,TV2,T04,test(T04): kiểm thử độc lập loader FER2013 trên bản clone sạch,2,BTL02/tracking/tasks.csv; BTL02/tracking/test_log.csv
 d6351e5b,2026-11-23T22:12:27+07:00,TrungKien2005,TV1,T02,docs(T02): sửa lệnh pip đọc requirements UTF-8,1,BTL02/README.md
 3abf7140,2026-11-23T22:00:34+07:00,TrungKien2005,TV1,T09,test(T09): kiểm tra mean và độ lệch chuẩn,1,BTL02/tests/test_tv1_t09_mean_std_check.py
 25b3b204,2026-11-23T22:00:33+07:00,TrungKien2005,TV1,T08,test(T08): đối chiếu metric với sklearn,1,BTL02/tests/test_tv1_t08_metric_check.py
