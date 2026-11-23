@@ -1,0 +1,31 @@
+{
+  "exp_id": "_qa-001_s0",
+  "task_id": "T07",
+  "group": "_qa",
+  "variant": "baseline_2ep",
+  "member": "TV2",
+  "hostname": "DESKTOP-IOD0676",
+  "os_user": "Nguyen Hai",
+  "git_user": "HiCyclone",
+  "gpu": "NVIDIA GeForce RTX 4060 Laptop GPU",
+  "torch": "2.6.0+cu124",
+  "cuda": "12.4",
+  "git_commit": "f2cb839b",
+  "dataset_sha256": "3b8d9617d1017f34733c8f2474d7784c563ce86c40a86ac12c2d37cc968f871b",
+  "started_at": "2026-11-23T23:30:52+07:00",
+  "finished_at": "2026-11-23T23:31:38+07:00",
+  "duration_s": 46.667,
+  "n_params": 5867847,
+  "config_path": "configs/qa_T07.json",
+  "cfg": {
+    "model": "baseline",
+    "epochs": 2,
+    "batch_size": 128,
+    "optimizer": "sgd",
+    "lr": 0.01,
+    "augmentation": "flip_affine",
+    "seed": 0,
+    "exp_id": "_qa-001_s0",
+    "variant": "baseline_2ep"
+  }
+}
