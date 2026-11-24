@@ -30,9 +30,12 @@ def _t(iso):
     return datetime.fromisoformat(iso)
 
 
-def read_commits(path=ROOT):
-    """Danh sách (thời điểm, thông điệp) của các commit chạm vào BTL02, bỏ commit của bot."""
-    raw = subprocess.run(["git", "log", "--format=%aI\x1f%an\x1f%s", "--", str(path)], capture_output=True,
+def read_commits():
+    """Danh sách (thời điểm, thông điệp) của mọi commit trong repo, bỏ commit của bot.
+
+    Không lọc theo thư mục: commit rỗng `done(Txx)` không chạm file nào, lọc `-- BTL02` sẽ bỏ sót nó.
+    """
+    raw = subprocess.run(["git", "log", "--format=%aI\x1f%an\x1f%s"], capture_output=True,
                          text=True, encoding="utf-8", cwd=ROOT, check=True).stdout
     out = []
     for line in filter(None, raw.splitlines()):
