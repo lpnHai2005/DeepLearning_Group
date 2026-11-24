@@ -13,8 +13,9 @@ của fit xem src/engine/trainer.py). Mô hình: "model" là tên cấu hình CN
 learning dùng "transfer": {"name": "resnet18", "pretrained": true, "freeze_backbone": false}.
 
 Mỗi (variant, seed) là một run: results/<group>/<group>-NNN_s<seed>/ gồm config.json (ai chạy, máy nào, giờ nào,
-commit, sha256 dữ liệu), run.log, history.csv, metrics.json, best.pt (chỉ run hợp lệ). Sau mỗi run, code tự nối 1
-dòng vào tracking/experiments.csv (kể cả run lỗi/bị ngắt). Chạy lại sau lỗi luôn lấy exp_id mới, không ghi đè.
+commit, sha256 dữ liệu), run.log, history.csv, metrics.json, best.pt (chỉ run hợp lệ), curves.png + curves.csv (đường
+cong Train/Val loss, acc vẽ từ history.csv bằng plots.py của T08, kèm 1 dòng tracking/figures_manifest.csv; run chưa
+xong epoch nào thì không có). Sau mỗi run, code tự nối 1 dòng vào tracking/experiments.csv (kể cả run lỗi/bị ngắt). Chạy lại sau lỗi luôn lấy exp_id mới, không ghi đè.
 Chưa có --eval-test: PrivateTest chạy đúng 1 lần ở nhiệm vụ T19 (TV3).
 """
 import argparse
@@ -38,6 +39,7 @@ from src.engine.trainer import fit, record_failure, scan_orphans  # noqa: E402
 from src.models import build_model, build_transfer, n_params  # noqa: E402
 from src.utils.io import append_csv_row, rel, sha256_file, write_json  # noqa: E402
 from src.utils.seed import set_seed  # noqa: E402
+from src.visual.plots import plot_curves, register_figure  # noqa: E402  (T08, TV3)
 
 
 def _now():
@@ -89,7 +91,29 @@ def collect_row(run_dir, root=ROOT):
         weights_path=rel(run_dir / "best.pt", root) if kept else "", weights_sha256=m["weights_sha256"],
         weights_size_mb=m["weights_size_mb"], weights_quyet_dinh=m["weights_quyet_dinh"],
         weights_ma_ly_do=m["weights_ma_ly_do"], run_dir=rel(run_dir, root), log_path=rel(run_dir / "run.log", root),
-        history_path=rel(run_dir / "history.csv", root))
+        history_path=rel(run_dir / "history.csv", root),
+        curve_path=rel(run_dir / "curves.png", root) if (run_dir / "curves.png").exists() else "")
+
+
+def plot_run(run_dir, root=ROOT):
+    """Vẽ curves.png + curves.csv từ history.csv của run và ghi/cập nhật 1 dòng figures_manifest.csv.
+
+    Run chưa xong epoch nào thì bỏ qua (trả None). Lỗi khi vẽ chỉ in cảnh báo, không làm hỏng run đã train.
+    """
+    run_dir, root = Path(run_dir), Path(root)
+    hist = run_dir / "history.csv"
+    if not hist.exists() or len(hist.read_text(encoding="utf-8").splitlines()) < 2:
+        return None
+    meta = _read_json(run_dir / "config.json")
+    try:
+        png, _ = plot_curves(hist, run_dir / "curves.png", title=meta["exp_id"])
+        register_figure(root / "tracking" / "figures_manifest.csv", f"curves_{meta['exp_id']}", png, hist,
+                        "src/visual/plots.py", f"python src/visual/plots.py --run-dir {rel(run_dir, root)}",
+                        exp_ids=meta["exp_id"], task_id=meta["task_id"], root=root)
+    except Exception as e:
+        print(f"[{meta['exp_id']}] không vẽ được curves.png: {e!r}", file=sys.stderr)
+        return None
+    return png
 
 
 def _next_number(root, group, known_ids):
@@ -117,6 +141,7 @@ def run(config_path, member, only=None, root=ROOT):
 
     for d in scan_orphans(root / "results"):  # run bị kill từ lần trước: ghi dòng còn thiếu
         if d.name not in known:
+            plot_run(d, root)
             append_csv_row(csv_path, header, collect_row(d, root))
             known.append(d.name)
     env, group, results = _environment(root), spec["group"], []
@@ -146,6 +171,7 @@ def run(config_path, member, only=None, root=ROOT):
                 res = _read_json(run_dir / "metrics.json")
             meta.update(finished_at=_now(), duration_s=round(time.perf_counter() - t0, 3))
             write_json(run_dir / "config.json", meta)
+            plot_run(run_dir, root)
             append_csv_row(csv_path, header, collect_row(run_dir, root))
             results.append(res)
             if res["status"] == "Aborted":  # Ctrl+C: dừng cả nhóm, không chạy tiếp

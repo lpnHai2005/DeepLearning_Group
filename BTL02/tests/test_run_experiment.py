@@ -57,7 +57,8 @@ def test_run_hop_le_ghi_du_file_va_mot_dong(root):
     r = rows(root)
     assert [x["exp_id"] for x in r] == ["E9-001_s0", "E9-001_s1", "E9-002_s0", "E9-002_s1"]  # seed chung số thứ tự
     d = root / "results" / "E9" / "E9-001_s0"
-    assert {p.name for p in d.iterdir()} == {"config.json", "run.log", "history.csv", "metrics.json", "best.pt"}
+    assert {p.name for p in d.iterdir()} == {"config.json", "run.log", "history.csv", "metrics.json", "best.pt",
+                                         "curves.png", "curves.csv"}
     meta = json.loads((d / "config.json").read_text(encoding="utf-8"))
     for k in ("member", "hostname", "os_user", "gpu", "started_at", "finished_at", "duration_s", "torch", "n_params"):
         assert meta[k] not in (None, ""), k
@@ -69,6 +70,17 @@ def test_run_hop_le_ghi_du_file_va_mot_dong(root):
     assert json.loads(row["hyperparams_json"])["variant"] == "sgd"
     assert int(row["n_params"]) == meta["n_params"] and float(row["epoch_time_s_tb"]) > 0 and row["test_acc"] == ""
     assert set(r[0]) == set(REAL_HEADER.split(","))
+    assert row["curve_path"] == "results/E9/E9-001_s0/curves.png"
+    hist = (d / "history.csv").read_text(encoding="utf-8").splitlines()
+    with open(d / "curves.csv", encoding="utf-8", newline="") as f:
+        plotted = list(csv.DictReader(f))
+    assert len(plotted) == len(hist) - 1 == 2  # mỗi epoch của history.csv đúng 1 dòng dữ liệu vẽ
+    with open(root / "tracking" / "figures_manifest.csv", encoding="utf-8", newline="") as f:
+        figs = {x["fig_id"]: x for x in csv.DictReader(f)}
+    assert len(figs) == 4  # 4 run, mỗi run 1 hình
+    fig = figs["curves_E9-001_s0"]
+    assert fig["file_hinh"] == row["curve_path"] and fig["exp_ids"] == "E9-001_s0" and fig["task_id"] == "T07"
+    assert fig["file_du_lieu_dau_vao"] == "results/E9/E9-001_s0/history.csv" and len(fig["sha256_hinh"]) == 64
 
 
 def test_config_sai_ghi_run_failed_va_chay_tiep(root):
@@ -80,6 +92,8 @@ def test_config_sai_ghi_run_failed_va_chay_tiep(root):
     r = rows(root)
     assert r[0]["trang_thai_ky_thuat"] == "Failed" and r[0]["weights_ma_ly_do"] == "EXCEPTION:ValueError" and r[0]["weights_path"] == ""
     assert r[1]["trang_thai_ky_thuat"] == "Completed"
+    assert r[0]["curve_path"] == "" and not (bad / "curves.png").exists()  # run lỗi trước epoch 1: không có hình
+    assert r[1]["curve_path"].endswith("curves.png")
 
 
 def test_chay_lai_dung_exp_id_moi(root):
