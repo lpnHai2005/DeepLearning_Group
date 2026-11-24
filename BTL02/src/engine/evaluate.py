@@ -40,7 +40,7 @@ def _ten_crops(x: torch.Tensor) -> list[torch.Tensor]:
     return crops
 
 
-def _forward_probs(model: torch.Tensor, x: torch.Tensor, tta_mode: str, amp: bool, device_type: str) -> torch.Tensor:
+def _forward_probs(model: torch.nn.Module, x: torch.Tensor, tta_mode: str, amp: bool, device_type: str) -> torch.Tensor:
     with torch.autocast(device_type, enabled=amp):
         if tta_mode == "none":
             return torch.softmax(model(x), dim=1)
