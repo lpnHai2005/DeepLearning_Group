@@ -119,7 +119,7 @@ def test_visualize_filters_cli(tmp_path):
         "--out-dir", str(out_dir),
         "--device", "cpu",
     ]
-    res = subprocess.run(cmd, capture_output=True, text=True, cwd=str(btl02_dir))
+    res = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", cwd=str(btl02_dir))
     assert res.returncode == 0, f"Lỗi chạy CLI: {res.stderr}\nSTDOUT: {res.stdout}"
     assert (out_dir / "filters_weights_first.png").exists()
     assert (out_dir / "filters_feature_maps.png").exists()
