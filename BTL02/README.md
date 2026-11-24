@@ -2,7 +2,7 @@
 
 Kế hoạch, phân công và quy chuẩn: [`PHAN_CONG_NHIEM_VU.md`](PHAN_CONG_NHIEM_VU.md). Bảng theo dõi: `tracking/` và Google Sheets (link ở mục 10 của file kế hoạch).
 
-**Hiện trạng (2026-11-23):** repo có loader/augmentation và kiểm tra dữ liệu (`src/data/`), model (`src/models/`), trainer/evaluate/plots (`src/engine/`, `src/visual/`), bảng (`src/make_tables.py`), trực quan hóa bộ lọc (`src/visual/filters.py`) và pytest. Theo `tracking/tasks.csv`, T06 là `Verified`; T01 đang `In Progress`, T02/T03–T05/T07–T09 đang `Pending`, T20 đang `In Progress`. Mã T03/T04/T05 có thể chạy kiểm tra bằng fixture; cần FER2013 gốc để tạo `results/data_check.json` và EDA thật. Không commit file dữ liệu gốc.
+**Hiện trạng (2026-11-24):** repo có loader/augmentation và kiểm tra dữ liệu (`src/data/`), model (`src/models/`), trainer/evaluate/plots (`src/engine/`, `src/visual/`), bảng (`src/make_tables.py`), trực quan hóa bộ lọc (`src/visual/filters.py`) và pytest. `configs/baseline.json` dùng cho T11; `configs/qa_T07.json` dùng để chạy QA ngắn. Trạng thái nhiệm vụ mới nhất xem trong `tracking/tasks.csv` vì file này được workflow cập nhật. FER2013 gốc chỉ lưu cục bộ và bị Git bỏ qua; mỗi clone cần tự đặt file tại `data/fer2013.csv` trước khi chạy kiểm tra dữ liệu, EDA hoặc huấn luyện. Không commit file dữ liệu gốc.
 
 ## Cấu trúc thư mục
 
@@ -132,17 +132,14 @@ Hai lệnh cần file FER2013 gốc tại chỗ; chúng không tải dữ liệu
 
 ## Lệnh chạy
 
-`src/` đã có các module triển khai từng phần, nhưng `configs/` và FER2013 gốc hiện chưa có; các lệnh huấn luyện dưới đây chưa chạy được cho đến khi cấu hình và dữ liệu sẵn sàng. Không chạy hàng loạt E1–E6 trước khi T04, T06, T07, T08 và T11 được Verified. Lệnh `--eval-test` chỉ chạy một lần trên mô hình cuối, sau khi chọn cấu hình bằng validation:
+`configs/baseline.json` đã có cho T11; `configs/qa_T07.json` là cấu hình QA hai epoch. Các file FER2013 gốc không được commit, nên mỗi máy cần tự đặt `data/fer2013.csv` trước khi huấn luyện. Các config E1–E7 chỉ chạy khi file cấu hình tương ứng đã có và đủ cổng nghiệm thu. Không chạy hàng loạt E1–E6 trước khi T04, T06, T07, T08 và T11 được Verified. PrivateTest chỉ được đánh giá đúng một lần ở T19 trên mô hình cuối; không chạy lệnh đánh giá test trong QA hoặc khi chọn cấu hình.
 
 ```powershell
-# Baseline T11: mỗi người chạy một seed trên máy mình (git pull trước để có experiments.csv mới nhất)
+# Baseline T11: lấy tracking/experiments.csv mới nhất trước khi chia seed
 python src/run_experiment.py --config configs/baseline.json --member TV2 --seeds 0
 python src/run_experiment.py --config configs/baseline.json --member TV1 --seeds 1
 python src/run_experiment.py --config configs/baseline.json --member TV4 --seeds 2
-# Các nhóm E1–E7: --member là mã của người chạy
-python src/run_experiment.py --config configs/E1_arch.json --member TV2
-python src/run_experiment.py --config configs/E3_optim.json --member TV3 --only adamw_1e-3
-python src/run_experiment.py --config configs/E7_final.json --eval-test
+# Chạy bảng sau khi experiments.csv đã có các run cần tổng hợp
 python src/make_tables.py
 python src/visualize_filters.py
 ```
