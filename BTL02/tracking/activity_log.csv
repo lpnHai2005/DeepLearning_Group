@@ -1,4 +1,8 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+487be203,2026-11-25T00:01:07+07:00,TrungKien2005,TV1,T11,feat(T11): lưu kết quả baseline seed 1,8,BTL02/results/baseline/baseline-001_s1/config.json; BTL02/results/baseline/baseline-001_s1/curves.csv; BTL02/results/baseline/baseline-001_s1/curves.png; BTL02/results/baseline/baseline-001_s1/history.csv; BTL02/results/baseline/baseline-001_s1/metrics.json; BTL02/results/baseline/baseline-001_s1/run.log; BTL02/tracking/experiments.csv; BTL02/tracking/figures_manifest.csv
+c4ed1a34,2026-11-24T23:01:37+07:00,TrungKien2005,TV1,T07,test(T07): ghi Pass cho CLI --seeds,2,BTL02/tracking/tasks.csv; BTL02/tracking/test_log.csv
+9193cc35,2026-11-24T22:57:14+07:00,TrungKien2005,TV1,T02,docs(T02): cập nhật hướng dẫn config và baseline,1,BTL02/README.md
+6cb0044c,2026-11-24T22:54:28+07:00,TrungKien2005,TV1,T07,test(T07): kiểm tra tùy chọn CLI --seeds,1,BTL02/tests/test_tv1_t07_acceptance.py
 a8ab1fa1,2026-11-24T22:17:17+07:00,HiCyclone,TV2,T11,feat(T11): thêm configs/baseline.json theo mục 3.2 và lệnh chạy từng seed trong README,2,BTL02/README.md; BTL02/configs/baseline.json
 126a86f4,2026-11-24T22:17:17+07:00,HiCyclone,TV2,T07,"feat(T07): run_experiment thêm --seeds, dùng chung số thứ tự khi chia seed nhiều máy",2,BTL02/src/run_experiment.py; BTL02/tests/test_run_experiment.py
 d38e0e49,2026-11-24T17:33:13+07:00,HiCyclone,TV2,T01,fix(T01): task_status đọc cả commit rỗng done(Txx),2,BTL02/tracking/task_status.py; BTL02/tracking/tasks.csv
