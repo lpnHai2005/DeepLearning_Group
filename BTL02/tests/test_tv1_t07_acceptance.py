@@ -91,3 +91,42 @@ def test_invalid_optimizer_records_failure_without_checkpoint(tmp_path):
     assert result["weights_quyet_dinh"] == "DISCARD"
     assert result["weights_ma_ly_do"] == "EXCEPTION:ValueError"
     assert not list(run_dir.glob("*.pt*"))
+
+
+def test_cli_seeds_override_reaches_runner():
+    import json
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    btl02_dir = Path(__file__).resolve().parents[1]
+    probe = """
+import json
+from src import run_experiment
+
+def capture(config, member, only=None, root=run_experiment.ROOT, seeds=None):
+    print(json.dumps({"config": config, "member": member, "only": only, "seeds": seeds}))
+
+run_experiment.run = capture
+run_experiment.main([
+    "--config", "configs/baseline.json",
+    "--member", "TV4",
+    "--seeds", "1", "2",
+])
+"""
+    completed = subprocess.run(
+        [sys.executable, "-c", probe],
+        cwd=btl02_dir,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        check=False,
+    )
+
+    assert completed.returncode == 0, completed.stderr
+    assert json.loads(completed.stdout) == {
+        "config": "configs/baseline.json",
+        "member": "TV4",
+        "only": None,
+        "seeds": [1, 2],
+    }
