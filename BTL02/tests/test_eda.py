@@ -3,7 +3,7 @@
 
 import csv
 
-from src.data.eda import generate_eda
+from src.data.eda import generate_eda, register_eda_figures
 from src.data.fer2013 import load_fer2013
 
 
@@ -54,3 +54,24 @@ def test_eda_writes_png_and_source_csv_for_all_figures(tmp_path):
     assert quality["Training"]["black_images"] == "1"
     assert quality["Training"]["white_images"] == "1"
     assert quality["PublicTest"]["mean_brightness_0_255"] == "128.0"
+
+
+def test_register_eda_figures_ghi_moi_hinh_mot_dong(tmp_path):
+    from src.utils.io import sha256_file
+
+    out = tmp_path / "figures"
+    out.mkdir()
+    created = []
+    for name in ("eda_a", "eda_b"):
+        (out / f"{name}.png").write_bytes(name.encode())
+        (out / f"{name}.csv").write_text("x\n1\n", encoding="utf-8")
+        created += [out / f"{name}.png", out / f"{name}.csv"]
+    manifest = tmp_path / "tracking" / "figures_manifest.csv"
+    for _ in range(2):  # chạy lại không nhân đôi dòng
+        register_eda_figures(created, manifest, tmp_path / "data" / "fer2013.csv", out, seed=3, root=tmp_path)
+    with manifest.open(encoding="utf-8", newline="") as handle:
+        rows = {row["fig_id"]: row for row in csv.DictReader(handle)}
+    assert set(rows) == {"eda_a", "eda_b"}
+    assert rows["eda_a"]["file_hinh"] == "figures/eda_a.png" and rows["eda_a"]["file_du_lieu_dau_vao"] == "figures/eda_a.csv"
+    assert rows["eda_a"]["task_id"] == "T05" and rows["eda_a"]["sha256_hinh"] == sha256_file(out / "eda_a.png")
+    assert rows["eda_a"]["lenh_chay"].endswith("--csv data/fer2013.csv --output-dir figures --seed 3")

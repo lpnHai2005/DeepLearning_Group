@@ -277,15 +277,37 @@ def run_eda(csv_path: str | Path, output_dir: str | Path, *, seed: int = 0) -> l
     return generate_eda(load_fer2013(csv_path), output_dir, seed=seed)
 
 
+def register_eda_figures(
+    created: list[Path], manifest_path: str | Path, csv_path: str | Path, output_dir: str | Path, *, seed: int = 0,
+    root: Path = DEFAULT_ROOT,
+) -> list[dict]:
+    """Ghi mỗi hình EDA 1 dòng vào figures_manifest.csv (tab Hinh_ve); dữ liệu vẽ là CSV cùng tên đi kèm hình."""
+    from src.utils.io import rel
+    from src.visual.plots import register_figure
+
+    cmd = (f"python -X utf8 -m src.data.eda --csv {rel(Path(csv_path).resolve(), root)} "
+           f"--output-dir {rel(Path(output_dir).resolve(), root)} --seed {seed}")
+    return [
+        register_figure(manifest_path, png.stem, png, png.with_suffix(".csv"), "src/data/eda.py", cmd,
+                        task_id="T05", root=root)
+        for png in created if png.suffix == ".png"
+    ]
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--csv", type=Path, default=DEFAULT_ROOT / "data" / "fer2013.csv")
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_ROOT / "figures")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--manifest", type=Path, default=DEFAULT_ROOT / "tracking" / "figures_manifest.csv",
+                        help='nơi ghi dòng Hinh_ve cho từng hình; truyền --manifest "" để không ghi')
     args = parser.parse_args(argv)
     if not args.csv.is_file():
         parser.error(f"Không tìm thấy FER2013 CSV: {args.csv}; EDA cần dữ liệu gốc thật.")
     created = run_eda(args.csv, args.output_dir, seed=args.seed)
+    if str(args.manifest) not in ("", "."):
+        register_eda_figures(created, args.manifest, args.csv, args.output_dir, seed=args.seed)
+        print(f"Đã ghi {len(created) // 2} dòng Hinh_ve vào {args.manifest}")
     print(f"Đã tạo {len(created) // 2} hình và CSV nguồn trong {args.output_dir}")
     return 0
 
