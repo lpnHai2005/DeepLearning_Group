@@ -1,9 +1,9 @@
-# Tự sinh BTL02/tracking/activity_log.csv từ lịch sử git sau mỗi push, để Google Sheets kéo về bằng IMPORTDATA.
+# Tự sinh BTL02/tracking/activity_log.csv (nhật ký commit) và cột trang_thai của tasks.csv (từ git + test_log.csv)
+# sau mỗi push, để Google Sheets kéo về bằng IMPORTDATA. Không lọc theo paths: commit rỗng `done(Txx)` cũng phải kích hoạt.
 name: activity-log
 on:
   push:
     branches: [main]
-    paths: ["BTL02/**"]
 permissions:
   contents: write
 concurrency:
@@ -21,12 +21,13 @@ jobs:
         with:
           python-version: "3.12"
       - run: python BTL02/tracking/git_activity.py
+      - run: python BTL02/tracking/task_status.py
       - name: Commit nếu có thay đổi
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add BTL02/tracking/activity_log.csv
+          git add BTL02/tracking/activity_log.csv BTL02/tracking/tasks.csv
           if git diff --cached --quiet; then echo "không đổi"; exit 0; fi
-          git commit -m "chore: cập nhật activity_log.csv [skip ci]"
+          git commit -m "chore: cập nhật activity_log.csv và trạng thái tasks.csv [skip ci]"
           git pull --rebase origin main
           git push origin main

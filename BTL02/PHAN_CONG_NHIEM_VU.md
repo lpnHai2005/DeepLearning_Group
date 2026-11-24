@@ -310,24 +310,32 @@ Thành viên (nhóm xác nhận 2026-11-20): **TV1 Đoàn Trung Kiên, TV2 Lê P
 
 ## 6. Nhật ký làm việc và hệ thống theo dõi
 
-### 6.1. Google Sheets (nơi nhập hằng ngày) và CSV trong git (bản lưu vết)
+### 6.1. CSV trong git (nguồn duy nhất) và Google Sheets (bản xem, tự đồng bộ)
 
 | Tab | Nội dung | CSV tương ứng |
 |---|---|---|
 | `Huong_dan` | Quy tắc đọc/ghi các tab | – |
-| `Phan_cong` | Bảng nhiệm vụ: module, R/C1/C2/T, bằng chứng cần có, cách T kiểm, phụ thuộc, trạng thái | `tracking/tasks.csv` |
+| `Phan_cong` | Bảng nhiệm vụ: module, R/C1/C2/T, bằng chứng cần có, cách T kiểm, phụ thuộc, trạng thái (tự suy, xem dưới); bản sao chỉ đọc, IMPORTDATA | `tracking/tasks.csv` |
 | `Ma_tran` | Ngang × dọc: từng người giữ vai R/C/T ở từng nhiệm vụ (công thức từ `Phan_cong`) | – |
 | `Tien_do` | Đếm theo module và theo thành viên bằng công thức, không nhập tay | – |
-| `Kiem_thu` | Nhật ký kiểm thử và đánh giá chéo | `tracking/test_log.csv` |
+| `Kiem_thu` | Nhật ký kiểm thử và đánh giá chéo; bản sao chỉ đọc, IMPORTDATA | `tracking/test_log.csv` |
 | `Hoat_dong` | Nhật ký git (bản sao chỉ đọc, IMPORTDATA) | `tracking/activity_log.csv` |
 | `Thuc_nghiem` | Mỗi lần train một dòng (kể cả run lỗi); bản sao chỉ đọc, IMPORTDATA | `tracking/experiments.csv` |
-| `Hinh_ve` | Mỗi hình: script, dữ liệu đầu vào, lệnh, experiment liên quan | `tracking/figures_manifest.csv` |
+| `Hinh_ve` | Mỗi hình: script, dữ liệu đầu vào, lệnh, experiment liên quan (code tự ghi: `plots.register_figure`); bản sao chỉ đọc, IMPORTDATA | `tracking/figures_manifest.csv` |
 
 Liên kết giữa các bảng: `task_id` (T01–T28) nối Phan_cong ↔ Kiem_thu ↔ commit git (mã nhiệm vụ trong thông điệp); `exp_id` nối Thuc_nghiem ↔ Hinh_ve (weights nằm ngay trong dòng Thuc_nghiem); `weights_id`, `fig_id` là khóa của từng bảng.
 
 Chuỗi truy vết: **nhiệm vụ → thành viên → source code (commit) → log (`run.log`) → kết quả (`experiments.csv`, `history.csv`) → kiểm thử (`Kiem_thu`) → báo cáo/slide**.
 
-Đồng bộ lên Sheets (tự động một chiều, không nhập tay): tab `Hoat_dong` và `Thuc_nghiem` là **bản sao chỉ đọc** của `tracking/activity_log.csv` và `tracking/experiments.csv` trên GitHub, kéo về bằng `=IMPORTDATA(<đường dẫn raw>)`. Dữ liệu chỉ lên Sheets sau khi file được **commit và push**; Google làm mới bộ nhớ đệm sau khoảng vài chục phút đến vài giờ, nên có độ trễ. Không sửa tay hai tab này (sẽ bị công thức ghi đè). `Phan_cong` và `Kiem_thu` vẫn nhập trên Sheets; cuối mỗi buổi xuất CSV ghi đè `tracking/*.csv` và commit nếu muốn giữ bản lưu vết. `build_tracking.py` chỉ **khởi tạo** bảng (ghi đè `tasks.csv`, `tracking.xlsx`; không ghi đè `members.csv` và các CSV nhật ký đã có).
+Đồng bộ lên Sheets (tự động một chiều, không nhập tay): các tab `Phan_cong`, `Kiem_thu`, `Hoat_dong`, `Thuc_nghiem`, `Hinh_ve` là **bản sao chỉ đọc** của CSV tương ứng trên GitHub, kéo về bằng `=IMPORTDATA(<đường dẫn raw>;",";"en_US")` (khóa `en_US` để số thập phân dấu chấm không bị Sheets tiếng Việt đọc sai). `Ma_tran` và `Tien_do` là công thức trên các tab đó. Dữ liệu chỉ lên Sheets sau khi file được **commit và push**; Google làm mới bộ nhớ đệm sau khoảng vài chục phút đến vài giờ, nên có độ trễ. Không sửa tay các tab này (sẽ bị công thức ghi đè); muốn đổi thì sửa nguồn trong git.
+
+Cột `trang_thai` của `tasks.csv` không ai gõ: `tracking/task_status.py` tự suy sau mỗi push (workflow `.github/workflows/activity-log.yml`, cùng lượt sinh `activity_log.csv`):
+- **In Progress**: đã có commit mang mã nhiệm vụ (`feat(T07): ...`).
+- **Completed**: R báo xong bằng commit `done(Txx): <bằng chứng ở đâu>`; được dùng commit rỗng `git commit --allow-empty -m "done(T07): ..."`. Sau một lần Fail, R sửa xong thì `done(Txx)` lại để báo chờ kiểm lại.
+- **Verified / Failed**: dòng kiểm thử mới nhất của nhiệm vụ trong `test_log.csv` là `Pass` / `Fail` (T thêm dòng và commit `test(Txx): ...`), và không có `done(Txx)` nào sau dòng đó.
+- **Pending**: chưa có gì.
+
+`build_tracking.py` chỉ **khởi tạo** bảng (ghi đè `tasks.csv`, `tracking.xlsx`; không ghi đè `members.csv` và các CSV nhật ký đã có); chạy lại thì lượt push kế tiếp sẽ tự suy lại trạng thái.
 
 Liên kết Google Sheets/Slides: xem mục 10 (quyền chia sẻ cho 3 thành viên còn lại do nhóm trưởng cấp).
 
