@@ -1,4 +1,6 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+a8ab1fa1,2026-11-24T22:17:17+07:00,HiCyclone,TV2,T11,feat(T11): thêm configs/baseline.json theo mục 3.2 và lệnh chạy từng seed trong README,2,BTL02/README.md; BTL02/configs/baseline.json
+126a86f4,2026-11-24T22:17:17+07:00,HiCyclone,TV2,T07,"feat(T07): run_experiment thêm --seeds, dùng chung số thứ tự khi chia seed nhiều máy",2,BTL02/src/run_experiment.py; BTL02/tests/test_run_experiment.py
 d38e0e49,2026-11-24T17:33:13+07:00,HiCyclone,TV2,T01,fix(T01): task_status đọc cả commit rỗng done(Txx),2,BTL02/tracking/task_status.py; BTL02/tracking/tasks.csv
 14aef687,2026-11-24T17:32:10+07:00,HiCyclone,TV2,T01,feat(T01): tự suy trạng thái nhiệm vụ bằng task_status.py trong workflow,3,BTL02/PHAN_CONG_NHIEM_VU.md; BTL02/tests/test_task_status.py; BTL02/tracking/task_status.py
 83466a93,2026-11-24T17:32:10+07:00,HiCyclone,TV2,T20,fix(T20): đọc output subprocess bằng utf-8 trong test_filters,1,BTL02/tests/test_filters.py
