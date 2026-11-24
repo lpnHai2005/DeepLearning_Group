@@ -124,3 +124,24 @@ def test_only_chi_chay_variant_duoc_chon(root):
     cfg = write_config(root, {"a": {}, "b": {}})
     run_experiment.run(cfg, "TV1", only=["b"], root=root)
     assert [json.loads(x["hyperparams_json"])["variant"] for x in rows(root)] == ["b"]
+
+
+def test_chia_seed_nhieu_may_dung_chung_so_thu_tu(root):
+    cfg = write_config(root, {"base": {}}, seeds=(0, 1, 2))
+    run_experiment.run(cfg, "TV2", root=root, seeds=[0])  # máy TV2
+    run_experiment.run(cfg, "TV1", root=root, seeds=[1])  # máy TV1 (đã pull experiments.csv)
+    run_experiment.run(cfg, "TV1", root=root, seeds=[2])
+    assert [x["exp_id"] for x in rows(root)] == ["E9-001_s0", "E9-001_s1", "E9-001_s2"]
+    run_experiment.run(cfg, "TV2", root=root, seeds=[0])  # chạy lại seed đã có: số mới, không ghi đè
+    assert rows(root)[-1]["exp_id"] == "E9-002_s0"
+
+
+def test_khong_dung_lai_so_cua_cfg_khac_hoac_run_loi(root):
+    a = write_config(root, {"x": {}})
+    run_experiment.run(a, "TV2", root=root, seeds=[0])
+    b = write_config(root, {"x": {"lr": 0.001}})  # cùng tên variant nhưng cfg khác
+    run_experiment.run(b, "TV1", root=root, seeds=[1])
+    bad = write_config(root, {"y": {"model": "khong_co"}})
+    run_experiment.run(bad, "TV1", root=root, seeds=[0])
+    run_experiment.run(bad, "TV1", root=root, seeds=[1])  # số có run Failed thì không gom seed vào đó
+    assert [x["exp_id"] for x in rows(root)] == ["E9-001_s0", "E9-002_s1", "E9-003_s0", "E9-004_s1"]

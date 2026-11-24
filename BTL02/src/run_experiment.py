@@ -12,6 +12,10 @@ Config JSON:
 của fit xem src/engine/trainer.py). Mô hình: "model" là tên cấu hình CNN (kèm "model_kwargs" ghi đè); transfer
 learning dùng "transfer": {"name": "resnet18", "pretrained": true, "freeze_backbone": false}.
 
+Chạy chia seed trên nhiều máy (ví dụ baseline T11: mỗi người một seed): thêm --seeds 1. Run mới dùng lại số NNN của
+run cùng group, cùng cfg (trừ seed) đã Completed mà chưa có seed đó, nên 3 seed chạy ở 3 máy vẫn là NNN_s0/_s1/_s2
+và make_tables gom được mean ± std. Nhớ pull experiments.csv mới nhất trước khi chạy.
+
 Mỗi (variant, seed) là một run: results/<group>/<group>-NNN_s<seed>/ gồm config.json (ai chạy, máy nào, giờ nào,
 commit, sha256 dữ liệu), run.log, history.csv, metrics.json, best.pt (chỉ run hợp lệ), curves.png + curves.csv (đường
 cong Train/Val loss, acc vẽ từ history.csv bằng plots.py của T08, kèm 1 dòng tracking/figures_manifest.csv; run chưa
@@ -122,8 +126,36 @@ def _next_number(root, group, known_ids):
     return 1 + max([int(m.group(1)) for m in map(pat.match, ids) if m] or [0])
 
 
-def run(config_path, member, only=None, root=ROOT):
-    """Chạy mọi (variant, seed) của file config; trả danh sách metrics của từng run."""
+def _cfg_key(cfg):
+    """Khóa so sánh cấu hình: mọi khóa trừ seed và exp_id."""
+    return json.dumps({k: v for k, v in cfg.items() if k not in ("seed", "exp_id")}, ensure_ascii=False, sort_keys=True)
+
+
+def _pick_number(group, key, seed, prior, taken):
+    """Số NNN để dùng lại cho (cfg, seed), hoặc None nếu phải lấy số mới.
+
+    prior: {exp_id: (cfg_key, trang_thai)} các run đã có. Chỉ dùng lại số mà mọi run của nó cùng cfg và đều
+    Completed (run lỗi thì chạy lại sang số mới), và chưa có seed này (không ghi đè run cũ).
+    """
+    pat = re.compile(rf"^{re.escape(group)}-(\d+)_s(\d+)$")
+    by_num = {}
+    for exp_id, (k, status) in prior.items():
+        m = pat.match(exp_id)
+        if m:
+            by_num.setdefault(int(m.group(1)), []).append((int(m.group(2)), k, status))
+    for num in sorted(by_num):
+        runs = by_num[num]
+        same_cfg_ok = all(k == key and st == "Completed" for _, k, st in runs)
+        if same_cfg_ok and seed not in {sd for sd, _, _ in runs} and f"{group}-{num:03d}_s{seed}" not in taken:
+            return num
+    return None
+
+
+def run(config_path, member, only=None, root=ROOT, seeds=None):
+    """Chạy mọi (variant, seed) của file config; trả danh sách metrics của từng run.
+
+    seeds: ghi đè danh sách seed trong config (chạy chia seed trên nhiều máy).
+    """
     root = Path(root)
     spec = _read_json(config_path)
     with open(root / "tracking" / "members.csv", encoding="utf-8-sig", newline="") as f:
@@ -136,24 +168,37 @@ def run(config_path, member, only=None, root=ROOT):
     csv_path = root / "tracking" / "experiments.csv"
     with open(csv_path, encoding="utf-8", newline="") as f:
         reader = csv.DictReader(f)
-        header, known = reader.fieldnames, [r["exp_id"] for r in reader]
+        header, rows_csv = reader.fieldnames, list(reader)
+    known = [r["exp_id"] for r in rows_csv]
+    prior = {r["exp_id"]: (_cfg_key(json.loads(r["hyperparams_json"] or "{}")), r["trang_thai_ky_thuat"]) for r in rows_csv}
     from src.data.loader import make_loaders  # nhiệm vụ T04 (TV1)
 
     for d in scan_orphans(root / "results"):  # run bị kill từ lần trước: ghi dòng còn thiếu
         if d.name not in known:
             plot_run(d, root)
-            append_csv_row(csv_path, header, collect_row(d, root))
+            row = collect_row(d, root)
+            append_csv_row(csv_path, header, row)
             known.append(d.name)
+            prior[d.name] = (_cfg_key(json.loads(row["hyperparams_json"])), row["trang_thai_ky_thuat"])
     env, group, results = _environment(root), spec["group"], []
     n = _next_number(root, group, known)
+    taken = set(known) | {p.name for p in (root / "results" / group).glob("*")}
     for variant, over in spec["variants"].items():
         if only and variant not in only:
             continue
-        for seed in spec.get("seeds", [0]):
-            exp_id = f"{group}-{n:03d}_s{seed}"
+        fresh = None  # số mới dùng chung cho các seed của variant này trong lần chạy
+        for seed in (seeds if seeds is not None else spec.get("seeds", [0])):
+            cfg = {**spec["base"], **over, "seed": seed, "variant": variant}
+            num = _pick_number(group, _cfg_key(cfg), seed, prior, taken)
+            if num is None:
+                if fresh is None or f"{group}-{fresh:03d}_s{seed}" in taken:
+                    fresh, n = n, n + 1
+                num = fresh
+            exp_id = f"{group}-{num:03d}_s{seed}"
+            taken.add(exp_id)
             run_dir = root / "results" / group / exp_id
             run_dir.mkdir(parents=True)  # đã tồn tại thì lỗi: không ghi đè
-            cfg = {**spec["base"], **over, "seed": seed, "exp_id": exp_id, "variant": variant}
+            cfg["exp_id"] = exp_id
             meta = dict(exp_id=exp_id, task_id=spec.get("task_id", ""), group=group, variant=variant, member=member,
                         **env, started_at=_now(), finished_at=None, duration_s=None, n_params=None,
                         config_path=rel(config_path, root), cfg=cfg)
@@ -176,7 +221,6 @@ def run(config_path, member, only=None, root=ROOT):
             results.append(res)
             if res["status"] == "Aborted":  # Ctrl+C: dừng cả nhóm, không chạy tiếp
                 return results
-        n += 1
     return results
 
 
@@ -186,8 +230,9 @@ def main(argv=None):
     ap.add_argument("--config", required=True, help="file JSON, ví dụ configs/E3_optim.json")
     ap.add_argument("--member", required=True, help="mã người chạy (TV1..TV4), ghi vào config.json và experiments.csv")
     ap.add_argument("--only", nargs="*", help="chỉ chạy các variant có tên này")
+    ap.add_argument("--seeds", nargs="+", type=int, help="chỉ chạy các seed này (ghi đè 'seeds' trong config)")
     a = ap.parse_args(argv)
-    run(a.config, a.member, a.only)
+    run(a.config, a.member, a.only, seeds=a.seeds)
 
 
 if __name__ == "__main__":
