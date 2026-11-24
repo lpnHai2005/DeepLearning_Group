@@ -135,10 +135,13 @@ Hai lệnh cần file FER2013 gốc tại chỗ; chúng không tải dữ liệu
 `src/` đã có các module triển khai từng phần, nhưng `configs/` và FER2013 gốc hiện chưa có; các lệnh huấn luyện dưới đây chưa chạy được cho đến khi cấu hình và dữ liệu sẵn sàng. Không chạy hàng loạt E1–E6 trước khi T04, T06, T07, T08 và T11 được Verified. Lệnh `--eval-test` chỉ chạy một lần trên mô hình cuối, sau khi chọn cấu hình bằng validation:
 
 ```powershell
-# Baseline và các nhóm E1–E7 (T07 trở đi)
-python src/run_experiment.py --config configs/baseline.json
-python src/run_experiment.py --config configs/E1_arch.json
-python src/run_experiment.py --config configs/E3_optim.json --only adamw_1e-3
+# Baseline T11: mỗi người chạy một seed trên máy mình (git pull trước để có experiments.csv mới nhất)
+python src/run_experiment.py --config configs/baseline.json --member TV2 --seeds 0
+python src/run_experiment.py --config configs/baseline.json --member TV1 --seeds 1
+python src/run_experiment.py --config configs/baseline.json --member TV4 --seeds 2
+# Các nhóm E1–E7: --member là mã của người chạy
+python src/run_experiment.py --config configs/E1_arch.json --member TV2
+python src/run_experiment.py --config configs/E3_optim.json --member TV3 --only adamw_1e-3
 python src/run_experiment.py --config configs/E7_final.json --eval-test
 python src/make_tables.py
 python src/visualize_filters.py
