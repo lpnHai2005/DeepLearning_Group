@@ -1,4 +1,10 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+14aef687,2026-11-24T17:32:10+07:00,HiCyclone,TV2,T01,feat(T01): tự suy trạng thái nhiệm vụ bằng task_status.py trong workflow,3,BTL02/PHAN_CONG_NHIEM_VU.md; BTL02/tests/test_task_status.py; BTL02/tracking/task_status.py
+83466a93,2026-11-24T17:32:10+07:00,HiCyclone,TV2,T20,fix(T20): đọc output subprocess bằng utf-8 trong test_filters,1,BTL02/tests/test_filters.py
+09565fa0,2026-11-24T17:32:10+07:00,HiCyclone,TV2,T08,fix(T08): sửa chú thích kiểu model trong _forward_probs,1,BTL02/src/engine/evaluate.py
+923b483f,2026-11-24T17:32:09+07:00,HiCyclone,TV2,T05,feat(T05): eda.py tự ghi dòng Hinh_ve vào figures_manifest.csv,3,BTL02/src/data/eda.py; BTL02/tests/test_eda.py; BTL02/tracking/figures_manifest.csv
+91b10531,2026-11-24T17:32:09+07:00,HiCyclone,TV2,T07,feat(T07): run_experiment tự vẽ curves.png và ghi figures_manifest.csv,2,BTL02/src/run_experiment.py; BTL02/tests/test_run_experiment.py
+ab37f3a5,2026-11-24T17:32:09+07:00,HiCyclone,TV2,T08,test(T08): kiểm thử độc lập evaluate.py và plots.py trên bản clone sạch,2,BTL02/tracking/tasks.csv; BTL02/tracking/test_log.csv
 b2ce42e1,2026-11-24T02:11:56+07:00,TrungKien2005,TV1,T20,test(T20): kiểm tra hook lớp Conv cuối,1,BTL02/tests/test_tv1_t20_hook.py
 94be961a,2026-11-24T00:24:56+07:00,TrungKien2005,TV1,T05,feat(T05): cải thiện EDA và lưới ảnh,12,BTL02/figures/eda_augmentation.csv; BTL02/figures/eda_augmentation.png; BTL02/figures/eda_class_distribution.csv; BTL02/figures/eda_class_distribution.png; BTL02/figures/eda_image_quality.csv; BTL02/figures/eda_image_quality.png; BTL02/figures/eda_mean_images.csv; BTL02/figures/eda_mean_images.png; BTL02/figures/eda_samples.csv; BTL02/figures/eda_samples.png; BTL02/src/data/eda.py; BTL02/tests/test_eda.py
 419c079c,2026-11-24T00:09:26+07:00,TrungKien2005,TV1,T03,feat(T03): ghi ngày và SHA-256 FER2013,4,BTL02/README.md; BTL02/results/data_check.json; BTL02/src/data/check_fer2013.py; BTL02/tests/test_check_fer2013.py
