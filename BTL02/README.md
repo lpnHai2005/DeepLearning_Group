@@ -139,6 +139,8 @@ Hai lệnh cần file FER2013 gốc tại chỗ; chúng không tải dữ liệu
 python src/run_experiment.py --config configs/baseline.json --member TV2 --seeds 0
 python src/run_experiment.py --config configs/baseline.json --member TV1 --seeds 1
 python src/run_experiment.py --config configs/baseline.json --member TV4 --seeds 2
+# Đủ 3 seed: mean ± std và dung sai tái lập -> results/baseline/baseline_summary.json
+python src/baseline_summary.py
 # Chạy bảng sau khi experiments.csv đã có các run cần tổng hợp
 python src/make_tables.py
 python src/visualize_filters.py

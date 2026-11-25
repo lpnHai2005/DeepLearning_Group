@@ -223,7 +223,7 @@ Quy tắc bắt buộc:
 ### 5.2. Quy tắc của người kiểm thử (T)
 
 1. T **tự chạy** trên bản clone sạch và **tự tính lại** số liệu từ file gốc (`history.csv`, `experiments.csv`, dự đoán đã lưu). Không xác nhận dựa trên báo cáo hay lời của R.
-2. Với nhiệm vụ có huấn luyện, T tự chọn ít nhất 1 cấu hình (không do R chỉ định) để chạy lại và so với `metrics.json`. **Dung sai tái lập = độ lệch chuẩn 3 seed của baseline**; con số này chưa có cho đến khi T11 xong, không được đặt trước.
+2. Với nhiệm vụ có huấn luyện, T tự chọn ít nhất 1 cấu hình (không do R chỉ định) để chạy lại và so với `metrics.json`. **Dung sai tái lập = độ lệch chuẩn 3 seed của baseline** = **0.0075 val acc** (chốt ở T11 ngày 2026-11-25 từ `baseline-002_s0/_s1/_s2`, 100 epoch; sinh bằng `python src/baseline_summary.py`, kết quả ở `results/baseline/baseline_summary.json`). Không tự đặt con số khác; nếu baseline đổi thì chạy lại script.
 3. T ghi 1 dòng `Kiem_thu`: lệnh đã chạy, số liệu gốc, số tái tính, `Pass`/`Fail`, bằng chứng. T khác `nguoi_thuc_hien`.
 4. Chỉ T mới đưa nhiệm vụ lên **Verified**, và chỉ khi có dòng `Pass`. R không tự đặt Verified.
 5. Fail: nhiệm vụ về *Failed*, R sửa rồi quay lại *In Progress*. Lỗi và cách sửa nằm trong dòng `Kiem_thu` và commit sửa lỗi.
@@ -501,5 +501,5 @@ Việc ưu tiên:
 4. T03: tải `fer2013.csv`, chạy kiểm toàn vẹn, ghi sha256.
 5. T04, T06, T07: loader, model, trainer có log/history/weights an toàn; đo lại ngân sách tính toán (2.5).
 6. T08, T10: evaluate/plots (hình Train/Val loss từ CSV) và notebook tái lập.
-7. T11: baseline 3 seed, chốt dung sai tái lập; T xác nhận trước khi chạy E1–E6.
+7. T11: baseline 3 seed, chốt dung sai tái lập (đã có 2026-11-25: val acc 0.6815 ± 0.0075, macro-F1 0.6408 ± 0.0195; `results/baseline/baseline_summary.json`); T xác nhận trước khi chạy E1–E6.
 8. E1–E6 song song, rồi E7 và test PrivateTest 1 lần; trực quan hóa bộ lọc; báo cáo, slide, QA, zip.

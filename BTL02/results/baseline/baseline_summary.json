@@ -1,0 +1,54 @@
+{
+  "task_id": "T11",
+  "config_path": "configs/baseline.json",
+  "config_sha256_lf": "255c87e91696427bb3af9f1623623a30e489bd1693f37b6faae6bde7322968c5",
+  "n_seeds": 3,
+  "runs": [
+    {
+      "exp_id": "baseline-002_s0",
+      "seed": 0,
+      "thanh_vien": "TV2",
+      "may_chay": "DESKTOP-IOD0676 | NVIDIA GeForce RTX 4060 Laptop GPU",
+      "git_commit": "f7594577",
+      "best_epoch": 99,
+      "val_acc": 0.6815268877124547,
+      "val_macro_f1": 0.6416322850865286,
+      "best_val_loss": 0.915008519412615
+    },
+    {
+      "exp_id": "baseline-002_s1",
+      "seed": 1,
+      "thanh_vien": "TV1",
+      "may_chay": "LAPTOP-RIMELLAL | NVIDIA GeForce RTX 3050 Laptop GPU",
+      "git_commit": "214ff0f1",
+      "best_epoch": 93,
+      "val_acc": 0.6740039008080245,
+      "val_macro_f1": 0.6209245313912722,
+      "best_val_loss": 0.9175978793709947
+    },
+    {
+      "exp_id": "baseline-002_s2",
+      "seed": 2,
+      "thanh_vien": "TV4",
+      "may_chay": "Administrator | NVIDIA GeForce RTX 3060 Laptop GPU",
+      "git_commit": "5b470fe7",
+      "best_epoch": 99,
+      "val_acc": 0.6890498746168849,
+      "val_macro_f1": 0.6598913756852982,
+      "best_val_loss": 0.9001500216590624
+    }
+  ],
+  "val_acc": {
+    "mean": 0.6815268877124547,
+    "std": 0.007522986904430207
+  },
+  "val_macro_f1": {
+    "mean": 0.6408160640543663,
+    "std": 0.019496240692470024
+  },
+  "best_val_loss": {
+    "mean": 0.910918806814224,
+    "std": 0.009415479092273348
+  },
+  "dung_sai_tai_lap_val_acc": 0.007522986904430207
+}
