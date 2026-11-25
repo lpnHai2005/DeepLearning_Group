@@ -1,0 +1,34 @@
+{
+  "group": "E1",
+  "task_id": "T12",
+  "base": {
+    "model": "baseline",
+    "model_kwargs": {},
+    "epochs": 100,
+    "batch_size": 128,
+    "optimizer": "sgd",
+    "lr": 0.01,
+    "momentum": 0.9,
+    "nesterov": true,
+    "weight_decay": 0.0005,
+    "scheduler": "plateau",
+    "factor": 0.5,
+    "lr_patience": 5,
+    "early_stopping_patience": 15,
+    "label_smoothing": 0.0,
+    "augmentation": "flip_affine",
+    "amp": true,
+    "num_workers": 0
+  },
+  "variants": {
+    "small": {"model": "small"},
+    "medium": {"model": "medium"},
+    "medium_01": {"model": "medium_01"},
+    "large": {"model": "large"},
+    "baseline_w0.5": {"model_kwargs": {"blocks": [[32, 32], [64, 64], [128, 128]]}},
+    "baseline_w2": {"model_kwargs": {"blocks": [[128, 128], [256, 256], [512, 512]]}},
+    "baseline_no_bn": {"model_kwargs": {"bn": false}},
+    "baseline_gap": {"model_kwargs": {"head": "gap"}}
+  },
+  "seeds": [0]
+}
