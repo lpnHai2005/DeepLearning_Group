@@ -1,0 +1,76 @@
+2026-11-26T03:27:56+07:00 | E6-003_s0 | START | giai đoạn=chuẩn bị (trước fit)
+2026-11-26T03:27:57+07:00 | E6-003_s0 | ERROR | status=Failed | reason=EXCEPTION:URLError
+Traceback (most recent call last):
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\urllib\request.py", line 1344, in do_open
+    h.request(req.get_method(), req.selector, req.data, headers,
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1338, in request
+    self._send_request(method, url, body, headers, encode_chunked)
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1384, in _send_request
+    self.endheaders(body, encode_chunked=encode_chunked)
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1333, in endheaders
+    self._send_output(message_body, encode_chunked=encode_chunked)
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1093, in _send_output
+    self.send(msg)
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1037, in send
+    self.connect()
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1472, in connect
+    super().connect()
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\http\client.py", line 1003, in connect
+    self.sock = self._create_connection(
+                ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 865, in create_connection
+    raise exceptions[0]
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\socket.py", line 850, in create_connection
+    sock.connect(sa)
+PermissionError: [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\Kien\Desktop\Coding\HOCSAU\DeepLearning_Group-1\BTL02\src\run_experiment.py", line 210, in run
+    model = _build(cfg)
+            ^^^^^^^^^^^
+  File "C:\Users\Kien\Desktop\Coding\HOCSAU\DeepLearning_Group-1\BTL02\src\run_experiment.py", line 73, in _build
+    return build_transfer(**cfg["transfer"])
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Kien\Desktop\Coding\HOCSAU\DeepLearning_Group-1\BTL02\src\models\transfer.py", line 48, in build_transfer
+    m = make(weights=weights if pretrained else None)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Kien\Desktop\Coding\HOCSAU\DeepLearning_Group-1\BTL02\.venv\Lib\site-packages\torchvision\models\_utils.py", line 142, in wrapper
+    return fn(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Kien\Desktop\Coding\HOCSAU\DeepLearning_Group-1\BTL02\.venv\Lib\site-packages\torchvision\models\_utils.py", line 228, in inner_wrapper
+    return builder(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Kien\Desktop\Coding\HOCSAU\DeepLearning_Group-1\BTL02\.venv\Lib\site-packages\torchvision\models\vgg.py", line 433, in vgg16
+    return _vgg("D", False, weights, progress, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Kien\Desktop\Coding\HOCSAU\DeepLearning_Group-1\BTL02\.venv\Lib\site-packages\torchvision\models\vgg.py", line 105, in _vgg
+    model.load_state_dict(weights.get_state_dict(progress=progress, check_hash=True))
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Kien\Desktop\Coding\HOCSAU\DeepLearning_Group-1\BTL02\.venv\Lib\site-packages\torchvision\models\_api.py", line 90, in get_state_dict
+    return load_state_dict_from_url(self.url, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Kien\Desktop\Coding\HOCSAU\DeepLearning_Group-1\BTL02\.venv\Lib\site-packages\torch\hub.py", line 867, in load_state_dict_from_url
+    download_url_to_file(url, cached_file, hash_prefix, progress=progress)
+  File "C:\Users\Kien\Desktop\Coding\HOCSAU\DeepLearning_Group-1\BTL02\.venv\Lib\site-packages\torch\hub.py", line 708, in download_url_to_file
+    u = urlopen(req)
+        ^^^^^^^^^^^^
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\urllib\request.py", line 215, in urlopen
+    return opener.open(url, data, timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\urllib\request.py", line 515, in open
+    response = self._open(req, data)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\urllib\request.py", line 532, in _open
+    result = self._call_chain(self.handle_open, protocol, protocol +
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\urllib\request.py", line 492, in _call_chain
+    result = func(*args)
+             ^^^^^^^^^^^
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\urllib\request.py", line 1392, in https_open
+    return self.do_open(http.client.HTTPSConnection, req,
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Kien\AppData\Local\Programs\Python\Python312\Lib\urllib\request.py", line 1347, in do_open
+    raise URLError(err)
+urllib.error.URLError: <urlopen error [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions>

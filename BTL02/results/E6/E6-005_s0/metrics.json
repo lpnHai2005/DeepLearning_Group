@@ -1,0 +1,19 @@
+{
+  "exp_id": "E6-005_s0",
+  "status": "Failed",
+  "stopped_by": "exception",
+  "epochs_run": 0,
+  "best_epoch": 0,
+  "best_val_acc": null,
+  "best_val_macro_f1": null,
+  "best_val_loss": null,
+  "train_loss_cuoi": null,
+  "train_acc_cuoi": null,
+  "val_loss_cuoi": null,
+  "epoch_time_s_tb": null,
+  "train_time_s": 0.001,
+  "weights_quyet_dinh": "DISCARD",
+  "weights_ma_ly_do": "EXCEPTION:PermissionError",
+  "weights_sha256": "",
+  "weights_size_mb": ""
+}
