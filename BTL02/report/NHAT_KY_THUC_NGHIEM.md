@@ -156,6 +156,14 @@
 - Nhận xét: Val Acc đạt 67.23% (thấp hơn baseline 0.92%), Val Macro-F1 đạt 58.78% (giảm mạnh 5.30% so với baseline 64.08%). AdamW với lr=1e-3 hội tụ chậm hơn và tổng quát hóa kém hơn SGD Nesterov; phân bố dự đoán thiên lệch vào các lớp đông mẫu hơn. Best epoch rơi vào epoch 99/100.
 - Quyết định: Giữ weights (KEEP) theo đúng luật kỹ thuật (OK). Kết luận AdamW 1e-3 chưa tối ưu bằng SGD Nesterov, tiếp tục khảo sát các biến thể tối ưu khác trong E3.
 
+### [E3-002_s0] Khảo sát AdamW lr=0.0003 — TV4 – 2026-11-25
+- Giả thuyết: Giảm tốc độ học của AdamW từ 1e-3 xuống 3e-4 sẽ giúp hàm mất mát hội tụ mượt mà hơn, tránh bước nhảy quá lớn và cải thiện khả năng tổng quát hóa so với adamw_1e-3.
+- Thay đổi so với baseline: `optimizer = "adamw"`, `lr = 0.0003`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only adamw_3e-4`
+- Kết quả: status=Completed, best_val_loss=0.9175645472711759, val_acc=0.6703817219281136, val_macro_f1=0.5630497131569857, best_epoch=91, time_s=4999.794, run_dir=results/E3/E3-002_s0
+- Nhận xét: Best Val Loss được cải thiện rõ rệt từ 0.9626 (adamw_1e-3) xuống 0.9176 (xấp xỉ mốc 0.9109 của Baseline), chứng minh giảm lr giúp ổn định loss. Tuy nhiên Val Acc đạt 67.04% và Macro-F1 đạt 56.30% (tiếp tục giảm 2.48% so với adamw_1e-3 và kém Baseline 7.78%). Hoàn tất 100 epochs, best epoch đạt tại epoch 91.
+- Quyết định: Giữ weights (KEEP, mã OK). Hoàn tất nhóm khảo sát AdamW: cả hai mức lr 1e-3 và 3e-4 đều kém hơn Baseline SGD Nesterov về độ chính xác và khả năng nhận diện các lớp cảm xúc thiểu số.
+
 ### [E4-001_s0] Khảo sát không dùng Data Augmentation — TV3 – <chưa thực hiện>
 - Giả thuyết: Huấn luyện mô hình không có Data Augmentation sẽ dẫn đến overfitting nghiêm trọng; chênh lệch giữa Train Acc và Val Acc sẽ rất lớn (> 20%).
 - Thay đổi so với baseline: `augmentation = "none"`.

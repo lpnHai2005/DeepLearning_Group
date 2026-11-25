@@ -3,6 +3,7 @@
 | group | task_id | variant | n_runs | n_completed | val_acc_mean | val_acc_std | val_acc_fmt | val_macro_f1_mean | val_macro_f1_std | val_macro_f1_fmt | best_val_loss_mean | epoch_time_s_tb_mean | so_voi_baseline_tu_tinh |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|
 | E3 | T14 | adamw_1e-3 | 1 | 1 | 0.672332 | 0.0 | 0.6723 | 0.587766 | 0.0 | 0.5878 | 0.96263 | 35.90504 | -0.0092 (thấp hơn) |
+| E3 | T14 | adamw_3e-4 | 1 | 1 | 0.670382 | 0.0 | 0.6704 | 0.56305 | 0.0 | 0.5630 | 0.917565 | 49.73663 | -0.0111 (thấp hơn) |
 | _nb | T10 | repro_2ep | 1 | 1 | 0.387573 | 0.0 | 0.3876 | 0.281308 | 0.0 | 0.2813 | 1.545885 | 20.941 | -0.2940 (thấp hơn) |
 | _probe | T11 | baseline_ep100 | 1 | 1 | 0.681527 | 0.0 | 0.6815 | 0.641632 | 0.0 | 0.6416 | 0.915009 | 15.37992 | +0.0000 (< std baseline) |
 | _qa | T07 | baseline_2ep | 1 | 1 | 0.382558 | 0.0 | 0.3826 | 0.239698 | 0.0 | 0.2397 | 1.577768 | 17.1435 | -0.2990 (thấp hơn) |
