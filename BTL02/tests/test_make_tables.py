@@ -89,3 +89,33 @@ def test_update_experiment_log(tmp_path):
     text = log_md.read_text(encoding="utf-8")
     assert n == 1
     assert "val_acc=0.6812" in text and "results/E3/E3-001_s0" in text
+
+
+def test_baseline_stats_va_summarize_tach_probe_va_cau_hinh_cu(tmp_path):
+    cfg_path = tmp_path / "baseline.json"
+    base_cfg = {"model": "baseline", "epochs": 100, "lr": 0.01}
+    cfg_path.write_text(json.dumps({"group": "baseline", "task_id": "T11", "base": base_cfg}), encoding="utf-8")
+
+    def _full_row(exp_id, seed, val_acc, epochs=100, variant="baseline"):
+        r = _row(exp_id, "T11", variant, seed, val_acc)
+        r["hyperparams_json"] = json.dumps({**base_cfg, "epochs": epochs, "seed": seed, "variant": variant})
+        return r
+
+    data = [
+        _full_row("baseline-001_s1", 1, 0.65645, epochs=60),
+        _full_row("_probe-001_s0", 0, 0.68153, epochs=100, variant="baseline_ep100"),
+        _full_row("baseline-002_s0", 0, 0.6815268877124547, epochs=100),
+        _full_row("baseline-002_s1", 1, 0.6740039008080245, epochs=100),
+        _full_row("baseline-002_s2", 2, 0.6890498746168849, epochs=100),
+    ]
+    bm, bs = baseline_stats(data, baseline_config=cfg_path)
+    assert bm == pytest.approx(0.6815268877124547, abs=1e-9)
+    assert bs == pytest.approx(0.007522986904430207, abs=1e-9)
+
+    rows_sum = summarize_rows(data, bm, bs)
+    by_var = {r["variant"]: r for r in rows_sum}
+    assert "baseline [baseline-001]" in by_var
+    assert "baseline [baseline-002]" in by_var
+    assert by_var["baseline [baseline-002]"]["n_runs"] == 3
+    assert by_var["baseline [baseline-002]"]["val_acc_fmt"] == "0.6815 ± 0.0075"
+    assert by_var["baseline [baseline-001]"]["n_runs"] == 1

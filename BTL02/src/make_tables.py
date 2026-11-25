@@ -97,13 +97,68 @@ def _float_or_none(val):
         return None
 
 
-def baseline_stats(rows, baseline_task="T11"):
-    """Tính (mean, std) val_acc của các run baseline (T11 hoặc group 'B0'/'baseline') đã Completed."""
+def _series_of(row):
+    exp_id = (row.get("exp_id") or "").strip()
+    return re.sub(r"_s\d+$", "", exp_id) if exp_id else ""
+
+
+def _parse_hp(row):
+    hp = (row.get("hyperparams_json") or "").strip()
+    if not hp:
+        return {}
+    try:
+        obj = json.loads(hp)
+        return obj if isinstance(obj, dict) else {}
+    except json.JSONDecodeError:
+        return {}
+
+
+def baseline_stats(rows, baseline_task="T11", baseline_config=None):
+    """Tính (mean, std) val_acc của bộ run baseline chính thức đã Completed.
+
+    Đồng bộ luật với src/baseline_summary.py: nếu có file configs/baseline.json và tồn tại
+    các run `baseline-NNN_sK` khớp toàn bộ khóa trong `base` của config, chỉ tính trên bộ đó
+    (loại run 60 epoch cũ và run `_probe`). Khi chạy trên fixture tối giản trong unit test,
+    tự động fallback về các dòng Completed thuộc `baseline_task` hoặc group `baseline`/`b0`
+    (luôn loại nhóm tạm bắt đầu bằng `_`).
+    """
+    cfg_path = Path(baseline_config) if baseline_config is not None else (BTL02 / "configs" / "baseline.json")
+    base_cfg = None
+    if cfg_path.exists():
+        try:
+            spec = json.loads(cfg_path.read_text(encoding="utf-8"))
+            if isinstance(spec, dict) and isinstance(spec.get("base"), dict):
+                base_cfg = spec["base"]
+        except (OSError, json.JSONDecodeError):
+            base_cfg = None
+
+    if base_cfg:
+        matched_by_num = defaultdict(list)
+        for r in rows:
+            if r.get("trang_thai_ky_thuat") != "Completed":
+                continue
+            exp_id = (r.get("exp_id") or "").strip()
+            m = re.match(r"^baseline-(\d{3})_s(\d+)$", exp_id)
+            if not m or r.get("task_id") != baseline_task:
+                continue
+            hp = _parse_hp(r)
+            if all(hp.get(k) == v for k, v in base_cfg.items()):
+                v = _float_or_none(r.get("val_acc"))
+                if v is not None:
+                    matched_by_num[int(m.group(1))].append(v)
+        if matched_by_num:
+            vals = matched_by_num[max(matched_by_num)]
+            arr = np.asarray(vals, dtype=np.float64)
+            std = float(arr.std(ddof=1)) if len(arr) >= 2 else 0.0
+            return float(arr.mean()), std
+
     vals = []
     for r in rows:
         if r.get("trang_thai_ky_thuat") != "Completed":
             continue
         grp = _group_of(r).lower()
+        if grp.startswith("_"):
+            continue
         if r.get("task_id") == baseline_task or grp in ("baseline", "b0"):
             v = _float_or_none(r.get("val_acc"))
             if v is not None:
@@ -138,10 +193,25 @@ def _fmt_mean_std(vals):
 
 
 def summarize_rows(rows, base_mean=None, base_std=None):
-    """Nhóm theo (group, task_id, variant) và tính mean ± std cho các chỉ số chính."""
+    """Nhóm theo (group, task_id, variant, series) và tính mean ± std cho các chỉ số chính.
+
+    Các seed cùng một số thứ tự (`baseline-002_s0/_s1/_s2`) được gom chung 1 dòng; các bộ chạy
+    lại với cấu hình khác số thứ tự (`baseline-001` 60ep vs `baseline-002` 100ep) được tách
+    riêng bằng hậu tố `[<series>]` để không trộn số liệu của hai cấu hình khác nhau.
+    """
+    series_per_key = defaultdict(set)
+    for r in rows:
+        key = (_group_of(r), r.get("task_id", ""), _variant_of(r))
+        series_per_key[key].add(_series_of(r))
+
     buckets = defaultdict(list)
     for r in rows:
-        buckets[(_group_of(r), r.get("task_id", ""), _variant_of(r))].append(r)
+        grp = _group_of(r)
+        tid = r.get("task_id", "")
+        var = _variant_of(r)
+        ser = _series_of(r)
+        label_var = f"{var} [{ser}]" if len(series_per_key[(grp, tid, var)]) > 1 and ser else var
+        buckets[(grp, tid, label_var)].append(r)
 
     summary = []
     for (grp, tid, var), items in sorted(buckets.items()):
