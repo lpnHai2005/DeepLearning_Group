@@ -1,11 +1,17 @@
-# Tổng hợp kết quả thực nghiệm
+# Bảng 4.8: Tổng hợp toàn bộ kết quả thực nghiệm (Baseline và E1–E7)
 
-| group | task_id | variant | n_runs | n_completed | val_acc_mean | val_acc_std | val_acc_fmt | val_macro_f1_mean | val_macro_f1_std | val_macro_f1_fmt | best_val_loss_mean | epoch_time_s_tb_mean | so_voi_baseline_tu_tinh |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| E3 | T14 | adamw_1e-3 | 1 | 1 | 0.672332 | 0.0 | 0.6723 | 0.587766 | 0.0 | 0.5878 | 0.96263 | 35.90504 | -0.0092 (thấp hơn) |
-| E3 | T14 | adamw_3e-4 | 1 | 1 | 0.670382 | 0.0 | 0.6704 | 0.56305 | 0.0 | 0.5630 | 0.917565 | 49.73663 | -0.0111 (thấp hơn) |
-| _nb | T10 | repro_2ep | 1 | 1 | 0.387573 | 0.0 | 0.3876 | 0.281308 | 0.0 | 0.2813 | 1.545885 | 20.941 | -0.2940 (thấp hơn) |
-| _probe | T11 | baseline_ep100 | 1 | 1 | 0.681527 | 0.0 | 0.6815 | 0.641632 | 0.0 | 0.6416 | 0.915009 | 15.37992 | +0.0000 (< std baseline) |
-| _qa | T07 | baseline_2ep | 1 | 1 | 0.382558 | 0.0 | 0.3826 | 0.239698 | 0.0 | 0.2397 | 1.577768 | 17.1435 | -0.2990 (thấp hơn) |
-| baseline | T11 | baseline [baseline-001] | 1 | 1 | 0.65645 | 0.0 | 0.6565 | 0.590581 | 0.0 | 0.5906 | 0.935421 | 48.67165 | -0.0251 (thấp hơn) |
-| baseline | T11 | baseline [baseline-002] | 3 | 3 | 0.681527 | 0.007523 | 0.6815 ± 0.0075 | 0.640816 | 0.019496 | 0.6408 ± 0.0195 | 0.910919 | 25.844723 | +0.0000 (< std baseline) |
+| group | task_id | variant | n_runs | n_completed | n_params | val_acc_mean | val_acc_std | val_acc_fmt | val_macro_f1_mean | val_macro_f1_std | val_macro_f1_fmt | best_val_loss_mean | train_val_gap_mean | gpu | epoch_time_s_tb_mean | so_voi_baseline_tu_tinh |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| baseline | T11 | baseline | 3 | 3 | 5867847 | 0.681527 | 0.007523 | 0.6815 ± 0.0075 | 0.640816 | 0.019496 | 0.6408 ± 0.0195 | 0.9109 | 0.0397 | nhiều GPU (RTX 3050/RTX 3060/RTX 4060) |  | tham chiếu |
+| E1 | T12 | small | 1 | 1 | 38901191 | 0.691558 |  | 0.6916 | 0.67314 |  | 0.6731 | 0.9094 | 0.1252 | RTX 4060 | 21.1 | +0.0100 (cao hơn) |
+| E1 | T12 | medium | 1 | 1 | 11327303 | 0.69518 |  | 0.6952 | 0.67889 |  | 0.6789 | 0.9162 | 0.1104 | RTX 4060 | 16.8 | +0.0137 (cao hơn) |
+| E1 | T12 | medium_01 | 1 | 1 | 12101895 | 0.249373 |  | 0.2494 | 0.057028 |  | 0.0570 | 1.8107 | 0.0019 | RTX 4060 | 19.6 | -0.4322 (thấp hơn) |
+| E1 | T12 | large | 1 | 1 | 20406599 | 0.249373 |  | 0.2494 | 0.057028 |  | 0.0570 | 1.8107 | 0.0019 | RTX 4060 | 24.0 | -0.4322 (thấp hơn) |
+| E1 | T12 | baseline_w0.5 | 1 | 1 | 2650279 | 0.670103 |  | 0.6701 | 0.63292 |  | 0.6329 | 0.9147 | 0.0166 | RTX 4060 | 13.9 | -0.0114 (thấp hơn) |
+| E1 | T12 | baseline_w2 | 1 | 1 | 14017159 | 0.670103 |  | 0.6701 | 0.582386 |  | 0.5824 | 0.9473 | 0.0347 | RTX 4060 | 25.9 | -0.0114 (thấp hơn) |
+| E1 | T12 | baseline_no_bn | 1 | 1 | 5866951 | 0.690722 |  | 0.6907 | 0.663963 |  | 0.6640 | 0.9086 | 0.061 | RTX 4060 | 14.0 | +0.0092 (cao hơn) |
+| E1 | T12 | baseline_gap | 1 | 1 | 1280327 | 0.68292 |  | 0.6829 | 0.644917 |  | 0.6449 | 0.9089 | 0.0443 | RTX 4060 | 14.2 | +0.0014 (< std baseline) |
+| E3 | T14 | adamw_1e-3 | 1 | 1 | 5867847 | 0.672332 |  | 0.6723 | 0.587766 |  | 0.5878 | 0.9626 | 0.0268 | RTX 3060 | 35.9 | -0.0092 (thấp hơn) |
+| E3 | T14 | adamw_3e-4 | 1 | 1 | 5867847 | 0.670382 |  | 0.6704 | 0.56305 |  | 0.5630 | 0.9176 | 0.0065 | RTX 3060 | 49.7 | -0.0111 (thấp hơn) |
+
+* Ghi chú: `Train–Val` = `train_acc_cuoi − val_acc`; `train_acc_cuoi` được đo trong chế độ huấn luyện (có bật data augmentation và dropout), chỉ dùng để so sánh xu hướng quá khớp giữa các cấu hình. Ký hiệu `—` thể hiện không xác định (1 seed không có độ lệch chuẩn mẫu, hoặc thời gian không lấy trung bình qua nhiều GPU khác nhau).
