@@ -5,7 +5,7 @@ Dùng (từ thư mục BTL02):
 
 Config JSON:
     {"group": "E3", "task_id": "T14",
-     "base": {"model": "baseline", "model_kwargs": {}, "epochs": 60, "optimizer": "sgd", "lr": 0.01, ...},
+     "base": {"model": "baseline", "model_kwargs": {}, "epochs": 100, "optimizer": "sgd", "lr": 0.01, ...},
      "variants": {"adamw_1e-3": {"optimizer": "adamw", "lr": 0.001}},
      "seeds": [0]}
 `base` + `variants[tên]` + seed là cfg của một run; cfg được đưa nguyên cho make_loaders(cfg) (TV1) và fit (khóa

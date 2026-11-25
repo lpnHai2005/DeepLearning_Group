@@ -3,7 +3,7 @@
   "task_id": "T11",
   "base": {
     "model": "baseline",
-    "epochs": 60,
+    "epochs": 100,
     "batch_size": 128,
     "optimizer": "sgd",
     "lr": 0.01,

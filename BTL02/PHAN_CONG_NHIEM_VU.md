@@ -124,7 +124,7 @@ Máy: RTX 4060 Laptop 8 GB, `torch 2.6.0+cu124`, `torchvision 0.21.0`. Đo 1 epo
 
 Hệ quả:
 
-- 1 run 60 epoch của CNN cỡ MEDIUM_01 ≈ **40 phút**; mô hình 2 conv/khối ≈ một nửa. Toàn bộ kế hoạch (~50 run, mục 3.3 + baseline) ≈ **15–20 giờ GPU** → chia cho 4 máy/Colab, mỗi người ~4–5 giờ, chạy song song theo nhóm thực nghiệm.
+- (ước lượng cũ, tính với 60 epoch; baseline nay là 100 epoch nên nhân khoảng 1.7) 1 run 60 epoch của CNN cỡ MEDIUM_01 ≈ **40 phút**; mô hình 2 conv/khối ≈ một nửa. Toàn bộ kế hoạch (~50 run, mục 3.3 + baseline) ≈ **15–20 giờ GPU** → chia cho 4 máy/Colab, mỗi người ~4–5 giờ, chạy song song theo nhóm thực nghiệm.
 - Nạp dữ liệu: 28 709 ảnh 48×48 chỉ ~66 MB (uint8) → **nạp hết vào RAM/GPU một lần**, augmentation theo batch, tránh `DataLoader` đọc file từng ảnh (Windows: `num_workers>0` rất chậm khởi động).
 - Khảo sát (E1–E6) chạy **1 seed**; nếu chênh lệch giữa 2 cấu hình < 1 điểm % thì chạy thêm 2 seed trước khi kết luận. Baseline và mô hình cuối luôn 3 seed.
 - VGG16 ở 96–128 px quá đắt (≥ 2 phút/epoch) → chỉ 1 run, ít epoch; dùng ResNet18 làm mô hình transfer chính.
@@ -148,7 +148,7 @@ Hệ quả:
 | Optimizer | SGD momentum 0.9 (Nesterov), lr 0.01, weight decay 5e-4, batch 128 |
 | Lịch lr | ReduceLROnPlateau (factor 0.5, patience 5) theo val acc |
 | Augmentation | HFlip + RandomAffine(±10°, dịch 10%, scale 0.9–1.1) |
-| Epoch / dừng | tối đa 60, early stopping patience 15 theo val acc, lưu `best.pt` theo val acc |
+| Epoch / dừng | tối đa 100, early stopping patience 15 theo val acc, lưu `best.pt` theo val acc (nâng từ 60 lên 100 ngày 2026-11-25 theo run `_probe-001_s0`: 60 epoch dừng khi val acc còn tăng, LR mới giảm lần đầu ở epoch 57; 100 epoch đạt val acc 0.6815, bão hòa từ khoảng epoch 85) |
 | Kỹ thuật | AMP fp16, seed 0/1/2 cho baseline |
 
 ### 3.3. Các nhóm thực nghiệm
