@@ -148,13 +148,13 @@
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
 
-### [E3-001_s0] Khảo sát AdamW lr=0.001 — TV4 – <chưa thực hiện>
+### [E3-001_s0] Khảo sát AdamW lr=0.001 — TV4 – 2026-11-25
 - Giả thuyết: AdamW kết hợp với lịch học Plateau sẽ hội tụ nhanh hơn SGD trong 30 epoch đầu nhưng độ chính xác cực đại có thể tương đương hoặc hơi thấp hơn một chút so với SGD Nesterov.
 - Thay đổi so với baseline: `optimizer = "adamw"`, `lr = 0.001`.
 - Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only adamw_1e-3`
-- Kết quả: (chưa thực hiện)
-- Nhận xét: (chưa thực hiện)
-- Quyết định: (chưa thực hiện)
+- Kết quả: status=Completed, best_val_loss=0.9626304985720257, val_acc=0.6723321259403734, val_macro_f1=0.5877659010880202, best_epoch=99, time_s=3620.904, run_dir=results/E3/E3-001_s0
+- Nhận xét: Val Acc đạt 67.23% (thấp hơn baseline 0.92%), Val Macro-F1 đạt 58.78% (giảm mạnh 5.30% so với baseline 64.08%). AdamW với lr=1e-3 hội tụ chậm hơn và tổng quát hóa kém hơn SGD Nesterov; phân bố dự đoán thiên lệch vào các lớp đông mẫu hơn. Best epoch rơi vào epoch 99/100.
+- Quyết định: Giữ weights (KEEP) theo đúng luật kỹ thuật (OK). Kết luận AdamW 1e-3 chưa tối ưu bằng SGD Nesterov, tiếp tục khảo sát các biến thể tối ưu khác trong E3.
 
 ### [E4-001_s0] Khảo sát không dùng Data Augmentation — TV3 – <chưa thực hiện>
 - Giả thuyết: Huấn luyện mô hình không có Data Augmentation sẽ dẫn đến overfitting nghiêm trọng; chênh lệch giữa Train Acc và Val Acc sẽ rất lớn (> 20%).
