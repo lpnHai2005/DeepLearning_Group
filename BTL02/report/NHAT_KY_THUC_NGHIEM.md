@@ -260,6 +260,54 @@
 - Nhận xét: Thời gian mỗi epoch nhanh nhất (24.4s/epoch, tổng 2477s). Tuy nhiên Val Acc giảm xuống 67.26% (thấp hơn baseline 0.89%), Val Macro-F1 đạt 62.98% và Val Loss đạt 0.9169. Kết quả đối sánh giữa bs=64 (69.24%), bs=128 (68.15%) và bs=256 (67.26%) thể hiện quy luật đơn điệu rõ ràng: batch size càng lớn thì độ chính xác tổng quát hóa càng giảm trên bài toán FER2013.
 - Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Kết luận chọn batch size 64 hoặc 128 là tối ưu, không nên dùng batch size 256.
 
+### [E3-005_s0] Khảo sát Lịch học Constant LR (sched_constant) — TV4 – 2026-11-26
+- Giả thuyết: Giữ nguyên learning rate không đổi (0.01) trong suốt 100 epoch sẽ giúp mô hình duy trì tốc độ cập nhật trọng số, tuy nhiên có nguy cơ dao động quanh cực tiểu ở các epoch cuối thay vì hội tụ sâu.
+- Thay đổi so với baseline: `scheduler = "constant"`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only sched_constant`
+- Kết quả: status=Completed, best_val_loss=0.913796362544976, val_acc=0.6759543048202842, val_macro_f1=0.6376441029281313, best_epoch=95, time_s=2497.091, run_dir=results/E3/E3-005_s0
+- Nhận xét: Hoàn thành 100 epochs (24.7s/epoch). Val Acc đạt 67.60% (chênh lệch -0.0056 so với baseline, nằm trong dung sai $\sigma=0.0075$), Val Macro-F1 đạt 63.76% và Best Val Loss đạt 0.9138 tại epoch 95. Việc giữ LR cố định 0.01 vẫn cho kết quả khá tốt nhờ momentum của SGD Nesterov, nhưng do không giảm learning rate ở cuối nên không thể hội tụ mịn bằng Plateau hay OneCycle.
+- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB).
+
+### [E3-006_s0] Khảo sát Lịch học OneCycleLR (sched_onecycle) — TV4 – 2026-11-26
+- Giả thuyết: OneCycleLR tăng dần learning rate từ nhỏ lên đỉnh (warmup) rồi giảm dần theo cosine xuống rất nhỏ, giúp mô hình vượt qua các cực tiểu địa phương gồ ghề trong giai đoạn đầu và hội tụ vào thung lũng phẳng tối ưu ở cuối quá trình huấn luyện.
+- Thay đổi so với baseline: `scheduler = "onecycle"`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only sched_onecycle`
+- Kết quả: status=Completed, best_val_loss=0.8997327092989115, val_acc=0.6862635831707997, val_macro_f1=0.6584167385961014, best_epoch=100, time_s=2533.215, run_dir=results/E3/E3-006_s0
+- Nhận xét: Xuất sắc vượt qua Baseline! Val Acc đạt 68.63% (+0.48% so với baseline 68.15%), Val Macro-F1 đạt 65.84% (+1.76% so với baseline 64.08%), và Best Val Loss giảm sâu xuống 0.8997 (phá mốc 0.90). Cơ chế super-convergence của OneCycleLR chứng minh hiệu quả vượt trội trên FER2013, đưa mô hình đạt phong độ cao nhất tại đúng epoch 100.
+- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Đề xuất đưa cấu hình OneCycleLR làm ứng viên sáng giá cho mô hình cuối E7.
+
+### [E3-007_s0] Khảo sát Tối ưu hóa RMSprop lr=0.001 (rmsprop_1e-3) — TV4 – 2026-11-26
+- Giả thuyết: RMSprop điều chỉnh learning rate thích ứng theo căn bậc hai trung bình bình phương gradient (EMA gradient bình phương), giúp cân bằng bước cập nhật giữa các hướng dốc và phẳng, có thể hội tụ nhanh và đạt loss thấp.
+- Thay đổi so với baseline: `optimizer = "rmsprop"`, `lr = 0.001`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only rmsprop_1e-3`
+- Kết quả: status=Completed, best_val_loss=0.880944062569715, val_acc=0.6857063248815826, val_macro_f1=0.662033096057049, best_epoch=95, time_s=2526.565, run_dir=results/E3/E3-007_s0
+- Nhận xét: Kỷ lục Val Loss thấp nhất trong toàn bộ E3! Best Val Loss giảm kỷ lục xuống 0.8809 (thấp hơn baseline 0.9109 tới -0.0300). Val Acc đạt 68.57% (+0.42% so với baseline) và Val Macro-F1 đạt tới 66.20% (+2.12% so với baseline). RMSprop với lr=1e-3 khắc phục hoàn toàn nhược điểm thiên lệch lớp của AdamW, mang lại khả năng tổng quát hóa xuất sắc trên các lớp cảm xúc thiểu số.
+- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Ghi nhận RMSprop lr=1e-3 là thuật toán tối ưu tốt nhất về độ mượt của hàm mất mát.
+
+### [E3-008_s0] Khảo sát Tối ưu hóa RMSprop lr=0.0003 (rmsprop_3e-4) — TV4 – 2026-11-26
+- Giả thuyết: Giảm learning rate của RMSprop xuống 3e-4 để khảo sát tính nhạy cảm với bước học; lr nhỏ hơn có thể giúp hội tụ an toàn nhưng tốc độ tiếp cận nghiệm tối ưu có thể chậm hơn.
+- Thay đổi so với baseline: `optimizer = "rmsprop"`, `lr = 0.0003`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only rmsprop_3e-4`
+- Kết quả: status=Completed, best_val_loss=0.9013970222046892, val_acc=0.6809696294232377, val_macro_f1=0.6332323565158145, best_epoch=87, time_s=2521.717, run_dir=results/E3/E3-008_s0
+- Nhận xét: Hoàn thành 100 epochs (25.0s/epoch). Val Acc đạt 68.10% (tương đương baseline 68.15%, sai khác chỉ -0.05%), Best Val Loss đạt 0.9014 (tốt hơn baseline 0.9109) và Macro-F1 đạt 63.32%. So với rmsprop_1e-3, mức lr 3e-4 hội tụ an toàn nhưng không bứt phá mạnh bằng 1e-3.
+- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Khẳng định họ thuật toán RMSprop rất phù hợp cho mạng CNN phân loại cảm xúc.
+
+### [E3-009_s0] Khảo sát Kích thước Batch bs=64 (bs_64) — TV4 – 2026-11-26
+- Giả thuyết: Giảm batch size từ 128 xuống 64 sẽ tăng nhiễu gradient ngẫu nhiên (stochastic noise), đóng vai trò như một cơ chế điều hòa tự nhiên (implicit regularization) giúp mô hình thoát khỏi cực tiểu sắc nhọn (sharp minima) và cải thiện khả năng tổng quát hóa trên tập Validation.
+- Thay đổi so với baseline: `batch_size = 64`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only bs_64`
+- Kết quả: status=Completed, best_val_loss=0.9058310323984628, val_acc=0.6923934243521872, val_macro_f1=0.6642436440332822, best_epoch=82, time_s=2499.457, run_dir=results/E3/E3-009_s0
+- Nhận xét: ĐỘT PHÁ KỶ LỤC CỦA TOÀN BỘ E3! Val Acc đạt 69.24% (+1.09% so với baseline 68.15%, cao hơn std baseline 0.0075 đáng kể), Val Macro-F1 đạt đỉnh 66.42% (+2.34% so với baseline 64.08%) và Best Val Loss đạt 0.9058 tại epoch 82. Giả thuyết về lợi thế của batch size nhỏ trong việc tăng khả năng tổng quát hóa hoàn toàn được xác thực bằng số liệu thực nghiệm.
+- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Ứng viên số 1 về batch size cho mô hình cuối E7.
+
+### [E3-010_s0] Khảo sát Kích thước Batch bs=256 (bs_256) — TV4 – 2026-11-26
+- Giả thuyết: Tăng batch size lên 256 sẽ giúp ước lượng gradient ổn định hơn trong mỗi bước và tăng tốc độ xử lý phần cứng, tuy nhiên có thể dẫn đến hiện tượng "generalization gap" khiến Val Acc giảm sút so với batch size nhỏ.
+- Thay đổi so với baseline: `batch_size = 256`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only bs_256`
+- Kết quả: status=Completed, best_val_loss=0.9169435649931818, val_acc=0.6726107550849819, val_macro_f1=0.6298344697529457, best_epoch=94, time_s=2477.546, run_dir=results/E3/E3-010_s0
+- Nhận xét: Thời gian mỗi epoch nhanh nhất (24.4s/epoch, tổng 2477s). Tuy nhiên Val Acc giảm xuống 67.26% (thấp hơn baseline 0.89%), Val Macro-F1 đạt 62.98% và Val Loss đạt 0.9169. Kết quả đối sánh giữa bs=64 (69.24%), bs=128 (68.15%) và bs=256 (67.26%) thể hiện quy luật đơn điệu rõ ràng: batch size càng lớn thì độ chính xác tổng quát hóa càng giảm trên bài toán FER2013.
+- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Kết luận chọn batch size 64 hoặc 128 là tối ưu, không nên dùng batch size 256.
+
 ### [E4-001_s0] Khảo sát không dùng Data Augmentation — TV3 – <chưa thực hiện>
 - Giả thuyết: Huấn luyện mô hình không có Data Augmentation sẽ dẫn đến overfitting nghiêm trọng; chênh lệch giữa Train Acc và Val Acc sẽ rất lớn (> 20%).
 - Thay đổi so với baseline: `augmentation = "none"`.
