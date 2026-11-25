@@ -204,6 +204,14 @@
 - Nhận xét: Huấn luyện hoàn thành 100 epochs với tốc độ rất nhanh (26.7s/epoch, tổng thời gian 44.5 phút trên RTX 3060). Val Acc đạt 67.71% (chênh lệch -0.0045 so với baseline, nằm hoàn toàn trong ngưỡng dung sai tái lập < std baseline = 0.0075). Val Macro-F1 đạt 61.81% và Best Val Loss đạt 0.9126 (sát mốc Baseline 0.9109). Kết quả này vượt trội hơn rõ rệt so với nhóm AdamW (67.04% - 67.23%), cho thấy lịch học Cosine Annealing kết hợp SGD Nesterov hoạt động rất ổn định và hội tụ mượt mà.
 - Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Ghi nhận Cosine Annealing là một phương án lịch học xuất sắc có thể cân nhắc cho mô hình cuối E7.
 
+### [E3-004_s0] Khảo sát Lịch học StepLR (sched_step) — TV4 – 2026-11-26
+- Giả thuyết: StepLR giảm learning rate 50% sau mỗi 20 epoch theo chu kỳ bậc thang định trước; việc giảm bước cứng nhắc có thể khiến mô hình bị mất đà thoát khỏi cực tiểu địa phương so với lịch học thích ứng Plateau hoặc mượt mà Cosine.
+- Thay đổi so với baseline: `scheduler = "step"`, `step_size = 20`, `gamma = 0.5`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only sched_step`
+- Kết quả: status=Completed, best_val_loss=0.9208383716956325, val_acc=0.6648091390359432, val_macro_f1=0.5918614905456292, best_epoch=92, time_s=2564.179, run_dir=results/E3/E3-004_s0
+- Nhận xét: Huấn luyện hoàn thành 100 epochs với tốc độ rất nhanh (25.4s/epoch, tổng thời gian 42.3 phút). Val Acc đạt 66.48% (thấp hơn baseline 1.67%) và Val Macro-F1 đạt 59.19% (thấp hơn baseline 4.89%). So sánh 3 lịch học trên cùng optimizer SGD Nesterov: Cosine (67.71%) và Plateau (68.15%) vượt trội hơn hẳn StepLR (66.48%). Việc giảm lr đột ngột ở epoch 20, 40, 60, 80 làm hạn chế khả năng tìm kiếm nghiệm tối ưu ở các thung lũng phẳng rộng.
+- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Kết luận StepLR kém hiệu quả hơn Plateau và Cosine Annealing trên bài toán này.
+
 ### [E4-001_s0] Khảo sát không dùng Data Augmentation — TV3 – <chưa thực hiện>
 - Giả thuyết: Huấn luyện mô hình không có Data Augmentation sẽ dẫn đến overfitting nghiêm trọng; chênh lệch giữa Train Acc và Val Acc sẽ rất lớn (> 20%).
 - Thay đổi so với baseline: `augmentation = "none"`.
