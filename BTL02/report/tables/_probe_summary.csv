@@ -1,0 +1,2 @@
+group,task_id,variant,n_runs,n_completed,val_acc_mean,val_acc_std,val_acc_fmt,val_macro_f1_mean,val_macro_f1_std,val_macro_f1_fmt,best_val_loss_mean,epoch_time_s_tb_mean,so_voi_baseline_tu_tinh
+_probe,T11,baseline_ep100,1,1,0.681527,0.0,0.6815,0.641632,0.0,0.6416,0.915009,15.37992,+0.0000 (< std baseline)
