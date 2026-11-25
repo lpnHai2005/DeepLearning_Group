@@ -354,4 +354,5 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding="utf-8")  # console Windows (cp1252) không in được tiếng Việt
     main()
