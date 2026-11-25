@@ -3,7 +3,7 @@
 > **Môn học**: Deep Learning (Học sâu) – Bài tập lớn 02 (FER-2013)  
 > **Người lập mẫu & phụ trách chính**: TV4 – Huỳnh Viễn Thông (Nhiệm vụ T24)  
 > **Các thành viên tham gia**: TV1 – Đoàn Trung Kiên, TV2 – Lê Phan Nguyên Hải, TV3 – Võ Hoàng Bảo, TV4 – Huỳnh Viễn Thông  
-> **Cập nhật lần cuối**: 2026-11-25  
+> **Cập nhật lần cuối**: 2026-11-26  
 
 ---
 
@@ -131,6 +131,38 @@
 - Kết quả: (chưa thực hiện)
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
+
+### [E1-007_s1] Khảo sát loại bỏ BatchNorm (`baseline_no_bn`, Seed 1 — C2) — TV3 – Võ Hoàng Bảo – 2026-11-25
+- Giả thuyết: Kiểm chứng độc lập trên máy khác (RTX 3050, seed 1) xem mức tăng bất ngờ của `baseline_no_bn` ở `E1-007_s0` (`0.6907` trên RTX 4060 của TV2) có tái lập ổn định hay chỉ là dao động 1 seed.
+- Thay đổi so với baseline: `model_kwargs = {"bn": false}` (`5,866,951` tham số, giảm 896 tham số BN), `seed = 1`.
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV3 --only baseline_no_bn baseline_gap --seeds 1 2`
+- Kết quả: status=Completed, best_val_loss=0.9074415885561786, val_acc=0.6940651992198384, val_macro_f1=0.6680916497711471, best_epoch=100, time_s=1973.071, run_dir=results/E1/E1-007_s1
+- Nhận xét: Hoàn tất trọn vẹn 100 epochs trên RTX 3050 (~32.9 phút, ~19.6s/ep). `val_acc` đạt **69.41%** (+1.25% so với trung bình baseline 68.15%) và `val_macro_f1` đạt **66.81%** (+2.73% so với baseline 64.08%), `best_val_loss = 0.9074` thấp hơn baseline (`0.9109`). Không xảy ra hiện tượng triệt tiêu gradient trên kiến trúc 6 lớp Conv này.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.39 MB). Xác nhận xu hướng vượt baseline ở seed 1.
+
+### [E1-007_s2] Khảo sát loại bỏ BatchNorm (`baseline_no_bn`, Seed 2 — C2) — TV3 – Võ Hoàng Bảo – 2026-11-25
+- Giả thuyết: Hoàn thiện bộ 3 seed độc lập (s0 TV2 + s1, s2 TV3) cho `baseline_no_bn` để kết luận có ý nghĩa thống kê so với dung sai baseline (`0.0075`).
+- Thay đổi so với baseline: `model_kwargs = {"bn": false}`, `seed = 2`.
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV3 --only baseline_no_bn baseline_gap --seeds 1 2`
+- Kết quả: status=Completed, best_val_loss=0.9016892844237601, val_acc=0.6974087489551407, val_macro_f1=0.6726705298117717, best_epoch=97, time_s=2775.095, run_dir=results/E1/E1-007_s2
+- Nhận xét: Đạt **69.74%** `val_acc`, **67.27%** `val_macro_f1`, `best_val_loss = 0.9017` tại epoch 97/100 (~46.3 phút). Tổng hợp đủ 3 seed (`E1-007_s0/s1/s2`): `val_acc = 0.6941 ± 0.0033` (**+0.0125**, cao hơn rõ rệt ngưỡng `std = 0.0075` của baseline), `val_macro_f1 = 0.6682 ± 0.0044` (+0.0274 so với baseline), `best_val_loss = 0.9059`. Trái với giả thuyết ban đầu, mạng VGG 6 lớp Conv + Kaiming init đủ nông để hội tụ không cần BN (khác với `medium_01` 12 lớp và `large` 16 lớp bị sập ở `0.2494`), đồng thời bỏ BN tránh xung đột thống kê giữa Dropout và BatchNorm nên vừa tăng độ chính xác vừa giảm một nửa độ lệch chuẩn giữa các seed (`0.0033` vs `0.0075`).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.39 MB). Chốt kết luận 3 seed cho `baseline_no_bn`: **vượt baseline có ý nghĩa thống kê**, là ứng viên kiến trúc mạnh cho các bước kế tiếp / `E7`.
+
+### [E1-008_s1] Khảo sát Global Average Pooling (`baseline_gap`, Seed 1 — C2) — TV3 – Võ Hoàng Bảo – 2026-11-25
+- Giả thuyết: Kiểm chứng độc lập trên RTX 3050 (seed 1) xem `baseline_gap` (`1.28M` tham số, giảm 78.2% so với baseline) có duy trì được hiệu năng tương đương baseline như `E1-008_s0` (`0.6829`) hay không.
+- Thay đổi so với baseline: `model_kwargs = {"head": "gap"}` (`1,280,327` tham số thay vì `5,867,847`), `seed = 1`.
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV3 --only baseline_no_bn baseline_gap --seeds 1 2`
+- Kết quả: status=Completed, best_val_loss=0.9081022443795277, val_acc=0.6834772917247144, val_macro_f1=0.6460131237868115, best_epoch=100, time_s=3356.223, run_dir=results/E1/E1-008_s1
+- Nhận xét: Hoàn tất 100 epochs trên RTX 3050 (~55.9 phút). `val_acc` đạt **68.35%** và `val_macro_f1` đạt **64.60%**, `best_val_loss = 0.9081`, khớp sát với `E1-008_s0` (`68.29%`, `64.49%`). Khoảng cách `train_acc_cuoi − val_acc = +0.0396` gần tương đương baseline (`+0.0397`).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` chỉ 4.90 MB). Xác nhận độ ổn định tốt ở seed 1.
+
+### [E1-008_s2] Khảo sát Global Average Pooling (`baseline_gap`, Seed 2 — C2) — TV3 – Võ Hoàng Bảo – 2026-11-26
+- Giả thuyết: Hoàn thiện bộ 3 seed độc lập cho `baseline_gap` để đánh giá đánh đổi giữa số tham số (giảm 78.2%) và độ chính xác.
+- Thay đổi so với baseline: `model_kwargs = {"head": "gap"}`, `seed = 2`.
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV3 --only baseline_no_bn baseline_gap --seeds 1 2`
+- Kết quả: status=Completed, best_val_loss=0.9059900776461062, val_acc=0.685427695736974, val_macro_f1=0.6523252167324272, best_epoch=98, time_s=2067.558, run_dir=results/E1/E1-008_s2
+- Nhận xét: Hoàn tất 100 epochs (~34.5 phút, ~20.5s/ep), đạt **68.54%** `val_acc`, **65.23%** `val_macro_f1`, `best_val_loss = 0.9060` tại epoch 98. Tổng hợp đủ 3 seed (`E1-008_s0/s1/s2`): `val_acc = 0.6839 ± 0.0013` (**+0.0024**, trong ngưỡng `< std baseline = 0.0075`), `val_macro_f1 = 0.6478 ± 0.0040`, `best_val_loss = 0.9077`. Đúng với giả thuyết: thay `Flatten` bằng `GAP` cắt giảm **78.2%** tham số (`5.87M → 1.28M`, trọng số `22.39 MB → 4.90 MB`) mà hiệu năng vẫn tương đương (nhỉnh nhẹ) baseline, đặc biệt độ lệch chuẩn giữa 3 seed thu hẹp mạnh còn `0.0013` (~1/6 của baseline).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 4.90 MB). Chốt kết luận 3 seed cho `baseline_gap`: **hiệu quả tham số vượt trội** (tương đương baseline với 21.8% số tham số), đáng thử kết hợp với `no_bn` ở các thí nghiệm sau / `E7`.
 
 ### [E2-001_s0] Khảo sát hàm kích hoạt LeakyReLU — TV3 – <chưa thực hiện>
 - Giả thuyết: LeakyReLU cho phép gradient nhỏ đi qua khi đầu vào âm, hạn chế hiện tượng Dying ReLU ở các lớp sâu.
