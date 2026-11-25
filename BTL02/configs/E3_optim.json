@@ -1,0 +1,40 @@
+{
+  "group": "E3",
+  "task_id": "T14",
+  "base": {
+    "model": "baseline",
+    "epochs": 100,
+    "batch_size": 128,
+    "optimizer": "sgd",
+    "lr": 0.01,
+    "momentum": 0.9,
+    "nesterov": true,
+    "weight_decay": 0.0005,
+    "scheduler": "plateau",
+    "factor": 0.5,
+    "lr_patience": 5,
+    "early_stopping_patience": 15,
+    "label_smoothing": 0.0,
+    "augmentation": "flip_affine",
+    "amp": true,
+    "num_workers": 0
+  },
+  "variants": {
+    "sgd_no_nesterov_1e-2": {"optimizer": "sgd", "nesterov": false, "lr": 0.01},
+    "sgd_nesterov_3e-2": {"optimizer": "sgd", "nesterov": true, "lr": 0.03},
+    "sgd_nesterov_3e-3": {"optimizer": "sgd", "nesterov": true, "lr": 0.003},
+    "adam_1e-3": {"optimizer": "adam", "lr": 0.001},
+    "adam_3e-4": {"optimizer": "adam", "lr": 0.0003},
+    "adamw_1e-3": {"optimizer": "adamw", "lr": 0.001},
+    "adamw_3e-4": {"optimizer": "adamw", "lr": 0.0003},
+    "rmsprop_1e-3": {"optimizer": "rmsprop", "lr": 0.001},
+    "rmsprop_3e-4": {"optimizer": "rmsprop", "lr": 0.0003},
+    "sched_constant": {"scheduler": "constant"},
+    "sched_step": {"scheduler": "step", "step_size": 20, "gamma": 0.5},
+    "sched_cosine": {"scheduler": "cosine"},
+    "sched_onecycle": {"scheduler": "onecycle"},
+    "bs_64": {"batch_size": 64},
+    "bs_256": {"batch_size": 256}
+  },
+  "seeds": [0]
+}
