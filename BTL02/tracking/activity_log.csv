@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+05536a2e,2026-11-25T21:06:07+07:00,HiCyclone,TV2,T17,feat(T17): thêm cấu hình transfer learning configs/E6_transfer.json,1,BTL02/configs/E6_transfer.json
 1ad422e2,2026-11-25T20:59:55+07:00,TrungKien2005,TV1,T01,test(T01): ghi nhận Sheets chưa đồng bộ,1,BTL02/tracking/test_log.csv
 a527a2d0,2026-11-25T20:46:58+07:00,HiCyclone,TV2,T10,chore(T10): TV2 chạy lại notebook tái lập Restart & Run All trên RTX 4060,9,BTL02/notebooks/executed/_nb-003_s0.ipynb; BTL02/results/_nb/_nb-003_s0/config.json; BTL02/results/_nb/_nb-003_s0/curves.csv; BTL02/results/_nb/_nb-003_s0/curves.png; BTL02/results/_nb/_nb-003_s0/history.csv; BTL02/results/_nb/_nb-003_s0/metrics.json; BTL02/results/_nb/_nb-003_s0/run.log; BTL02/tracking/experiments.csv; BTL02/tracking/figures_manifest.csv
 dbabeb0d,2026-11-25T20:33:33+07:00,TrungKien2005,TV1,T01,test(T01): báo cáo kiểm thử phân công trên clone sạch,2,BTL02/tracking/tasks.csv; BTL02/tracking/test_log.csv
