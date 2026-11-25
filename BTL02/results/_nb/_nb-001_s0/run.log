@@ -1,0 +1,4 @@
+2026-11-25T10:09:43+07:00 | _nb-001_s0 | START | device=cuda | epochs=2 | amp=True | optimizer=sgd | lr=0.01 | seed=0
+2026-11-25T10:10:04+07:00 | _nb-001_s0 | 1/2 | train_loss=1.8166 | val_loss=1.7233 | val_acc=0.3129 | val_macro_f1=0.1756 | lr=0.01 | 21.7s | ok
+2026-11-25T10:10:25+07:00 | _nb-001_s0 | 2/2 | train_loss=1.7271 | val_loss=1.5459 | val_acc=0.3876 | val_macro_f1=0.2813 | lr=0.01 | 20.2s | ok
+2026-11-25T10:10:25+07:00 | _nb-001_s0 | END | status=Completed | reason=OK | stopped_by=max_epochs | best_epoch=2 | train_time_s=43.272
