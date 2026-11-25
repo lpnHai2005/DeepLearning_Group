@@ -13,5 +13,6 @@
 | E1 – baseline_gap | 3 | 0.6839 ± 0.0013 | 0.6478 ± 0.0040 | 0.9077 | 1,280,327 | +0.0463 | — (nhiều GPU) | +0.0024 (< std baseline) |
 | E3 – adamw_1e-3 | 1 | 0.6723 | 0.5878 | 0.9626 | 5,867,847 | +0.0268 | RTX 3060 (35.9s) | -0.0092 (thấp hơn) |
 | E3 – adamw_3e-4 | 1 | 0.6704 | 0.5630 | 0.9176 | 5,867,847 | +0.0065 | RTX 3060 (49.7s) | -0.0111 (thấp hơn) |
+| E3 – sched_cosine | 1 | 0.6771 | 0.6181 | 0.9126 | 5,867,847 | +0.0224 | RTX 3060 (26.7s) | -0.0045 (< std baseline) |
 
 _* Ghi chú: `Train–Val` = `train_acc_cuoi − val_acc`; `train_acc_cuoi` được đo trong chế độ huấn luyện (có bật data augmentation và dropout), chỉ dùng để so sánh xu hướng quá khớp giữa các cấu hình. Ký hiệu `—` thể hiện không xác định (1 seed không có độ lệch chuẩn mẫu, hoặc thời gian không lấy trung bình qua nhiều GPU khác nhau)._

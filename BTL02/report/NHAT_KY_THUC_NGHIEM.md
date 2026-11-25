@@ -96,7 +96,7 @@
 - Giả thuyết: Mô hình SMALL_CNN chỉ có 2 khối Conv và không có BatchNorm sẽ huấn luyện nhanh hơn nhưng độ chính xác thấp hơn Baseline đáng kể (dự kiến < 60%).
 - Thay đổi so với baseline: `model = "small"` (không BN, 4 Conv, FC 1024).
 - Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only small`
-- Kết quả: (chưa thực hiện)
+- Kết quả: status=Completed, best_val_loss=0.9094449157799874, val_acc=0.6915575369183616, val_macro_f1=0.6731403436946511, best_epoch=96, time_s=2133.077, run_dir=results/E1/E1-001_s0
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
 
@@ -104,7 +104,7 @@
 - Giả thuyết: Tái hiện mô hình MEDIUM_01 từ notebook mẫu (12.1M tham số, không BN) xem mức độ quá khớp (overfitting) khi thiếu chuẩn hóa theo lô.
 - Thay đổi so với baseline: `model = "medium_01"`.
 - Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only medium_01`
-- Kết quả: (chưa thực hiện)
+- Kết quả: status=Completed, best_val_loss=0.9161594292020758, val_acc=0.6951797157982725, val_macro_f1=0.6788904667222425, best_epoch=100, time_s=1691.147, run_dir=results/E1/E1-002_s0
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
 
@@ -112,7 +112,7 @@
 - Giả thuyết: Tái hiện mô hình LARGE_CNN (20.4M tham số, 16 lớp Conv) để đánh giá chi phí tính toán và hiện tượng biến mất gradient khi thiếu BatchNorm.
 - Thay đổi so với baseline: `model = "large"`.
 - Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only large`
-- Kết quả: (chưa thực hiện)
+- Kết quả: status=Completed, best_val_loss=1.8107485001915575, val_acc=0.24937308442463083, val_macro_f1=0.05702816362941251, best_epoch=1, time_s=326.687, run_dir=results/E1/E1-003_s0
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
 
@@ -120,7 +120,7 @@
 - Giả thuyết: Khi loại bỏ toàn bộ các lớp BatchNorm trong Baseline, gradient sẽ kém ổn định hơn, tốc độ hội tụ chậm hơn và validation accuracy giảm ít nhất 3-5%.
 - Thay đổi so với baseline: `bn = False`.
 - Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV3 --only no_bn`
-- Kết quả: (chưa thực hiện)
+- Kết quả: status=Completed, best_val_loss=1.8107463234013652, val_acc=0.24937308442463083, val_macro_f1=0.05702816362941251, best_epoch=1, time_s=397.254, run_dir=results/E1/E1-004_s0
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
 
@@ -128,7 +128,7 @@
 - Giả thuyết: Thay thế Flatten bằng Global Average Pooling (GAP) sẽ giảm mạnh số lượng tham số ở phần phân loại và giúp mô hình chống overfitting tốt hơn.
 - Thay đổi so với baseline: `head = "gap"`.
 - Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV3 --only gap`
-- Kết quả: (chưa thực hiện)
+- Kết quả: status=Completed, best_val_loss=0.9146933610075927, val_acc=0.6701030927835051, val_macro_f1=0.6329196107692682, best_epoch=90, time_s=1397.591, run_dir=results/E1/E1-005_s0
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
 
@@ -195,6 +195,14 @@
 - Kết quả: status=Completed, best_val_loss=0.9175645472711759, val_acc=0.6703817219281136, val_macro_f1=0.5630497131569857, best_epoch=91, time_s=4999.794, run_dir=results/E3/E3-002_s0
 - Nhận xét: Best Val Loss được cải thiện rõ rệt từ 0.9626 (adamw_1e-3) xuống 0.9176 (xấp xỉ mốc 0.9109 của Baseline), chứng minh giảm lr giúp ổn định loss. Tuy nhiên Val Acc đạt 67.04% và Macro-F1 đạt 56.30% (tiếp tục giảm 2.48% so với adamw_1e-3 và kém Baseline 7.78%). Hoàn tất 100 epochs, best epoch đạt tại epoch 91.
 - Quyết định: Giữ weights (KEEP, mã OK). Hoàn tất nhóm khảo sát AdamW: cả hai mức lr 1e-3 và 3e-4 đều kém hơn Baseline SGD Nesterov về độ chính xác và khả năng nhận diện các lớp cảm xúc thiểu số.
+
+### [E3-003_s0] Khảo sát Lịch học Cosine Annealing (sched_cosine) — TV4 – 2026-11-26
+- Giả thuyết: Lịch học Cosine Annealing giảm learning rate mượt mà theo chu kỳ nửa sóng cosin, giúp mô hình thoát khỏi cực tiểu địa phương tốt hơn lịch học Plateau và đạt độ chính xác tương đương hoặc vượt Baseline.
+- Thay đổi so với baseline: `scheduler = "cosine"`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only sched_cosine`
+- Kết quả: status=Completed, best_val_loss=0.9126208526704862, val_acc=0.6770688213987183, val_macro_f1=0.6180704523759227, best_epoch=85, time_s=2709.745, run_dir=results/E3/E3-003_s0
+- Nhận xét: Huấn luyện hoàn thành 100 epochs với tốc độ rất nhanh (26.7s/epoch, tổng thời gian 44.5 phút trên RTX 3060). Val Acc đạt 67.71% (chênh lệch -0.0045 so với baseline, nằm hoàn toàn trong ngưỡng dung sai tái lập < std baseline = 0.0075). Val Macro-F1 đạt 61.81% và Best Val Loss đạt 0.9126 (sát mốc Baseline 0.9109). Kết quả này vượt trội hơn rõ rệt so với nhóm AdamW (67.04% - 67.23%), cho thấy lịch học Cosine Annealing kết hợp SGD Nesterov hoạt động rất ổn định và hội tụ mượt mà.
+- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Ghi nhận Cosine Annealing là một phương án lịch học xuất sắc có thể cân nhắc cho mô hình cuối E7.
 
 ### [E4-001_s0] Khảo sát không dùng Data Augmentation — TV3 – <chưa thực hiện>
 - Giả thuyết: Huấn luyện mô hình không có Data Augmentation sẽ dẫn đến overfitting nghiêm trọng; chênh lệch giữa Train Acc và Val Acc sẽ rất lớn (> 20%).
