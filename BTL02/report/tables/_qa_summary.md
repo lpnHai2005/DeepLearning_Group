@@ -1,5 +1,0 @@
-# Tổng hợp nhóm _qa
-
-| group | task_id | variant | n_runs | n_completed | val_acc_mean | val_acc_std | val_acc_fmt | val_macro_f1_mean | val_macro_f1_std | val_macro_f1_fmt | best_val_loss_mean | epoch_time_s_tb_mean | so_voi_baseline_tu_tinh |
-|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| _qa | T07 | baseline_2ep | 1 | 1 | 0.382558 | 0.0 | 0.3826 | 0.239698 | 0.0 | 0.2397 | 1.577768 | 17.1435 | -0.2990 (thấp hơn) |
