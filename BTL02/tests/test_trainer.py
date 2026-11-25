@@ -176,3 +176,40 @@ def test_scan_orphans(tmp_path):
     m = read_metrics(d)
     assert m["status"] == "Aborted" and m["weights_ma_ly_do"] == "INTERRUPTED@epoch2" and m["best_epoch"] == 2
     assert scan_orphans(tmp_path) == []  # lần quét sau không xử lý lại
+
+
+def test_grad_norms_tung_lop(tmp_path):
+    """T13: log_grad_norms ghi chuẩn gradient từng lớp có trọng số mỗi epoch, khớp chuẩn tính tay ở epoch 1."""
+    tl, vl = loaders()
+    net = nn.Sequential(nn.Flatten(), nn.Linear(16, 8), nn.BatchNorm1d(8), nn.ReLU(), nn.Linear(8, 7))
+    torch.manual_seed(0)
+    ref = nn.Sequential(nn.Flatten(), nn.Linear(16, 8), nn.BatchNorm1d(8), nn.ReLU(), nn.Linear(8, 7))
+    ref.load_state_dict(net.state_dict())
+    fit(net, tl, vl, {**CFG, "log_grad_norms": True}, tmp_path)
+    with open(tmp_path / "grad_norms.csv", encoding="utf-8", newline="") as f:
+        rows = list(csv.DictReader(f))
+    assert [(r["epoch"], r["layer"]) for r in rows] == [(str(e), n) for e in (1, 2, 3) for n in ("1", "4")]
+    assert all(float(r["grad_norm_mean"]) > 0 and r["n_steps"] == str(len(tl)) for r in rows)
+    # tính tay epoch 1: cùng trọng số ban đầu, cùng thứ tự batch, SGD giống fit
+    opt = torch.optim.SGD(ref.parameters(), lr=0.1, momentum=0.9, nesterov=True, weight_decay=5e-4)
+    ref.train()
+    sums = {"1": 0.0, "4": 0.0}
+    for x, y in tl:
+        opt.zero_grad()
+        nn.CrossEntropyLoss()(ref(x), y).backward()
+        sums["1"] += ref[1].weight.grad.norm().item()
+        sums["4"] += ref[4].weight.grad.norm().item()
+        opt.step()
+    for r in rows[:2]:
+        assert float(r["grad_norm_mean"]) == pytest.approx(sums[r["layer"]] / len(tl), rel=1e-5)
+
+
+def test_grad_norms_khong_doi_ket_qua_train(tmp_path):
+    """Bật log_grad_norms không đổi bước cập nhật: history giống run không bật; mặc định không ghi file."""
+    tl, vl = loaders()
+    fit(model(), tl, vl, CFG, tmp_path / "a")
+    fit(model(), tl, vl, {**CFG, "log_grad_norms": True}, tmp_path / "b")
+    assert not (tmp_path / "a" / "grad_norms.csv").exists()
+    cols = ["train_loss", "val_loss", "train_acc", "val_acc"]
+    assert [[h[c] for c in cols] for h in read_history(tmp_path / "a")] == \
+           [[h[c] for c in cols] for h in read_history(tmp_path / "b")]

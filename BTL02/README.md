@@ -16,7 +16,7 @@ BTL02/
 │   ├── data/                   fer2013.py, loader.py, augment.py, eda.py
 │   ├── models/                 cnn.py, transfer.py
 │   ├── engine/                 trainer.py, evaluate.py
-│   ├── visual/                 plots.py, filters.py
+│   ├── visual/                 plots.py, filters.py, grad_norms.py
 │   ├── utils/                  seed.py, io.py
 │   ├── run_experiment.py, make_tables.py, visualize_filters.py
 ├── tests/
@@ -37,7 +37,7 @@ TV2 đã khởi tạo các script tracking. Theo ma trận hiện tại, TV4 là
 | `src/data/` | đọc `fer2013.csv`, loader, augmentation, EDA | TV1 | T04, T05 |
 | `src/models/` | CNN VGG-style, transfer (ResNet18/VGG16) | TV2 | T06 |
 | `src/engine/` | trainer, evaluate, tự giữ/xóa weights | TV2 (trainer), TV3 (evaluate) | T07, T08 |
-| `src/visual/` | đường cong, ma trận nhầm lẫn, hình bộ lọc | TV3 (plots), TV4 (filters) | T08, T20 |
+| `src/visual/` | đường cong, ma trận nhầm lẫn, hình bộ lọc, chuẩn gradient E2 | TV3 (plots), TV4 (filters), TV2 (grad_norms) | T08, T20, T13 |
 | `src/utils/` | seed, io, log | TV2 | T07 |
 | `configs/` | cấu hình từng nhóm thực nghiệm (`baseline.json`, E1–E7) | người phụ trách nhóm | T11–T18 |
 | `tests/` | pytest: shape, nhãn, không rò rỉ test, luật giữ/xóa weights | người viết module | |
@@ -54,7 +54,7 @@ TV2 đã khởi tạo các script tracking. Theo ma trận hiện tại, TV4 là
 |---|---|---|
 | `README.md`, `requirements.txt`, khung thư mục | TV1 – Đoàn Trung Kiên | T02 |
 | `data/fer2013.csv`, `results/data_check.json`, `src/data/{fer2013,loader,augment,eda}.py` | TV1 – Đoàn Trung Kiên | T03–T05, T15–T16, T21 |
-| `src/models/{cnn,transfer}.py`, `src/engine/trainer.py`, `src/run_experiment.py`, `src/utils/` | TV2 – Lê Phan Nguyên Hải | T06–T07, T11–T13, T17, T22 |
+| `src/models/{cnn,transfer}.py`, `src/engine/trainer.py`, `src/run_experiment.py`, `src/utils/`, `src/visual/grad_norms.py` | TV2 – Lê Phan Nguyên Hải | T06–T07, T11–T13, T17, T22 |
 | `src/engine/evaluate.py`, `src/visual/plots.py`, `src/make_tables.py`, `notebooks/` | TV3 – Võ Hoàng Bảo | T08–T10, T14, T18–T19, T23 |
 | `src/visual/filters.py`, `src/visualize_filters.py`, `report/` | TV4 – Huỳnh Viễn Thông | T20, T24–T27 |
 | `tracking/*.csv`, Google Sheets và nghiệm thu T01 | TV4 – Huỳnh Viễn Thông | T01 (R theo ma trận) |

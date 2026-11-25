@@ -12,8 +12,13 @@ Khóa cfg (mặc định trong ngoặc): epochs (60), optimizer ("sgd"|"adam"|"a
 momentum (0.9), nesterov (True), weight_decay (5e-4), scheduler ("plateau"|"constant"|"step"|"cosine"|"onecycle",
 "plateau"), factor (0.5) và lr_patience (5) cho plateau, step_size (20) và gamma (0.5) cho step,
 early_stopping_patience (15; 0 là tắt), label_smoothing (0.0), class_weights (None hoặc list 7 số), amp (True,
-chỉ có tác dụng trên CUDA), device (None: tự chọn), exp_id (mặc định tên run_dir).
+chỉ có tác dụng trên CUDA), device (None: tự chọn), exp_id (mặc định tên run_dir), log_grad_norms (False).
 Loss train có label_smoothing/class_weights; loss val luôn là CE thường để so sánh được giữa các run.
+
+log_grad_norms=True (E2, nhiệm vụ T13) ghi thêm grad_norms.csv: mỗi epoch, mỗi lớp có trọng số (Conv, Linear; bỏ
+bias và BatchNorm) một dòng chuẩn L2 trung bình của gradient qua các batch. Gradient lấy sau scaler.unscale_ (giá trị
+thật, không bị hệ số scale của AMP), trước bước optimizer (chưa cộng weight decay); batch mà AMP gặp inf/nan bị bỏ
+qua. unscale_ không đổi bước cập nhật nên run bật cờ này vẫn so được với run không bật.
 """
 import copy
 import csv
@@ -33,6 +38,7 @@ from src.models.cnn import NUM_CLASSES
 from src.utils.io import atomic_torch_save, sha256_file, write_json
 
 HISTORY_COLS = ["epoch", "train_loss", "val_loss", "train_acc", "val_acc", "val_macro_f1", "lr", "epoch_time_s"]
+GRAD_COLS = ["epoch", "layer", "grad_norm_mean", "n_steps"]
 # shortcut: dung sai 1e-4 (nhỏ hơn 1 mẫu của PublicTest = 2.8e-4, tức val_acc tính lại phải khớp từng mẫu); nhóm chưa
 # chốt dung sai, nới ra nếu AMP fp16 làm lật 1 mẫu giữa hai lần chạy.
 RELOAD_TOL = 1e-4
@@ -76,7 +82,37 @@ def macro_f1(conf):
     return (2 * conf.diag() / (conf.sum(0) + conf.sum(1)).clamp(min=1)).mean().item()
 
 
-def _run_epoch(model, loader, device, criterion, amp, optimizer=None, scaler=None, batch_sched=None):
+class _GradNorms:
+    """Cộng dồn chuẩn L2 gradient từng lớp qua các batch, ngay trên GPU (không đồng bộ CPU mỗi batch)."""
+
+    def __init__(self, model, device):
+        named = [(n.removesuffix(".weight"), p) for n, p in model.named_parameters() if p.requires_grad and p.dim() > 1]
+        self.names = [n for n, _ in named]
+        self.params = [p for _, p in named]
+        self.device = device
+        self._reset()
+
+    def _reset(self):
+        self.sum = torch.zeros(len(self.params), device=self.device)
+        self.cnt = torch.zeros(len(self.params), device=self.device)
+
+    def add(self):
+        nan = torch.full((), float("nan"), device=self.device)
+        norms = torch.stack([torch.linalg.vector_norm(p.grad.detach().float()) if p.grad is not None else nan
+                             for p in self.params])
+        ok = torch.isfinite(norms)
+        self.sum += torch.where(ok, norms, torch.zeros_like(norms))
+        self.cnt += ok
+
+    def pop(self):
+        """[(tên lớp, chuẩn trung bình hoặc nan nếu không có batch hợp lệ, số batch)] rồi đặt lại bộ đếm."""
+        mean = (self.sum / self.cnt.clamp(min=1)).tolist()
+        cnt = self.cnt.long().tolist()
+        self._reset()
+        return [(n, m if c else float("nan"), c) for n, m, c in zip(self.names, mean, cnt)]
+
+
+def _run_epoch(model, loader, device, criterion, amp, optimizer=None, scaler=None, batch_sched=None, grad_norms=None):
     train = optimizer is not None
     model.train(train)
     loss_sum = torch.zeros((), device=device)
@@ -92,6 +128,9 @@ def _run_epoch(model, loader, device, criterion, amp, optimizer=None, scaler=Non
             if train:
                 optimizer.zero_grad(set_to_none=True)
                 scaler.scale(loss).backward()
+                if grad_norms is not None:
+                    scaler.unscale_(optimizer)  # scaler.step sẽ không unscale lần hai
+                    grad_norms.add()
                 scaler.step(optimizer)
                 scaler.update()
                 if batch_sched is not None:
@@ -225,6 +264,7 @@ def fit(model, train_loader, val_loader, cfg, run_dir):
     t0 = time.perf_counter()
     status, fail_reason, error_tb, stopped_by = "Aborted", "INTERRUPTED", None, "interrupted"
     n_rows, best_acc, stale = 0, -1.0, 0
+    gf = gwriter = grad_norms = None
     try:
         try:
             model.to(device)
@@ -235,19 +275,27 @@ def fit(model, train_loader, val_loader, cfg, run_dir):
             criterion = nn.CrossEntropyLoss(weight=None if weight is None else torch.tensor(weight, dtype=torch.float32, device=device),
                                             label_smoothing=cfg.get("label_smoothing", 0.0))
             val_criterion = nn.CrossEntropyLoss()
+            if cfg.get("log_grad_norms", False):
+                grad_norms = _GradNorms(model, device)
+                gf = open(run_dir / "grad_norms.csv", "w", newline="", encoding="utf-8")
+                gwriter = csv.writer(gf)
+                gwriter.writerow(GRAD_COLS)
             _log(logger, exp_id, "START", f"device={device}", f"epochs={epochs}", f"amp={amp}",
                  f"optimizer={cfg.get('optimizer', 'sgd')}", f"lr={cfg.get('lr', 0.01)}", f"seed={cfg.get('seed')}")
             stopped_by = "max_epochs"
             for epoch in range(1, epochs + 1):
                 t = time.perf_counter()
                 tl, ta, _ = _run_epoch(model, train_loader, device, criterion, amp, optimizer, scaler,
-                                       scheduler if per_batch else None)
+                                       scheduler if per_batch else None, grad_norms)
                 vl, va, conf = _run_epoch(model, val_loader, device, val_criterion, amp)
                 if not (math.isfinite(tl) and math.isfinite(vl)):
                     raise _NanLoss(epoch)
                 f1, lr, dt = macro_f1(conf), optimizer.param_groups[0]["lr"], time.perf_counter() - t
                 writer.writerow([epoch, tl, vl, ta, va, f1, lr, round(dt, 3)])
                 hf.flush()
+                if grad_norms is not None:
+                    gwriter.writerows([epoch, *row] for row in grad_norms.pop())
+                    gf.flush()
                 n_rows += 1
                 if va > best_acc:
                     best_acc, stale = va, 0
@@ -271,6 +319,8 @@ def fit(model, train_loader, val_loader, cfg, run_dir):
             error_tb = traceback.format_exc()
     finally:
         hf.close()
+        if gf is not None:
+            gf.close()
         if fail_reason == "INTERRUPTED":
             fail_reason = f"INTERRUPTED@epoch{n_rows}"
         result = _finish(run_dir, exp_id, logger, status, fail_reason, error_tb, stopped_by,

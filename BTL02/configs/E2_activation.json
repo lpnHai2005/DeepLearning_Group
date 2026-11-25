@@ -1,0 +1,43 @@
+{
+  "group": "E2",
+  "task_id": "T13",
+  "ghi_chu": [
+    "Base giống configs/baseline.json, thêm log_grad_norms=true để ghi grad_norms.csv (chuẩn L2 gradient từng lớp mỗi epoch); cờ này không đổi bước cập nhật.",
+    "Chỉ đổi hàm kích hoạt (model_kwargs.activation, áp cho mọi Conv và lớp FC ẩn) và có/không BatchNorm.",
+    "relu chạy lại baseline có ghi gradient để làm mốc so chuẩn gradient; val acc so với baseline 3 seed (0.6815 ± 0.0075).",
+    "Bản không BN chỉ chạy relu, tanh, sigmoid: đủ để kiểm giả thuyết vanishing gradient của sigmoid (relu là đối chứng, tanh là hàm bão hòa đối xứng).",
+    "Chia máy: TV3 chạy relu, leaky_relu, elu, gelu, relu_no_bn; TV4 chạy tanh, sigmoid, tanh_no_bn, sigmoid_no_bn."
+  ],
+  "base": {
+    "model": "baseline",
+    "model_kwargs": {},
+    "epochs": 100,
+    "batch_size": 128,
+    "optimizer": "sgd",
+    "lr": 0.01,
+    "momentum": 0.9,
+    "nesterov": true,
+    "weight_decay": 0.0005,
+    "scheduler": "plateau",
+    "factor": 0.5,
+    "lr_patience": 5,
+    "early_stopping_patience": 15,
+    "label_smoothing": 0.0,
+    "augmentation": "flip_affine",
+    "amp": true,
+    "num_workers": 0,
+    "log_grad_norms": true
+  },
+  "variants": {
+    "relu": {"model_kwargs": {"activation": "relu"}},
+    "leaky_relu": {"model_kwargs": {"activation": "leaky_relu"}},
+    "elu": {"model_kwargs": {"activation": "elu"}},
+    "gelu": {"model_kwargs": {"activation": "gelu"}},
+    "tanh": {"model_kwargs": {"activation": "tanh"}},
+    "sigmoid": {"model_kwargs": {"activation": "sigmoid"}},
+    "relu_no_bn": {"model_kwargs": {"activation": "relu", "bn": false}},
+    "tanh_no_bn": {"model_kwargs": {"activation": "tanh", "bn": false}},
+    "sigmoid_no_bn": {"model_kwargs": {"activation": "sigmoid", "bn": false}}
+  },
+  "seeds": [0]
+}
