@@ -1,0 +1,38 @@
+{
+  "group": "E6",
+  "task_id": "T17",
+  "ghi_chu": [
+    "Base giống configs/baseline.json về tối ưu và augmentation; chỉ đổi mô hình (khóa transfer) và đầu vào (resize, channels=3).",
+    "Chuẩn hóa dùng mean/std của tập Training FER (lặp 3 kênh), không dùng mean/std ImageNet; hai bộ số gần nhau (xám FER ~0.51/0.26, ImageNet ~0.45/0.23).",
+    "vgg16_48_ft tái hiện fail case của demo_report: 5 lần MaxPool đưa 48 -> 24 -> 12 -> 6 -> 3 -> 1, xem results/transfer_summary.csv.",
+    "vgg16_96_ft là phần tùy thời gian trong kế hoạch: VGG16 ở 96 px đắt nên chỉ chạy 30 epoch.",
+    "Chia máy: TV1 chạy vgg16_48_ft, resnet18_96_scratch; TV4 chạy resnet18_96_ft, resnet18_96_frozen; vgg16_96_ft chạy trên máy có >= 8 GB VRAM."
+  ],
+  "base": {
+    "resize": 96,
+    "channels": 3,
+    "epochs": 100,
+    "batch_size": 128,
+    "optimizer": "sgd",
+    "lr": 0.01,
+    "momentum": 0.9,
+    "nesterov": true,
+    "weight_decay": 0.0005,
+    "scheduler": "plateau",
+    "factor": 0.5,
+    "lr_patience": 5,
+    "early_stopping_patience": 15,
+    "label_smoothing": 0.0,
+    "augmentation": "flip_affine",
+    "amp": true,
+    "num_workers": 0
+  },
+  "variants": {
+    "vgg16_48_ft": {"resize": 48, "transfer": {"name": "vgg16", "pretrained": true, "freeze_backbone": false}},
+    "resnet18_96_scratch": {"transfer": {"name": "resnet18", "pretrained": false, "freeze_backbone": false}},
+    "resnet18_96_ft": {"transfer": {"name": "resnet18", "pretrained": true, "freeze_backbone": false}},
+    "resnet18_96_frozen": {"transfer": {"name": "resnet18", "pretrained": true, "freeze_backbone": true}},
+    "vgg16_96_ft": {"epochs": 30, "transfer": {"name": "vgg16", "pretrained": true, "freeze_backbone": false}}
+  },
+  "seeds": [0]
+}
