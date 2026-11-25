@@ -1,4 +1,6 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+2945b830,2026-11-25T14:01:15+07:00,HiCyclone,TV2,T09,fix(T09): make_tables.py in được tiếng Việt trên console Windows,1,BTL02/src/make_tables.py
+592a1003,2026-11-25T14:01:15+07:00,HiCyclone,TV2,T12,feat(T12): thêm cấu hình khảo sát kiến trúc configs/E1_arch.json,1,BTL02/configs/E1_arch.json
 b8f31365,2026-11-25T12:48:16+07:00,hoangbao2908,TV3,T11,"test(T11): kiểm thử độc lập baseline 3 seed, chốt dung sai tái lập 0.0075",1,BTL02/tracking/test_log.csv
 980a7328,2026-11-25T12:48:16+07:00,hoangbao2908,TV3,T05,"test(T05): kiểm thử độc lập EDA, phân bố 3 tập và nhãn 21 ảnh mẫu",1,BTL02/tracking/test_log.csv
 6fc984ce,2026-11-25T12:48:16+07:00,hoangbao2908,TV3,T02,"test(T02): kiểm thử độc lập khung repo, cài đặt và README trên bản clone sạch",1,BTL02/tracking/test_log.csv
