@@ -16,5 +16,6 @@
 | E3 | T14 | sched_constant | 1 | 1 | 5867847 | 0.675954 |  | 0.6760 | 0.637644 |  | 0.6376 | 0.9138 | 0.0334 | RTX 3060 | 24.7 | -0.0056 (< std baseline) |
 | E3 | T14 | sched_step | 1 | 1 | 5867847 | 0.664809 |  | 0.6648 | 0.591861 |  | 0.5919 | 0.9208 | 0.0077 | RTX 3060 | 25.4 | -0.0167 (thấp hơn) |
 | E3 | T14 | sched_cosine | 1 | 1 | 5867847 | 0.677069 |  | 0.6771 | 0.61807 |  | 0.6181 | 0.9126 | 0.0224 | RTX 3060 | 26.7 | -0.0045 (< std baseline) |
+| E3 | T14 | sched_onecycle | 1 | 1 | 5867847 | 0.686264 |  | 0.6863 | 0.658417 |  | 0.6584 | 0.8997 | 0.0423 | RTX 3060 | 25.1 | +0.0047 (< std baseline) |
 
 * Ghi chú: `Train–Val` = `train_acc_cuoi − val_acc`; `train_acc_cuoi` được đo trong chế độ huấn luyện (có bật data augmentation và dropout), chỉ dùng để so sánh xu hướng quá khớp giữa các cấu hình. Ký hiệu `—` thể hiện không xác định (1 seed không có độ lệch chuẩn mẫu, hoặc thời gian không lấy trung bình qua nhiều GPU khác nhau).
