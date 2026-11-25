@@ -1,0 +1,6 @@
+model_name,params,params_millions,num_conv_layers,has_bn,fc_units
+baseline,5867847,5.87,6,True,512
+medium_01,12101895,12.1,11,False,1024
+large,20406599,20.41,16,False,2048
+medium,11327303,11.33,8,False,1024
+small,38901191,38.9,6,False,1024

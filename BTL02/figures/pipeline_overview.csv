@@ -1,0 +1,7 @@
+stage,input,process,output
+1. Dữ liệu,"fer2013.csv (35,887 ảnh)",Chia theo cột Usage,"Training (28,709) / PublicTest (3,589) / PrivateTest (3,589)"
+2. Tăng cường,Training,"HFlip (p=0.5) + RandomAffine (±10°, 10% translate, 0.9-1.1 scale)",Tensor 48×48 chuẩn hóa mean/std
+3. Huấn luyện,Batches (size=128),Forward CNN (AMP FP16) + CrossEntropy + SGD Nesterov (lr=0.01),Loss & Gradients
+4. Kiểm định & LR,PublicTest (Validation),"Đo Val Acc & Macro-F1; ReduceLROnPlateau (patience=5, factor=0.5)",Lưu best.pt khi Val Acc cải thiện
+5. Dừng sớm,Val Loss / Acc,Early Stopping sau 15 epochs không tiến bộ,Kết thúc huấn luyện tối đa 100 epochs
+6. PrivateTest (Khóa),"PrivateTest (3,589 ảnh)",CHỈ CHẠY 1 LẦN DUY NHẤT ở mô hình cuối cùng (T19: --eval-test),results/E7/TEST_DONE.json
