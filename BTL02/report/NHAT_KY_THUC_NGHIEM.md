@@ -230,6 +230,22 @@
 - Nhận xét: Hoàn tất 100 epochs (~34.5 phút, ~20.5s/ep), đạt **68.54%** `val_acc`, **65.23%** `val_macro_f1`, `best_val_loss = 0.9060` tại epoch 98. Tổng hợp đủ 3 seed (`E1-008_s0/s1/s2`): `val_acc = 0.6839 ± 0.0013` (**+0.0024**, trong ngưỡng `< std baseline = 0.0075`), `val_macro_f1 = 0.6478 ± 0.0040`, `best_val_loss = 0.9077`. Đúng với giả thuyết: thay `Flatten` bằng `GAP` cắt giảm **78.2%** tham số (`5.87M → 1.28M`, trọng số `22.39 MB → 4.90 MB`) mà hiệu năng vẫn tương đương (nhỉnh nhẹ) baseline, đặc biệt độ lệch chuẩn giữa 3 seed thu hẹp mạnh còn `0.0013` (~1/6 của baseline).
 - Quyết định: Giữ weights (`KEEP`, `best.pt` 4.90 MB). Chốt kết luận 3 seed cho `baseline_gap`: **hiệu quả tham số vượt trội** (tương đương baseline với 21.8% số tham số), đáng thử kết hợp với `no_bn` ở các thí nghiệm sau / `E7`.
 
+### [E1-010_s0] MEDIUM1_CNN với Adam lr=1e-4 như mẫu (`medium_01_adam1e-4`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+- Giả thuyết: `E1-003_s0` sập vì cách tối ưu chứ không phải vì kiến trúc; đổi sang optimizer của notebook mẫu (Adam lr=1e-4), giữ không BN và init mặc định của PyTorch, thì mạng sẽ học được.
+- Thay đổi so với baseline: `model = "medium_01"`, `optimizer = "adam"`, `lr = 1e-4` (so với `E1-003_s0` chỉ đổi optimizer và lr).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only medium_01_adam1e-4 large_adam1e-4 medium_01_bn large_bn --seeds 0`
+- Kết quả: status=Completed, best_val_loss=0.9729039279090624, val_acc=0.6391752577319587, val_macro_f1=0.5992779215288392, best_epoch=99, time_s=2064.053, run_dir=results/E1/E1-010_s0
+- Nhận xét: **Học được.** Epoch 1 vẫn đứng 0.2494 như bản SGD, nhưng loss giảm ngay từ epoch 2 và val tăng đều: 0.47 (epoch 10), 0.57 (30), 0.61 (50), 0.63 (90). `val_acc = 0.6392`, `val_macro_f1 = 0.5993`, thấp hơn baseline 0.042 và thấp hơn mẫu (0.65). Train và val gần nhau (`train_acc_cuoi = 0.6536`) và best_epoch = 99, tức là với lr nhỏ thì 100 epoch chưa đủ hội tụ chứ chưa quá khớp. Chạy đủ 100 epoch, khoảng 34 phút. `git_commit` ghi `35e59bbd-dirty` do lúc chạy thư mục có file chưa commit của E6; `src/` không đổi nên kết quả không bị ảnh hưởng.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 46.2 MB). Xác nhận phần "tối ưu" của nguyên nhân: Adam chia gradient cho độ lớn của chính nó nên bù được gradient rất nhỏ ở các lớp đầu (đo lúc khởi tạo: 7.6e-6 tới `conv1_1`). Chạy thêm `medium_01_glorot_adam1e-4` để tách phần "khởi tạo".
+
+### [E1-011_s0] LARGE_CNN với Adam lr=1e-4 như mẫu (`large_adam1e-4`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+- Giả thuyết: Như `E1-010_s0`, đổi sang Adam lr=1e-4 thì LARGE (16 lớp Conv, không BN) học được.
+- Thay đổi so với baseline: `model = "large"`, `optimizer = "adam"`, `lr = 1e-4` (so với `E1-004_s0` chỉ đổi optimizer và lr).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only medium_01_adam1e-4 large_adam1e-4 medium_01_bn large_bn --seeds 0`
+- Kết quả:
+- Nhận xét: Dừng tay ở epoch 4 (TV2 tắt tiến trình để kiểm tra), nên không đủ để kết luận. Cả 4 epoch đều đứng `val_acc = 0.2494`, `train_loss` khoảng 1.812 không giảm. Đo lúc khởi tạo (ảnh nhiễu N(0,1), tắt dropout): chuẩn gradient tới `conv1_1` của LARGE không BN là 7.6e-8 với init mặc định của PyTorch, so với 1.0e-3 với Glorot (init mặc định của Keras, mẫu dùng) và 7.6e-6 ở MEDIUM1. Gradient từng phần tử cỡ hoặc nhỏ hơn `eps = 1e-8` trong mẫu số của Adam nên Adam không bù được như ở MEDIUM1.
+- Quyết định: Run bị ngắt, `run_experiment.py` tự đánh dấu `Aborted` và xóa `best.pt` dở. Không chạy lại `large_adam1e-4`; thay bằng `large_glorot_adam1e-4` (Glorot + Adam 1e-4, đúng thiết lập mẫu, mẫu đạt 0.67) và `large_bn`.
+
 ### [E2-001_s0] Khảo sát hàm kích hoạt ReLU kèm ghi chuẩn gradient (`relu`, Seed 0 — C1) — TV3 – Võ Hoàng Bảo – 2026-11-26
 - Giả thuyết: Chạy lại mốc đối chứng `ReLU` (giống Baseline) với cờ `log_grad_norms=true` để ghi chuẩn L2 gradient từng lớp (`grad_norms.csv`) làm mốc so sánh vanishing gradient với các hàm kích hoạt khác; `val_acc` kỳ vọng nằm trong khoảng dung sai `0.6815 ± 0.0075` của Baseline.
 - Thay đổi so với baseline: `activation = "relu"`, bật `log_grad_norms = true` (không đổi bước cập nhật trọng số).
