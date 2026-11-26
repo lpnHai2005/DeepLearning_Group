@@ -278,6 +278,82 @@
 - Nhận xét: **Tái hiện được và vượt mẫu:** `val_acc = 0.6721` ở epoch 90 (mẫu 0.65), `val_macro_f1 = 0.6383`, val_loss thấp nhất 0.906 ở epoch 80 (mẫu 0.94–0.97). So với `E1-010_s0` (init mặc định) cao hơn 0.033 và học nhanh hơn rõ: ep 2 / 5 / 10 / 20 lần lượt 0.362 / 0.492 / 0.552 / 0.588, so với log notebook mẫu (MEDIUM1, Adam 1e-4) là 0.39 / 0.52 / 0.57 (ep 9) / 0.63 (ep 19). Mẫu vẫn nhanh hơn một chút ở đầu; khác biệt còn lại là mẫu đưa ảnh thô 0–255 vào mạng còn nhóm chuẩn hóa mean/std. Nhóm cao hơn mẫu ở cuối vì chạy 100 epoch có giảm lr (plateau) còn mẫu dừng sớm theo val_loss ở khoảng epoch 32. Quá khớp nhẹ (`train_acc_cuoi = 0.7266`). Thấp hơn baseline 0.0094 (trong khoảng ±1 điểm).
 - Quyết định: Giữ weights (`KEEP`, `best.pt` 46.2 MB). Xác nhận phần "khởi tạo" của nguyên nhân. Thứ tự với MEDIUM1 (1 seed): init mặc định + SGD 0.2494 < init mặc định + Adam 0.6392 < Glorot + Adam 0.6721 < init mặc định + SGD + BN 0.6913.
 
+### [E1-016_s0] LARGE_CNN init Glorot + Adam 1e-4, đúng thiết lập mẫu (`large_glorot_adam1e-4`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+- Giả thuyết: Như `E1-015_s0` với MEDIUM1: đổi sang init Glorot thì gradient tới `conv1_1` của LARGE không BN tăng từ 7.6e-8 lên 1.0e-3 (đo lúc khởi tạo), lớn hơn hẳn `eps = 1e-8` của Adam, nên LARGE thoát được trạng thái đoán toàn Happy mà `E1-011_s0` (init mặc định) bị kẹt. Mẫu báo cáo LARGE 0.67.
+- Thay đổi so với baseline: `model = "large"`, `model_kwargs = {"init": "glorot"}`, `optimizer = "adam"`, `lr = 1e-4` (so với `E1-011_s0` chỉ đổi init).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only large_glorot_adam1e-4 --seeds 0`
+- Kết quả: status=Completed, best_val_loss=1.0055855756086305, val_acc=0.6235720256338813, val_macro_f1=0.5544728307543171, best_epoch=88, time_s=2463.596, run_dir=results/E1/E1-016_s0
+- Nhận xét: **Thoát kẹt nhưng thiếu khớp (underfit).** Bốn epoch đầu val vẫn 0.2494 nhưng train_loss giảm dần (1.821 → 1.786, bản init mặc định đứng yên 1.812), tới epoch 5 val vượt 0.26 rồi học tiếp đủ 100 epoch (~41 phút). Đỉnh `val_acc = 0.6236` ở epoch 88, `val_macro_f1 = 0.5545`, thấp hơn mẫu (0.67) 0.046 và thấp hơn `medium_01_glorot_adam1e-4` (0.6721) 0.049. Không quá khớp: `train_acc_cuoi = 0.6548`, khoảng train–val 0.035, val_loss thấp nhất 1.005 ở epoch 98 và gần như không tăng. Nguyên nhân dự đoán: lr 1e-4 đã nhỏ, lịch plateau còn giảm thêm 5 lần xuống 3.1e-6 trước khi mạng 16 lớp học xong; mẫu thì dùng lr cố định và ảnh thô 0–255. Chưa có run kiểm chứng giả thuyết này.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 77.9 MB). Đủ để xác nhận phần "khởi tạo" của nguyên nhân sập ở LARGE; không chạy thêm vì `large_bn` (0.7086) đã là lời giải tốt hơn cho mạng sâu.
+
+### [E1-005_s1] Thu hẹp baseline còn ×0.5 số kênh (`baseline_w0.5`, Seed 1) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+- Giả thuyết: Như `E1-005_s0`; chạy thêm seed vì chênh lệch seed 0 so với baseline (−0.0114) sát ngưỡng 1 điểm.
+- Thay đổi so với baseline: `model_kwargs.blocks = [[32,32],[64,64],[128,128]]` (`2,650,279` tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only baseline_w0.5 baseline_w2 --seeds 1 2`
+- Kết quả: status=Completed, best_val_loss=0.894616552965659, val_acc=0.6798551128448036, val_macro_f1=0.6456993756644813, best_epoch=100, time_s=1382.73, run_dir=results/E1/E1-005_s1
+- Nhận xét: Chạy đủ 100 epoch (~23 phút), đỉnh ở epoch cuối: `val_acc = 0.6799`, `val_macro_f1 = 0.6457`, `best_val_loss = 0.8946` (thấp nhất trong mọi run E1 và baseline). Khoảng train–val 0.014, val_loss còn giảm tới epoch 100: mạng hẹp vẫn chưa hội tụ hẳn, không có dấu hiệu quá khớp.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 10.1 MB).
+
+### [E1-005_s2] Thu hẹp baseline còn ×0.5 số kênh (`baseline_w0.5`, Seed 2) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+- Giả thuyết: Như `E1-005_s1`.
+- Thay đổi so với baseline: `model_kwargs.blocks = [[32,32],[64,64],[128,128]]` (`2,650,279` tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only baseline_w0.5 baseline_w2 --seeds 1 2`
+- Kết quả: status=Completed, best_val_loss=0.9033515358343202, val_acc=0.674282529952633, val_macro_f1=0.6253687426428443, best_epoch=82, time_s=1337.356, run_dir=results/E1/E1-005_s2
+- Nhận xét: Dừng sớm ở epoch 97 (đỉnh epoch 82, ~22 phút): `val_acc = 0.6743`, `val_macro_f1 = 0.6254`. Khoảng train–val 0.021. Ba seed của w0.5: 0.6701 / 0.6799 / 0.6743.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 10.1 MB). Đủ 3 seed, tổng hợp ở Kết luận E1.
+
+### [E1-006_s1] Mở rộng baseline ×2 số kênh (`baseline_w2`, Seed 1) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+- Giả thuyết: Như `E1-006_s0`; chạy thêm seed để xác nhận w2 không hơn baseline và macro-F1 thấp không phải do seed.
+- Thay đổi so với baseline: `model_kwargs.blocks = [[128,128],[256,256],[512,512]]` (`14,017,159` tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only baseline_w0.5 baseline_w2 --seeds 1 2`
+- Kết quả: status=Completed, best_val_loss=0.9616181550832404, val_acc=0.6687099470604625, val_macro_f1=0.5836231151850474, best_epoch=99, time_s=2721.67, run_dir=results/E1/E1-006_s1
+- Nhận xét: Chạy đủ 100 epoch (~45 phút). Hai epoch đầu đứng ở 0.2494 rồi mới học (epoch 3), giống `E1-006_s0`. Đỉnh `val_acc = 0.6687` ở epoch 99, `val_macro_f1 = 0.5836`, lặp lại đúng mẫu hình của seed 0: accuracy kém baseline khoảng 1 điểm, macro-F1 kém khoảng 6 điểm. lr ở epoch 100 còn 0.0025 (mới giảm 2 lần).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 53.5 MB).
+
+### [E1-006_s2] Mở rộng baseline ×2 số kênh (`baseline_w2`, Seed 2) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+- Giả thuyết: Như `E1-006_s1`.
+- Thay đổi so với baseline: `model_kwargs.blocks = [[128,128],[256,256],[512,512]]` (`14,017,159` tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only baseline_w0.5 baseline_w2 --seeds 1 2`
+- Kết quả: status=Completed, best_val_loss=0.9900542456115909, val_acc=0.657286152131513, val_macro_f1=0.5491253925533953, best_epoch=100, time_s=2632.556, run_dir=results/E1/E1-006_s2
+- Nhận xét: Chạy đủ 100 epoch (~44 phút), đỉnh ở epoch cuối: `val_acc = 0.6573`, `val_macro_f1 = 0.5491`, thấp nhất trong 3 seed. `train_acc_cuoi = 0.6469` còn thấp hơn val: mạng chưa học xong tập train sau 100 epoch (lr cuối 0.00125, val_loss vẫn giảm tới epoch 99). Ba seed của w2: 0.6701 / 0.6687 / 0.6573.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 53.5 MB). Đủ 3 seed, tổng hợp ở Kết luận E1.
+
+### Kết luận E1 (T12) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E1_summary.md` (Bảng 4.1). Mốc so sánh: baseline 3 seed `val_acc = 0.6815 ± 0.0075`, `val_macro_f1 = 0.6408 ± 0.0195`, khoảng train–val `0.0397`. Chênh lệch dưới std baseline coi là chưa phân biệt được; biến thể chỉ có 1 seed chỉ dùng làm định hướng.
+
+**1. Tái hiện 4 CNN của notebook mẫu (không BN).**
+- `small` `0.6934 ± 0.0027` và `medium` `0.6919 ± 0.0031` (3 seed) cao hơn baseline khoảng 1.0–1.2 điểm, vượt std baseline, nhưng quá khớp mạnh hơn nhiều (khoảng train–val `0.123` và `0.101` so với `0.040`) và nặng hơn (38.9 M và 11.3 M tham số so với 5.9 M).
+- `medium_01` (11 lớp conv) và `large` (16 lớp conv) với SGD lr 0.01 và init mặc định **sập**: loss đứng 1.81 từ epoch 1, đoán toàn lớp Happy (`0.2494`).
+- Tách nguyên nhân bằng các biến thể đổi một yếu tố (1 seed mỗi biến thể):
+
+| Mô hình | Init | Optimizer | BN | val_acc | Run |
+|---|---|---|---|---|---|
+| MEDIUM1 | mặc định | SGD 0.01 | không | 0.2494 | `E1-003_s0` |
+| MEDIUM1 | mặc định | Adam 1e-4 | không | 0.6392 | `E1-010_s0` |
+| MEDIUM1 | Glorot | Adam 1e-4 | không | 0.6721 (mẫu 0.65) | `E1-015_s0` |
+| MEDIUM1 | mặc định | SGD 0.01 | có | 0.6913 | `E1-013_s0` |
+| LARGE | mặc định | SGD 0.01 | không | 0.2494 | `E1-004_s0` |
+| LARGE | mặc định | Adam 1e-4 | không | kẹt 0.2494, dừng tay epoch 4 | `E1-011_s0` (Aborted) |
+| LARGE | Glorot | Adam 1e-4 | không | 0.6236 (mẫu 0.67) | `E1-016_s0` |
+| LARGE | mặc định | SGD 0.01 | có | **0.7086** | `E1-014_s0` |
+
+- Kết luận: mạng sâu không BN sập do **khởi tạo**. Init mặc định của PyTorch (kaiming_uniform a=√5) có phương sai nhỏ hơn Glorot của Keras khoảng 3 lần; qua 11–16 lớp, gradient tới lớp đầu chỉ còn cỡ 1e-7 (LARGE, 7.6e-8), nhỏ ngang `eps` của Adam, nên đổi optimizer chỉ cứu được MEDIUM1. Đổi sang Glorot tái hiện được mẫu ở MEDIUM1 nhưng LARGE vẫn thiếu khớp sau 100 epoch. **BatchNorm loại bỏ hoàn toàn sự phụ thuộc vào init** và cho kết quả tốt nhất ở cả hai độ sâu.
+
+**2. Độ rộng (số kênh), giữ 6 lớp conv của baseline.**
+- `baseline_w0.5` `0.6747 ± 0.0049` (−0.0068, dưới std baseline) với 45% tham số; macro-F1 `0.6347 ± 0.0103` gần baseline. Thu hẹp một nửa gần như không mất gì: baseline dư sức chứa.
+- `baseline_w2` `0.6654 ± 0.0070` (−0.0162, vượt std baseline) với 2.4× tham số; macro-F1 `0.5717 ± 0.0196` thấp hơn baseline khoảng 7 điểm, cả 3 seed đều thấp (0.582 / 0.584 / 0.549): mạng rộng đoán lệch về các lớp lớn. Nguyên nhân không phải quá khớp (khoảng train–val `0.023`, nhỏ hơn baseline) mà là **học chậm**: cả 3 seed đứng ở 0.2494 trong 2–3 epoch đầu, đỉnh ở epoch 99–100 và lr cuối còn 0.005 / 0.0025 / 0.00125, tức chưa hội tụ trong 100 epoch với lr 0.01. Không kết luận w2 kém về bản chất, chỉ kết luận: **với cấu hình huấn luyện cố định của nhóm, mở rộng kênh không có lợi**.
+
+**3. BatchNorm và phần phân loại ở độ sâu của baseline.**
+- `baseline_no_bn` `0.6941 ± 0.0033` (+0.0125, vượt std baseline): ở 6 lớp conv, bỏ BN không gây sập mà còn cao hơn baseline. BN chỉ cần thiết khi mạng sâu (mục 1).
+- `baseline_gap` `0.6839 ± 0.0013` (+0.0024, dưới std baseline) với **1.28 M tham số (22% baseline)**: lớp FC sau Flatten chiếm 80% tham số của baseline nhưng không đóng góp vào độ chính xác. GAP là cách rẻ nhất để giảm kích thước mô hình.
+
+**4. Độ sâu khi có BN.** `medium_01_bn` `0.6913` và `large_bn` **`0.7086`** (cao nhất E1, +0.0270, vượt kỷ lục public Kaggle 0.69), 1 seed mỗi biến thể. Đổi lại quá khớp mạnh nhất E1 (khoảng train–val `0.167` và `0.182`; val_loss của `large_bn` thấp nhất 0.916 ở epoch 38 rồi tăng lên 1.246). **Tăng sâu có lợi hơn tăng rộng** cho FER2013 ở cùng cấu hình huấn luyện.
+
+**5. Quyết định cho E7 (T18).**
+- Ứng viên kiến trúc chính: `large_bn`. Cần chạy thêm seed 1, 2 trước khi chốt, và nên kết hợp với điều chuẩn của E4 (label smoothing, dropout, weight decay) vì khoảng train–val lớn.
+- Ứng viên dự phòng đã đủ 3 seed: `baseline_no_bn` (0.6941) và `small` (0.6934). Nếu cần mô hình nhỏ, dùng head GAP.
+- Kết quả E2–E5 đo trên baseline nên chưa chắc còn đúng khi đổi sang `large_bn`; E7 nên so cả "baseline + lựa chọn tốt nhất" lẫn "large_bn + lựa chọn tốt nhất", mỗi bên 3 seed, thay vì cộng dồn mức cải thiện.
+
 ### [E2-001_s0] Khảo sát hàm kích hoạt ReLU kèm ghi chuẩn gradient (`relu`, Seed 0 — C1) — TV3 – Võ Hoàng Bảo – 2026-11-26
 - Giả thuyết: Chạy lại mốc đối chứng `ReLU` (giống Baseline) với cờ `log_grad_norms=true` để ghi chuẩn L2 gradient từng lớp (`grad_norms.csv`) làm mốc so sánh vanishing gradient với các hàm kích hoạt khác; `val_acc` kỳ vọng nằm trong khoảng dung sai `0.6815 ± 0.0075` của Baseline.
 - Thay đổi so với baseline: `activation = "relu"`, bật `log_grad_norms = true` (không đổi bước cập nhật trọng số).
