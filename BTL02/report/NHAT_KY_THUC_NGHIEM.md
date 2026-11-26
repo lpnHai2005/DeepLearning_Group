@@ -411,13 +411,68 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E1
 - Nhận xét: Hoàn tất 100 epochs (~30.4 phút, nhanh nhất ở ~18.1s/ep do bỏ BN). `val_acc` đạt **69.13%** (**`+0.0098` cao hơn baseline**, khớp sát `E1-007_s0 = 0.6907` của TV2 trên RTX 4060 — chỉ lệch `0.0006`, xác nhận tái lập chéo cực tốt!), `val_macro_f1` đạt **66.75%** (cao nhất trong 5 biến thể E2 phần TV3), `best_val_loss = 0.8969`. Về `grad_norms.csv` (800 dòng, 0 NaN): ở epoch 1, chuẩn gradient lớp đầu `features.conv1_1` là `0.0132` (nhỏ hơn ~4.5× so với bản có BN `0.0594`), nhưng vẫn tăng khỏe lên `0.4189` ở epoch 100 (`classifier.4`: `0.3127 → 0.4839`) — khẳng định trên mạng VGG 6 lớp Conv + ReLU, bỏ BN **không** gây vanishing gradient (tạo mốc đối chứng lý tưởng cho `sigmoid_no_bn` của TV4).
 - Quyết định: Giữ weights (`KEEP`, `best.pt` 22.39 MB). Hoàn tất trọn vẹn 5/5 biến thể phần `C1` của TV3 trong `T13`.
 
-### [E2-006_s0] Khảo sát hàm kích hoạt Sigmoid (Vanishing Gradient) — TV4 – <chưa thực hiện>
-- Giả thuyết: Dùng Sigmoid thay cho ReLU ở mạng sâu 6 lớp Conv sẽ gặp hiện tượng triệt tiêu gradient nghiêm trọng (đặc biệt khi không có BN), mô hình gần như không học được.
-- Thay đổi so với baseline: `activation = "sigmoid"`.
-- Lệnh: `python src/run_experiment.py --config configs/E2_activation.json --member TV4 --only sigmoid`
+### [E2-006_s0] Khảo sát hàm kích hoạt Tanh (`tanh`, Seed 0 — C2) — TV4 – Huỳnh Viễn Thông – 2026-11-26
+- Giả thuyết: Tanh bão hòa ở hai đầu nhưng đạo hàm tại 0 bằng 1 và đầu ra đối xứng quanh 0, nên có BN thì gradient vẫn tới được lớp đầu; độ chính xác có thể thấp hơn ReLU vì vùng bão hòa.
+- Thay đổi so với baseline: `activation = "tanh"`, bật `log_grad_norms = true`.
+- Lệnh (tái lập): `python src/run_experiment.py --config configs/E2_activation.json --member TV4 --only tanh`
 - Kết quả: status=Completed, best_val_loss=0.9687542175309974, val_acc=0.641404290888827, val_macro_f1=0.5951930862888543, best_epoch=92, time_s=3590.856, run_dir=results/E2/E2-006_s0
-- Nhận xét: (chưa thực hiện)
-- Quyết định: (chưa thực hiện)
+- Nhận xét (TV2 viết khi tổng hợp T13): Chạy đủ 100 epoch trên RTX 3060 (~60 phút). `val_acc = 0.6414` (−0.0401 so với baseline), `val_macro_f1 = 0.5952`; `train_acc_cuoi = 0.6388` thấp hơn val, tức thiếu khớp chứ không quá khớp. Gradient không bị triệt tiêu: ở epoch 1 chuẩn gradient `conv1_1` là `9.7e-2`, cao hơn cả ReLU (`5.9e-2`), tỉ lệ lớp đầu/lớp cuối `0.046` (ReLU `0.056`). Kém ReLU là do vùng bão hòa làm mạng học chậm, không phải do vanishing gradient. Mục này trước ghi nhầm là Sigmoid; dòng Kết quả tự điền cho thấy đây là run `tanh`.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB). Loại tanh khỏi ứng viên E7.
+
+### [E2-007_s0] Khảo sát hàm kích hoạt Sigmoid có BN (`sigmoid`, Seed 0 — C2) — TV4 – Huỳnh Viễn Thông – 2026-11-26
+- Giả thuyết: Đạo hàm sigmoid tối đa 0.25, đi qua 6 lớp Conv thì gradient tới lớp đầu co lại mạnh (vanishing gradient); BN giữ đầu vào mỗi lớp quanh 0 (vùng đạo hàm lớn nhất) nên có thể cứu được một phần.
+- Thay đổi so với baseline: `activation = "sigmoid"`, bật `log_grad_norms = true`.
+- Lệnh (tái lập): `python src/run_experiment.py --config configs/E2_activation.json --member TV4 --only sigmoid`
+- Kết quả: status=Completed, best_val_loss=1.4288181444169685, val_acc=0.45110058512120366, val_macro_f1=0.3302818115004095, best_epoch=29, time_s=1322.763, run_dir=results/E2/E2-007_s0
+- Nhận xét (TV2 viết khi tổng hợp T13): Dừng sớm ở epoch 44 (đỉnh epoch 29, ~21.5 phút): `val_acc = 0.4511` (−0.2304), `val_macro_f1 = 0.3303`, `train_acc_cuoi = 0.4152`, train_loss cuối 1.51. Epoch 1 có dấu hiệu vanishing gradient: chuẩn gradient `conv1_1` chỉ `1.8e-3` (ReLU `5.9e-2`, nhỏ hơn 33 lần), tỉ lệ lớp đầu/lớp cuối `2.5e-3`. Nhưng gradient hồi phục nhanh nhờ BN: `1.3e-2` ở epoch 3, `0.28` ở epoch 10, ngang ReLU từ đó tới cuối (Hình `figures/e2_grad_norms.png` (b)). val_acc dao động mạnh (0.23–0.45), lr bị cắt 3 lần, rồi dừng sớm khi mạng vẫn thiếu khớp nặng.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB). Loại sigmoid khỏi ứng viên E7.
+
+### [E2-008_s0] Khảo sát Tanh không BatchNorm (`tanh_no_bn`, Seed 0 — C2) — TV4 – Huỳnh Viễn Thông – 2026-11-26
+- Giả thuyết: Bỏ BN để xem tanh có bị triệt tiêu gradient như sigmoid không; nếu không thì vanishing gradient là đặc tính riêng của sigmoid (đạo hàm ≤ 0.25, đầu ra không đối xứng quanh 0).
+- Thay đổi so với baseline: `activation = "tanh"`, `bn = false`, bật `log_grad_norms = true` (`5,866,951` tham số).
+- Lệnh (tái lập): `python src/run_experiment.py --config configs/E2_activation.json --member TV4 --only tanh_no_bn`
+- Kết quả: status=Completed, best_val_loss=0.966715449441871, val_acc=0.6522708275285595, val_macro_f1=0.6201139639943545, best_epoch=99, time_s=2501.554, run_dir=results/E2/E2-008_s0
+- Nhận xét (TV2 viết khi tổng hợp T13): Chạy đủ 100 epoch (~41 phút). `val_acc = 0.6523` (−0.0293), cao hơn bản có BN (`E2-006_s0`, 0.6414) khoảng 1 điểm (1 seed). `train_acc_cuoi = 0.6361`, vẫn thiếu khớp. Không vanishing gradient: chuẩn gradient `conv1_1` ở epoch 1 là `1.5e-2`, tỉ lệ lớp đầu/lớp cuối `0.035`, ngang `relu_no_bn` (`1.3e-2`, `0.042`).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB). Dùng làm đối chứng cho `sigmoid_no_bn`.
+
+### [E2-009_s0] Khảo sát Sigmoid không BatchNorm (`sigmoid_no_bn`, Seed 0 — C2) — TV4 – Huỳnh Viễn Thông – 2026-11-26
+- Giả thuyết: Không có BN, sigmoid sẽ triệt tiêu gradient ở các lớp Conv đầu và mạng không học được.
+- Thay đổi so với baseline: `activation = "sigmoid"`, `bn = false`, bật `log_grad_norms = true` (`5,866,951` tham số).
+- Lệnh (tái lập): `python src/run_experiment.py --config configs/E2_activation.json --member TV4 --only sigmoid_no_bn`
+- Kết quả: status=Completed, best_val_loss=1.8108197900703538, val_acc=0.24937308442463083, val_macro_f1=0.05702816362941251, best_epoch=1, time_s=474.724, run_dir=results/E2/E2-009_s0
+- Nhận xét (TV2 viết khi tổng hợp T13): **Không học được.** Dừng sớm ở epoch 16, đỉnh ở epoch 1: `val_acc = 0.2494` (đoán toàn lớp Happy, 895/3589 ảnh PublicTest), `val_macro_f1 = 0.0570`. train_loss đứng ở 1.81 suốt 16 epoch, bằng entropy của phân bố lớp trong tập train (1.8096): mạng chỉ học được tần suất lớp qua bias của lớp FC cuối, không học gì từ ảnh. Chuẩn gradient ở epoch 1 giảm đều từ lớp ra về lớp vào: `fc2 8.1e-1 → fc1 6.5e-1 → conv3_2 4.6e-2 → conv3_1 4.9e-3 → conv2_2 6.9e-4 → conv2_1 7.9e-5 → conv1_2 1.1e-5 → conv1_1 3.2e-7`. Mỗi lớp Conv nhân gradient thêm khoảng 0.07–0.14 lần (lớp `conv1_1` 0.03), lớp đầu nhỏ hơn lớp cuối khoảng 2.5 triệu lần. Gradient lớp đầu còn giảm tiếp tới `1.0e-7` ở epoch 16 chứ không hồi phục. Đây là **vanishing gradient điển hình**.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB) làm bằng chứng cho báo cáo (mục E2).
+
+### Kết luận E2 (T13) — TV2 – Lê Phan Nguyên Hải – 2026-11-27
+Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E2_summary.md` (Bảng 4.2). Hình chuẩn gradient sinh bằng `python src/visual/grad_norms.py --group E2 --epoch 1` → `figures/e2_grad_norms.png` (dữ liệu `figures/e2_grad_norms.csv`). Mỗi biến thể 1 seed, chạy trên 2 máy (TV3 RTX 3050, TV4 RTX 3060). Mốc so sánh là baseline 3 seed `0.6815 ± 0.0075`; chênh lệch dưới std coi là chưa phân biệt được.
+
+**1. Họ ReLU (có BN).**
+- `relu` `0.6863` (+0.0047, dưới std). Cấu hình trùng baseline, chỉ bật ghi gradient và chạy máy khác; lệch `baseline-002_s0` 0.0048 là sai khác giữa các GPU. Cùng máy thì tái lập đúng tới từng chữ số (xem `E5-003_s0`).
+- `leaky_relu` `0.6935` (+0.0120) và `gelu` `0.6918` (+0.0103, best_val_loss thấp nhất E2 0.8807) vượt std baseline, nhưng mới 1 seed và chỉ nhỉnh hơn ngưỡng.
+- `elu` `0.6553` (−0.0262): thiếu khớp (`train_acc_cuoi` 0.644 thấp hơn val), gradient không có vấn đề (tỉ lệ lớp đầu/lớp cuối ở epoch 1 là 0.016).
+
+**2. Hàm bão hòa.** `tanh` `0.6414` và `tanh_no_bn` `0.6523` kém ReLU 3–4 điểm và đều thiếu khớp. `sigmoid` `0.4511` thiếu khớp nặng. `sigmoid_no_bn` `0.2494` không học được.
+
+**3. Vanishing gradient của Sigmoid (Hình e2_grad_norms).** Chuẩn gradient lớp Conv đầu ở epoch 1:
+
+| Biến thể | conv1_1 | conv1_1 / fc2 | Diễn biến |
+|---|---|---|---|
+| `relu` | 5.9e-2 | 0.056 | tăng lên 0.72 ở epoch 100 |
+| `relu_no_bn` | 1.3e-2 | 0.042 | tăng lên 0.42 |
+| `tanh_no_bn` | 1.5e-2 | 0.035 | tăng lên 0.34 |
+| `sigmoid` (có BN) | 1.8e-3 | 2.5e-3 | hồi phục: 0.28 ở epoch 10 |
+| `sigmoid_no_bn` | **3.2e-7** | **4.0e-7** | giảm còn 1.0e-7 ở epoch 16, không hồi phục |
+
+- **Xác nhận giả thuyết:** không có BN, sigmoid triệt tiêu gradient. Mỗi lớp Conv nhân gradient thêm khoảng 0.1 lần, khớp với đạo hàm sigmoid ≤ 0.25. Qua 6 lớp Conv, lớp đầu nhận gradient nhỏ hơn lớp ra khoảng 2.5 triệu lần, nên mạng chỉ học được tần suất lớp (train_loss đứng ở 1.81 = entropy phân bố lớp).
+- **Vanishing gradient là đặc tính của sigmoid, không phải do bỏ BN hay do bão hòa nói chung:** `tanh_no_bn` (cũng bão hòa) và `relu_no_bn` có tỉ lệ lớp đầu/lớp cuối ngang nhau (0.035 và 0.042), lớn hơn `sigmoid_no_bn` khoảng 100.000 lần. Khác biệt: đạo hàm tanh tại 0 là 1 và đầu ra đối xứng quanh 0, còn sigmoid là 0.25 và đầu ra luôn dương.
+- **BN sửa được gradient nhưng không sửa được độ chính xác:** với BN, gradient lớp đầu của sigmoid về ngang ReLU sau 10 epoch, nhưng val_acc vẫn chỉ 0.4511 và `train_acc_cuoi` 0.4152. Ở bản có BN, nút thắt không còn là vanishing gradient mà là sigmoid học rất chậm với cấu hình SGD lr 0.01 cố định, khiến plateau cắt lr và early stopping dừng ở epoch 44. Chưa tách được nguyên nhân cụ thể (đầu ra không đối xứng quanh 0 hay vùng bão hòa); E2 không chạy thêm vì sigmoid đã bị loại.
+
+**4. BatchNorm ở độ sâu baseline.** `relu_no_bn` `0.6913` khớp `baseline_no_bn` của E1 (`0.6941 ± 0.0033`, 3 seed, RTX 4060) trên một máy khác, xác nhận chéo kết luận E1: với 6 lớp Conv và ReLU, bỏ BN không gây vanishing gradient và không làm giảm độ chính xác. Với hàm bão hòa: `tanh_no_bn` hơn `tanh` khoảng 1 điểm (1 seed), còn sigmoid thì BN là điều kiện để học được.
+
+**5. Quyết định cho E7 (T18).**
+- Giữ họ ReLU. `leaky_relu` và `gelu` là ứng viên thay ReLU, nhưng cần chạy thêm seed 1, 2 trước khi chọn vì mức hơn (≈ +0.01) chỉ vừa vượt std baseline với 1 seed.
+- Loại `sigmoid`, `tanh`, `elu`.
+- Báo cáo (T22, mục E2): dùng `E2-009_s0` cùng Hình e2_grad_norms làm bằng chứng vanishing gradient của Sigmoid mà đề yêu cầu so với ReLU.
 
 ### [E3-001_s0] Khảo sát AdamW lr=0.001 — TV4 – 2026-11-25
 - Giả thuyết: AdamW kết hợp với lịch học Plateau sẽ hội tụ nhanh hơn SGD trong 30 epoch đầu nhưng độ chính xác cực đại có thể tương đương hoặc hơi thấp hơn một chút so với SGD Nesterov.
