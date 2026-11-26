@@ -24,6 +24,7 @@
 | E6 – vgg16_48_ft | 1 | 0.6938 | 0.6812 | 0.9373 | 134,289,223 | +0.2571 | RTX 3050 (60.5s) | +0.0123 (cao hơn) |
 | E6 – resnet18_96_scratch | 1 | 0.6771 | 0.6672 | 1.0006 | 11,180,103 | +0.2437 | RTX 3050 (55.5s) | -0.0045 (< std baseline) |
 | E6 – resnet18_96_ft | 1 | 0.6874 | 0.6698 | 0.9718 | 11,180,103 | +0.2983 | RTX 3060 (79.4s) | +0.0059 (< std baseline) |
+| E6 – resnet18_96_frozen | 1 | 0.4570 | 0.3683 | 1.4507 | 11,180,103 | -0.0133 | RTX 3060 (75.0s) | -0.2246 (thấp hơn) |
 | E6 – vgg16_96_ft | 1 | 0.6977 | 0.6818 | 0.9220 | 134,289,223 | +0.1876 | RTX 4060 (71.3s) | +0.0162 (cao hơn) |
 
 _* Ghi chú: `Train–Val` = `train_acc_cuoi − val_acc`; `train_acc_cuoi` được đo trong chế độ huấn luyện (có bật data augmentation và dropout), chỉ dùng để so sánh xu hướng quá khớp giữa các cấu hình. Ký hiệu `—` thể hiện không xác định (1 seed không có độ lệch chuẩn mẫu, hoặc thời gian không lấy trung bình qua nhiều GPU khác nhau)._
