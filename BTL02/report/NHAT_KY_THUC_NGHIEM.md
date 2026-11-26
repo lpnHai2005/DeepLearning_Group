@@ -242,9 +242,41 @@
 - Giả thuyết: Như `E1-010_s0`, đổi sang Adam lr=1e-4 thì LARGE (16 lớp Conv, không BN) học được.
 - Thay đổi so với baseline: `model = "large"`, `optimizer = "adam"`, `lr = 1e-4` (so với `E1-004_s0` chỉ đổi optimizer và lr).
 - Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only medium_01_adam1e-4 large_adam1e-4 medium_01_bn large_bn --seeds 0`
-- Kết quả:
+- Kết quả: status=Aborted, best_val_loss=1.8114331007070215, val_acc=0.24937308442463083, val_macro_f1=0.05702816362941251, best_epoch=1, time_s=, run_dir=results/E1/E1-011_s0
 - Nhận xét: Dừng tay ở epoch 4 (TV2 tắt tiến trình để kiểm tra), nên không đủ để kết luận. Cả 4 epoch đều đứng `val_acc = 0.2494`, `train_loss` khoảng 1.812 không giảm. Đo lúc khởi tạo (ảnh nhiễu N(0,1), tắt dropout): chuẩn gradient tới `conv1_1` của LARGE không BN là 7.6e-8 với init mặc định của PyTorch, so với 1.0e-3 với Glorot (init mặc định của Keras, mẫu dùng) và 7.6e-6 ở MEDIUM1. Gradient từng phần tử cỡ hoặc nhỏ hơn `eps = 1e-8` trong mẫu số của Adam nên Adam không bù được như ở MEDIUM1.
 - Quyết định: Run bị ngắt, `run_experiment.py` tự đánh dấu `Aborted` và xóa `best.pt` dở. Không chạy lại `large_adam1e-4`; thay bằng `large_glorot_adam1e-4` (Glorot + Adam 1e-4, đúng thiết lập mẫu, mẫu đạt 0.67) và `large_bn`.
+
+### [E1-012_s0] MEDIUM1_CNN thêm BatchNorm (`medium_01_bn`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+- Giả thuyết: BN chuẩn hóa đầu ra từng lớp nên tín hiệu và gradient không co lại qua 11 lớp Conv; giữ SGD lr=0.01 và init mặc định thì mạng sẽ học được.
+- Thay đổi so với baseline: `model = "medium_01"`, `model_kwargs = {"bn": true}` (so với `E1-003_s0` chỉ thêm BN).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only medium_01_bn large_bn medium_01_glorot_adam1e-4 large_glorot_adam1e-4 --seeds 0`
+- Kết quả: status=Aborted, best_val_loss=1.1380014236207858, val_acc=0.5742546670381722, val_macro_f1=0.45911900431262, best_epoch=8, time_s=, run_dir=results/E1/E1-012_s0
+- Nhận xét: TV2 tắt tiến trình ở epoch 9 để tạm dừng máy. Run được code đánh dấu `Aborted` (`INTERRUPTED@epoch9`) và xóa `best.pt` dở. Trong 9 epoch val đã tăng từ 0.317 lên tối đa 0.574 (epoch 8), trong khi bản không BN đứng ở 0.2494. Chạy lại thành `E1-013_s0`, epoch 1 trùng khớp (val 0.3168), xác nhận cùng seed thì tái lập được.
+- Quyết định: Bỏ (`DISCARD`). Dùng `E1-013_s0`.
+
+### [E1-013_s0] MEDIUM1_CNN thêm BatchNorm, chạy lại (`medium_01_bn`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+- Giả thuyết: Như `E1-012_s0`.
+- Thay đổi so với baseline: `model = "medium_01"`, `model_kwargs = {"bn": true}`.
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only medium_01_bn large_bn medium_01_glorot_adam1e-4 large_glorot_adam1e-4 --seeds 0`
+- Kết quả: status=Completed, best_val_loss=0.920362198841077, val_acc=0.6912789077737531, val_macro_f1=0.6686331095461697, best_epoch=76, time_s=1982.429, run_dir=results/E1/E1-013_s0
+- Nhận xét: **BN cứu được MEDIUM1.** Val tăng ngay từ epoch 1: 0.317 (ep 1), 0.577 (ep 10), 0.640 (ep 30), đạt đỉnh `val_acc = 0.6913` ở epoch 76 (+0.0098 so với baseline), `val_macro_f1 = 0.6686`. Early stopping dừng ở epoch 91. Quá khớp rõ: `train_acc_cuoi = 0.8582`, val_loss thấp nhất 0.920 ở epoch 52 rồi tăng lên 1.146 ở epoch 91 trong khi val_acc vẫn lập kỷ lục.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 46.2 MB). Cùng SGD lr 0.01 và init mặc định: không BN ra 0.2494, có BN ra 0.6913, nên nguyên nhân sập của `E1-003_s0` là thiếu chuẩn hóa tín hiệu qua mạng sâu chứ không phải độ sâu.
+
+### [E1-014_s0] LARGE_CNN thêm BatchNorm (`large_bn`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+- Giả thuyết: Như `E1-013_s0`, BN cho phép LARGE (16 lớp Conv) học được với SGD lr=0.01 và init mặc định.
+- Thay đổi so với baseline: `model = "large"`, `model_kwargs = {"bn": true}` (`20,410,439` tham số; so với `E1-004_s0` chỉ thêm BN).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only medium_01_bn large_bn medium_01_glorot_adam1e-4 large_glorot_adam1e-4 --seeds 0`
+- Kết quả: status=Completed, best_val_loss=0.9163508506896071, val_acc=0.7085539147394817, val_macro_f1=0.6952893066297167, best_epoch=90, time_s=2608.403, run_dir=results/E1/E1-014_s0
+- Nhận xét: **Học được và cao nhất E1 tới thời điểm này:** `val_acc = 0.7086` ở epoch 90 (+0.0271 so với baseline, vượt kỷ lục public Kaggle 0.69), `val_macro_f1 = 0.6953`. Chạy đủ 100 epoch (~43.5 phút). Quá khớp mạnh nhất E1: `train_acc_cuoi = 0.8902`; val_loss thấp nhất 0.916 ở epoch 38 rồi tăng lên 1.246 ở epoch 100. Mới có 1 seed.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 77.9 MB). Ứng viên kiến trúc cho E7, nhưng cần chạy thêm seed 1, 2 trước khi kết luận và nên kết hợp với điều chuẩn của E4 (dropout, weight decay, label smoothing) vì khoảng cách train–val lớn.
+
+### [E1-015_s0] MEDIUM1_CNN init Glorot + Adam 1e-4, đúng thiết lập mẫu (`medium_01_glorot_adam1e-4`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+- Giả thuyết: Khác biệt còn lại giữa `E1-010_s0` (0.6392) và mẫu (0.65) là khởi tạo trọng số: Keras mặc định Glorot uniform, PyTorch mặc định kaiming_uniform a=√5 có phương sai nhỏ hơn khoảng 3 lần. Đổi sang Glorot thì gradient ở các lớp đầu lớn hơn nhiều bậc (đo lúc khởi tạo: 1.1e-2 so với 7.6e-6 tới `conv1_1`) nên mạng học nhanh và tốt hơn.
+- Thay đổi so với baseline: `model = "medium_01"`, `model_kwargs = {"init": "glorot"}`, `optimizer = "adam"`, `lr = 1e-4` (so với `E1-010_s0` chỉ đổi init).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only medium_01_bn large_bn medium_01_glorot_adam1e-4 large_glorot_adam1e-4 --seeds 0`
+- Kết quả: status=Completed, best_val_loss=0.9063716961766857, val_acc=0.6720534967957649, val_macro_f1=0.6383022535970843, best_epoch=90, time_s=2080.734, run_dir=results/E1/E1-015_s0
+- Nhận xét: **Tái hiện được và vượt mẫu:** `val_acc = 0.6721` ở epoch 90 (mẫu 0.65), `val_macro_f1 = 0.6383`, val_loss thấp nhất 0.906 ở epoch 80 (mẫu 0.94–0.97). So với `E1-010_s0` (init mặc định) cao hơn 0.033 và học nhanh hơn rõ: ep 2 / 5 / 10 / 20 lần lượt 0.362 / 0.492 / 0.552 / 0.588, so với log notebook mẫu (MEDIUM1, Adam 1e-4) là 0.39 / 0.52 / 0.57 (ep 9) / 0.63 (ep 19). Mẫu vẫn nhanh hơn một chút ở đầu; khác biệt còn lại là mẫu đưa ảnh thô 0–255 vào mạng còn nhóm chuẩn hóa mean/std. Nhóm cao hơn mẫu ở cuối vì chạy 100 epoch có giảm lr (plateau) còn mẫu dừng sớm theo val_loss ở khoảng epoch 32. Quá khớp nhẹ (`train_acc_cuoi = 0.7266`). Thấp hơn baseline 0.0094 (trong khoảng ±1 điểm).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 46.2 MB). Xác nhận phần "khởi tạo" của nguyên nhân. Thứ tự với MEDIUM1 (1 seed): init mặc định + SGD 0.2494 < init mặc định + Adam 0.6392 < Glorot + Adam 0.6721 < init mặc định + SGD + BN 0.6913.
 
 ### [E2-001_s0] Khảo sát hàm kích hoạt ReLU kèm ghi chuẩn gradient (`relu`, Seed 0 — C1) — TV3 – Võ Hoàng Bảo – 2026-11-26
 - Giả thuyết: Chạy lại mốc đối chứng `ReLU` (giống Baseline) với cờ `log_grad_norms=true` để ghi chuẩn L2 gradient từng lớp (`grad_norms.csv`) làm mốc so sánh vanishing gradient với các hàm kích hoạt khác; `val_acc` kỳ vọng nằm trong khoảng dung sai `0.6815 ± 0.0075` của Baseline.
