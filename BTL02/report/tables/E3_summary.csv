@@ -1,4 +1,9 @@
 group,task_id,variant,n_runs,n_completed,n_params,val_acc_mean,val_acc_std,val_acc_fmt,val_macro_f1_mean,val_macro_f1_std,val_macro_f1_fmt,best_val_loss_mean,train_val_gap_mean,gpu,epoch_time_s_tb_mean,so_voi_baseline_tu_tinh
+E3,T14,sgd_no_nesterov_1e-2,1,1,5867847,0.684313,,0.6843,0.6442,,0.6442,0.9134,0.0424,RTX 3050,37.4,+0.0028 (< std baseline)
+E3,T14,sgd_nesterov_3e-2,1,1,5867847,0.249373,,0.2494,0.057028,,0.0570,1.8059,0.0019,RTX 3050,23.0,-0.4322 (thấp hơn)
+E3,T14,sgd_nesterov_3e-3,1,1,5867847,0.674283,,0.6743,0.637582,,0.6376,0.9114,0.0186,RTX 3050,22.5,-0.0072 (< std baseline)
+E3,T14,adam_1e-3,1,1,5867847,0.686542,,0.6865,0.659157,,0.6592,0.8922,0.0472,RTX 3050,24.6,+0.0050 (< std baseline)
+E3,T14,adam_3e-4,2,1,5867847,0.687935,,0.6879,0.658696,,0.6587,0.9013,0.0607,RTX 3050,28.7,+0.0064 (< std baseline)
 E3,T14,adamw_1e-3,1,1,5867847,0.672332,,0.6723,0.587766,,0.5878,0.9626,0.0268,RTX 3060,35.9,-0.0092 (thấp hơn)
 E3,T14,adamw_3e-4,1,1,5867847,0.670382,,0.6704,0.56305,,0.5630,0.9176,0.0065,RTX 3060,49.7,-0.0111 (thấp hơn)
 E3,T14,rmsprop_1e-3,1,1,5867847,0.685706,,0.6857,0.662033,,0.6620,0.8809,0.0373,RTX 3060,25.1,+0.0042 (< std baseline)

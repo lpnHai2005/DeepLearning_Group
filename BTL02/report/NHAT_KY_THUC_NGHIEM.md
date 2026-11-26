@@ -180,6 +180,30 @@
 - Nhận xét: Hoàn tất 100 epochs trên RTX 3050 (~62.1 phút). `val_acc` đạt **69.35%** (**`+0.0120` cao hơn baseline `68.15%`**, vượt dung sai `0.0075`, và nhỉnh hơn `E2-001_s0` `relu` **+0.72%** trên cùng máy và cùng seed 0); `val_macro_f1` tăng mạnh lên **66.64%** (`+2.56%` so với baseline `64.08%`, `+1.22%` so với `relu`); `best_val_loss = 0.9016` thấp hơn cả Baseline và ReLU. File `grad_norms.csv` đủ **800 dòng** (0 NaN), chuẩn gradient `features.conv1_1` (`0.0577 → 0.6187`) và `classifier.4` (`1.2091 → 0.3694`) cân bằng tốt suốt 100 epochs.
 - Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Kết quả rất tích cực, ủng hộ giả thuyết giảm Dying ReLU; `leaky_relu` là ứng viên hàm kích hoạt mạnh cho `E7` (nên cân nhắc chạy thêm 2 seed nếu tiếp tục dẫn đầu sau khi hoàn tất `elu`, `gelu`, `relu_no_bn`).
 
+### [E2-003_s0] Khảo sát hàm kích hoạt ELU (`elu`, Seed 0 — C1) — TV3 – Võ Hoàng Bảo – 2026-11-26
+- Giả thuyết: ELU có nhánh âm mượt tiến về `-1`, giúp đầu ra trung bình gần 0 hơn ReLU và có thể ổn định hội tụ.
+- Thay đổi so với baseline: `activation = "elu"`, bật `log_grad_norms = true`.
+- Lệnh: `python src/run_experiment.py --config configs/E2_activation.json --member TV3 --only elu gelu relu_no_bn`
+- Kết quả: status=Completed, best_val_loss=0.9435755574759682, val_acc=0.6553357481192533, val_macro_f1=0.6168795023384526, best_epoch=95, time_s=1905.26, run_dir=results/E2/E2-003_s0
+- Nhận xét: Hoàn tất 100 epochs trên RTX 3050 (~31.8 phút, ~18.9s/ep). Tuy nhiên `val_acc` chỉ đạt **65.53%** (**`-0.0262` thấp hơn baseline `68.15%`**), `val_macro_f1 = 61.69%`, `best_val_loss = 0.9436`. Đáng chú ý `train_acc_cuoi = 64.40%` còn thấp hơn `val_acc` (dấu hiệu underfitting dưới cùng `SGD lr=0.01 + BN + Dropout`), đồng thời trong `grad_norms.csv` (800 dòng, 0 NaN) chuẩn gradient ở lớp cuối `classifier.4` rất cao (`3.5450 → 1.1056`) so với `features.conv1_1` (`0.0561 → 0.5629`) cho thấy phân bố gradient giữa đầu/cuối mạng kém cân bằng hơn nhóm ReLU/LeakyReLU/GELU.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Kết luận `ELU` không phù hợp với cấu hình SGD+BN+Dropout của Baseline.
+
+### [E2-004_s0] Khảo sát hàm kích hoạt GELU (`gelu`, Seed 0 — C1) — TV3 – Võ Hoàng Bảo – 2026-11-26
+- Giả thuyết: GELU làm mượt vùng chuyển tiếp quanh 0 theo xác suất chuẩn, cho gradient liên tục và có thể cải thiện khả năng tổng quát hóa so với ReLU.
+- Thay đổi so với baseline: `activation = "gelu"`, bật `log_grad_norms = true`.
+- Lệnh: `python src/run_experiment.py --config configs/E2_activation.json --member TV3 --only elu gelu relu_no_bn`
+- Kết quả: status=Completed, best_val_loss=0.8806721030187726, val_acc=0.6918361660629702, val_macro_f1=0.6614454696521527, best_epoch=100, time_s=1905.97, run_dir=results/E2/E2-004_s0
+- Nhận xét: Hoàn tất 100 epochs (~31.8 phút, ~18.9s/ep). `val_acc` đạt **69.18%** (**`+0.0103` cao hơn baseline**, vượt dung sai `0.0075`), `val_macro_f1 = 66.14%` (`+2.06%` so với baseline), và đặc biệt **`best_val_loss = 0.8807`** — thấp nhất trong cả 5 biến thể phần TV3 (giảm `0.0302` so với baseline `0.9109`)! File `grad_norms.csv` đủ 800 dòng (0 NaN), chuẩn gradient lớp đầu `features.conv1_1` khởi đầu mạnh nhất (`0.0922 → 0.5980`) và lớp cuối `classifier.4` rất cân bằng (`1.1106 → 0.3742`).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Cùng với `leaky_relu` (`0.6935`), `gelu` (`0.6918`, loss `0.8807`) là ứng viên hàm kích hoạt hàng đầu cho `E7`.
+
+### [E2-005_s0] Khảo sát đối chứng ReLU không BatchNorm (`relu_no_bn`, Seed 0 — C1) — TV3 – Võ Hoàng Bảo – 2026-11-26
+- Giả thuyết: Chạy đối chứng `ReLU` bỏ toàn bộ BatchNorm kèm `log_grad_norms=true` để so sánh trực tiếp chuẩn gradient từng lớp với `tanh_no_bn` / `sigmoid_no_bn` của TV4 và kiểm chứng tái lập độc lập với `E1-007_s0` (`baseline_no_bn = 0.6907` của TV2).
+- Thay đổi so với baseline: `activation = "relu"`, `bn = false`, bật `log_grad_norms = true` (`5,866,951` tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E2_activation.json --member TV3 --only elu gelu relu_no_bn`
+- Kết quả: status=Completed, best_val_loss=0.8968940197043048, val_acc=0.6912789077737531, val_macro_f1=0.6675158378052052, best_epoch=100, time_s=1821.821, run_dir=results/E2/E2-005_s0
+- Nhận xét: Hoàn tất 100 epochs (~30.4 phút, nhanh nhất ở ~18.1s/ep do bỏ BN). `val_acc` đạt **69.13%** (**`+0.0098` cao hơn baseline**, khớp sát `E1-007_s0 = 0.6907` của TV2 trên RTX 4060 — chỉ lệch `0.0006`, xác nhận tái lập chéo cực tốt!), `val_macro_f1` đạt **66.75%** (cao nhất trong 5 biến thể E2 phần TV3), `best_val_loss = 0.8969`. Về `grad_norms.csv` (800 dòng, 0 NaN): ở epoch 1, chuẩn gradient lớp đầu `features.conv1_1` là `0.0132` (nhỏ hơn ~4.5× so với bản có BN `0.0594`), nhưng vẫn tăng khỏe lên `0.4189` ở epoch 100 (`classifier.4`: `0.3127 → 0.4839`) — khẳng định trên mạng VGG 6 lớp Conv + ReLU, bỏ BN **không** gây vanishing gradient (tạo mốc đối chứng lý tưởng cho `sigmoid_no_bn` của TV4).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.39 MB). Hoàn tất trọn vẹn 5/5 biến thể phần `C1` của TV3 trong `T13`.
+
 ### [E2-006_s0] Khảo sát hàm kích hoạt Sigmoid (Vanishing Gradient) — TV4 – <chưa thực hiện>
 - Giả thuyết: Dùng Sigmoid thay cho ReLU ở mạng sâu 6 lớp Conv sẽ gặp hiện tượng triệt tiêu gradient nghiêm trọng (đặc biệt khi không có BN), mô hình gần như không học được.
 - Thay đổi so với baseline: `activation = "sigmoid"`.
