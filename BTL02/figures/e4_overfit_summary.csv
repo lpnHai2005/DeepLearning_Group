@@ -1,0 +1,5 @@
+exp_id,variant,best_epoch,best_val_acc,train_acc_at_best,acc_gap_at_best,best_val_loss,loss_gap_at_best,final_acc_gap,final_loss_gap
+baseline-002_s0,"baseline (wd=5e-4, ls=0)",99,0.681527,0.728761,0.047234,0.920006,0.176394,0.046398,0.175918
+E4-001_s0,weight_decay_0,100,0.681806,0.711554,0.029748,0.933877,0.156496,0.029748,0.156496
+E4-002_s0,weight_decay_1e-3,95,0.684035,0.736389,0.052355,0.920446,0.203798,0.060018,0.214156
+E4-003_s0,label_smoothing_0_1,94,0.68292,0.716117,0.033197,0.892894,-0.17455,0.042775,-0.160058
