@@ -329,16 +329,16 @@
 - Thay đổi so với baseline: `resize = 96`, `channels = 3`, `transfer = {"name": "resnet18", "pretrained": true, "freeze_backbone": false}`.
 - Lệnh: `python src/run_experiment.py --config configs/E6_transfer.json --member TV4 --only resnet18_96_ft`
 - Kết quả: status=Completed, best_val_loss=0.9717674393546252, val_acc=0.6873780997492338, val_macro_f1=0.6698490430387746, best_epoch=42, time_s=4572.14, run_dir=results/E6/E6-007_s0
-- Nhận xét: (chưa thực hiện)
-- Quyết định: (chưa thực hiện)
+- Nhận xét: Fine-tune toàn bộ ResNet-18 trên ảnh 96x96 đạt Val Acc 68.74% (vượt mốc Baseline 68.15%) và Val Macro-F1 đạt đỉnh 66.98% (tăng vượt bậc +2.90% so với Baseline 64.08%). Các đặc trưng cấp thấp (cạnh, góc, texture) thừa hưởng từ ImageNet kết hợp với việc tinh chỉnh toàn bộ trọng số giúp mô hình học rất nhạy các đặc trưng biểu cảm vi mô trên khuôn mặt, phân loại đồng đều trên các lớp cảm xúc thiểu số. Early stopping dừng tại epoch 57 giúp ngăn chặn hiện tượng quá khớp (train acc cuối đạt 98.57%).
+- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 42.7 MB). Khẳng định ResNet-18 fine-tune toàn bộ là một cấu hình xuất sắc cho Báo cáo.
 
-### [E6-002_s0] Khảo sát ResNet-18 Đóng băng Backbone (resnet18_96_frozen) — TV4 – 2026-11-26
+### [E6-006_s0] Khảo sát ResNet-18 Đóng băng Backbone (resnet18_96_frozen) — TV4 – 2026-11-26
 - Giả thuyết: Đóng băng toàn bộ backbone ResNet-18 tiền huấn luyện ImageNet và chỉ huấn luyện lớp phân loại (Linear Probing / Feature Extractor) sẽ giúp giảm tối đa số tham số cần cập nhật và chống overfitting, tuy nhiên do đặc trưng ImageNet (vật thể tự nhiên) khác biệt với ảnh khuôn mặt cảm xúc xám nên độ chính xác có thể bị giới hạn so với fine-tune toàn bộ.
 - Thay đổi so với baseline: `resize = 96`, `channels = 3`, `transfer = {"name": "resnet18", "pretrained": true, "freeze_backbone": true}`.
 - Lệnh: `python src/run_experiment.py --config configs/E6_transfer.json --member TV4 --only resnet18_96_frozen`
-- Kết quả: status=Completed, best_val_loss=1.0006212015011144, val_acc=0.6770688213987183, val_macro_f1=0.6671904234002443, best_epoch=60, time_s=4182.096, run_dir=results/E6/E6-002_s0
-- Nhận xét: (chưa thực hiện)
-- Quyết định: (chưa thực hiện)
+- Kết quả: status=Completed, best_val_loss=1.4507161095534968, val_acc=0.45695179715798273, val_macro_f1=0.368315020130604, best_epoch=50, time_s=4918.338, run_dir=results/E6/E6-006_s0
+- Nhận xét: Đóng băng backbone ResNet-18 và chỉ huấn luyện classifier đạt Val Acc 45.70% (kém Baseline tới 22.46%) và Macro-F1 36.83%. Mặc dù số tham số huấn luyện giảm mạnh, nhưng vì đặc trưng ImageNet được tối ưu hóa cho phân loại 1,000 lớp vật thể tự nhiên đa dạng (động vật, đồ vật...) nên khi không được tinh chỉnh (fine-tune), chúng không thể biểu diễn tốt các nếp nhăn và biến đổi vi mô trên khuôn mặt người. Kết quả đối sánh giữa Fine-tuning (68.74%) và Frozen (45.70%) mang giá trị khoa học đắt giá: chứng minh việc fine-tune backbone là điều kiện tiên quyết khi áp dụng Transfer Learning cho bài toán FER2013.
+- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 42.7 MB) làm dữ liệu đối chứng phản biện cho Chương 4 và Chương 5 của Báo cáo.
 
 ### [E7-001_s0] Mô hình Tối ưu Cuối cùng (Final Best Model) — TV3 – <chưa thực hiện>
 - Giả thuyết: Tổng hợp cấu hình tốt nhất từ các thực nghiệm E1–E6 (kiến trúc, activation, optimizer, augmentation, xử lý mất cân bằng) sẽ mang lại độ chính xác validation cao nhất nhóm, vượt ngưỡng 70%.
