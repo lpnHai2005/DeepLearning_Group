@@ -202,3 +202,40 @@ def test_gop_y_c2_loc_nhom_tam_thu_tu_config_gpu_va_word(tmp_path):
     idx_gap = e1_rep.index("| baseline_gap |")
     assert idx_base < idx_small < idx_med < idx_gap
     assert "train_acc_cuoi" in e1_rep  # có ghi chú aug + dropout
+
+
+def test_gop_run_chay_lai_va_an_dong_chi_co_run_loi(tmp_path):
+    """Run chạy lại khác series (E1-009_s1) gộp chung 3 seed; run Failed (E6-003/005) không tạo dòng rỗng trong báo cáo."""
+    data = [
+        _row("B0-001_s0", "T11", "baseline", 0, 0.6815, 0.6408, 0.9109),
+        _row("E1-001_s0", "T12", "small", 0, 0.691558, 0.673140, 0.9094, n_params=38901191),
+        _row("E1-001_s1", "T12", "small", 1, 0.689300, 0.666800, 0.9200, status="Aborted", n_params=38901191),
+        _row("E1-009_s1", "T12", "small", 1, 0.692115, 0.676600, 0.9146, n_params=38901191),
+        _row("E1-001_s2", "T12", "small", 2, 0.696573, 0.682000, 0.9190, n_params=38901191),
+        _row("E6-003_s0", "T17", "vgg16_48_ft", 0, None, None, None, status="Failed", train_acc=None, n_params=None),
+        _row("E6-004_s0", "T17", "vgg16_48_ft", 0, 0.693787, 0.681200, 0.9373, n_params=134289223),
+        _row("E6-005_s0", "T17", "vgg16_48_ft", 0, None, None, None, status="Failed", train_acc=None, n_params=None),
+        _row("E6-006_s0", "T17", "broken_only", 0, None, None, None, status="Failed", train_acc=None, n_params=None),
+    ]
+    exp_csv = tmp_path / "experiments.csv"
+    with open(exp_csv, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=REAL_HEADER)
+        w.writeheader()
+        w.writerows(data)
+
+    export_tables(exp_csv, tmp_path / "tables", root=tmp_path)
+
+    e1_df = pd.read_csv(tmp_path / "tables" / "E1_summary.csv")
+    assert len(e1_df) == 1
+    assert e1_df.loc[0, "variant"] == "small"
+    assert e1_df.loc[0, "n_runs"] == 4 and e1_df.loc[0, "n_completed"] == 3
+    assert e1_df.loc[0, "val_acc_mean"] == pytest.approx((0.691558 + 0.692115 + 0.696573) / 3, abs=1e-5)
+
+    e6_rep = (tmp_path / "tables" / "E6_report.md").read_text(encoding="utf-8")
+    assert "| vgg16_48_ft | 1 |" in e6_rep
+    assert "[E6-" not in e6_rep
+    assert "broken_only" not in e6_rep
+
+    all_rep = (tmp_path / "tables" / "summary_all_report.md").read_text(encoding="utf-8")
+    assert "broken_only" not in all_rep
+    assert "[E1-" not in all_rep

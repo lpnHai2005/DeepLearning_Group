@@ -313,12 +313,31 @@ def _group_sort_key(grp):
     return (1, 0, grp)
 
 
+def _config_sig(r):
+    """Chữ ký cấu hình cốt lõi (bỏ qua seed/exp_id và cờ hệ thống) để chỉ tách series khi thực sự đổi siêu tham số."""
+    hp = _parse_hp(r)
+    if not hp:
+        return ""
+    ignore = {"seed", "exp_id", "num_workers", "amp", "log_grad_norms"}
+    core = {k: v for k, v in hp.items() if k not in ignore}
+    return json.dumps(core, sort_keys=True, ensure_ascii=False)
+
+
 def summarize_rows(rows, base_mean=None, base_std=None, root=BTL02, baseline_task="T11"):
-    """Nhóm theo (group, task_id, variant, series) và tính các chỉ số theo thứ tự config."""
-    series_per_key = defaultdict(set)
+    """Nhóm theo (group, task_id, variant) và tính các chỉ số theo thứ tự config.
+
+    Chỉ tách theo series khi các run Completed của cùng (group, task_id, variant) có cấu hình
+    siêu tham số cốt lõi khác nhau (ví dụ 60 epoch vs 100 epoch); các run chạy lại do Aborted/Failed
+    (cùng biến thể, cùng siêu tham số, khác mã số run như E1-009_s1 vs E1-001_s0/s2) được gộp chung.
+    """
+    sigs_per_key = defaultdict(set)
     for r in rows:
+        if r.get("trang_thai_ky_thuat") != "Completed":
+            continue
         key = (_group_of(r), r.get("task_id", ""), _variant_of(r))
-        series_per_key[key].add(_series_of(r))
+        sig = _config_sig(r)
+        if sig:
+            sigs_per_key[key].add(sig)
 
     buckets = defaultdict(list)
     raw_var_for_bucket = {}
@@ -327,7 +346,8 @@ def summarize_rows(rows, base_mean=None, base_std=None, root=BTL02, baseline_tas
         tid = r.get("task_id", "")
         var = _variant_of(r)
         ser = _series_of(r)
-        label_var = f"{var} [{ser}]" if len(series_per_key[(grp, tid, var)]) > 1 and ser else var
+        split_series = len(sigs_per_key[(grp, tid, var)]) > 1 and bool(ser)
+        label_var = f"{var} [{ser}]" if split_series else var
         bkey = (grp, tid, label_var)
         buckets[bkey].append(r)
         raw_var_for_bucket[bkey] = var
@@ -585,7 +605,7 @@ def export_tables(experiments_csv, out_dir, include_internal=False, baseline_con
     _write_markdown(all_md, SUMMARY_COLS, summary, TABLE_CAPTIONS["summary_all"], footnote=REPORT_FOOTNOTE)
     written.extend([all_csv, all_md])
 
-    # 2. Bảng báo cáo gọn tổng hợp (MD)
+    # 2. Bảng báo cáo gọn tổng hợp (MD) — chỉ đưa các biến thể có ít nhất 1 run Completed
     all_report_rows = [
         _to_report_row(
             r,
@@ -594,6 +614,7 @@ def export_tables(experiments_csv, out_dir, include_internal=False, baseline_con
             else f"{r['group']} – {r['variant']}",
         )
         for r in summary
+        if r["n_completed"] > 0
     ]
     all_rep_md = out_dir / "summary_all_report.md"
     _write_report_markdown(all_rep_md, all_report_rows, TABLE_CAPTIONS["summary_all"])
@@ -614,11 +635,13 @@ def export_tables(experiments_csv, out_dir, include_internal=False, baseline_con
         _write_markdown(g_md, SUMMARY_COLS, grp_rows, caption, footnote=REPORT_FOOTNOTE)
         written.extend([g_csv, g_md])
 
-        # Bảng báo cáo gọn cho nhóm: chèn dòng Baseline tham chiếu ở đầu các bảng E1-E7
+        # Bảng báo cáo gọn cho nhóm: chèn dòng Baseline tham chiếu ở đầu các bảng E1-E7, bỏ dòng n_completed=0
         rep_rows = []
         if re.match(r"^E[1-7]$", grp) and base_summary_row is not None:
             rep_rows.append(_to_report_row(base_summary_row, variant_override="Baseline (tham chiếu)"))
         for r in grp_rows:
+            if r["n_completed"] <= 0:
+                continue
             v_over = "Baseline (tham chiếu)" if grp.lower() in ("baseline", "b0") else None
             rep_rows.append(_to_report_row(r, variant_override=v_over))
 
