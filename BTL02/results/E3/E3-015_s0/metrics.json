@@ -1,0 +1,19 @@
+{
+  "exp_id": "E3-015_s0",
+  "status": "Aborted",
+  "stopped_by": "killed",
+  "epochs_run": 46,
+  "best_epoch": 44,
+  "best_val_acc": 0.6497631652270828,
+  "best_val_macro_f1": 0.578402721067604,
+  "best_val_loss": 0.9523329204687936,
+  "train_loss_cuoi": 0.9641356750060956,
+  "train_acc_cuoi": 0.6444320596328678,
+  "val_loss_cuoi": 0.9827126805647465,
+  "epoch_time_s_tb": 27.990195652173913,
+  "train_time_s": 1287.553,
+  "weights_quyet_dinh": "DISCARD",
+  "weights_ma_ly_do": "INTERRUPTED@epoch46",
+  "weights_sha256": "",
+  "weights_size_mb": ""
+}

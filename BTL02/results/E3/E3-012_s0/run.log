@@ -1,0 +1,19 @@
+2026-11-26T09:28:27+07:00 | E3-012_s0 | START | device=cuda | epochs=100 | amp=True | optimizer=sgd | lr=0.03 | seed=0
+2026-11-26T09:28:49+07:00 | E3-012_s0 | 1/100 | train_loss=2.0294 | val_loss=1.8059 | val_acc=0.2491 | val_macro_f1=0.0570 | lr=0.03 | 22.1s | ok
+2026-11-26T09:29:10+07:00 | E3-012_s0 | 2/100 | train_loss=1.8086 | val_loss=1.8124 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.03 | 20.5s | ok
+2026-11-26T09:29:35+07:00 | E3-012_s0 | 3/100 | train_loss=1.8104 | val_loss=1.8130 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.03 | 24.8s | ok
+2026-11-26T09:30:02+07:00 | E3-012_s0 | 4/100 | train_loss=1.8103 | val_loss=1.8117 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.03 | 27.5s | ok
+2026-11-26T09:30:25+07:00 | E3-012_s0 | 5/100 | train_loss=1.8102 | val_loss=1.8116 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.03 | 23.3s | ok
+2026-11-26T09:30:46+07:00 | E3-012_s0 | 6/100 | train_loss=1.8103 | val_loss=1.8112 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.03 | 20.3s | ok
+2026-11-26T09:31:10+07:00 | E3-012_s0 | 7/100 | train_loss=1.8102 | val_loss=1.8121 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.03 | 24.0s | ok
+2026-11-26T09:31:35+07:00 | E3-012_s0 | 8/100 | train_loss=1.8103 | val_loss=1.8111 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.03 | 25.0s | ok
+2026-11-26T09:31:55+07:00 | E3-012_s0 | 9/100 | train_loss=1.8101 | val_loss=1.8109 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.015 | 20.2s | ok
+2026-11-26T09:32:15+07:00 | E3-012_s0 | 10/100 | train_loss=1.8100 | val_loss=1.8115 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.015 | 20.1s | ok
+2026-11-26T09:32:35+07:00 | E3-012_s0 | 11/100 | train_loss=1.8099 | val_loss=1.8122 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.015 | 20.2s | ok
+2026-11-26T09:32:55+07:00 | E3-012_s0 | 12/100 | train_loss=1.8100 | val_loss=1.8114 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.015 | 20.2s | ok
+2026-11-26T09:33:16+07:00 | E3-012_s0 | 13/100 | train_loss=1.8100 | val_loss=1.8115 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.015 | 20.8s | ok
+2026-11-26T09:33:44+07:00 | E3-012_s0 | 14/100 | train_loss=1.8100 | val_loss=1.8120 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.015 | 27.5s | ok
+2026-11-26T09:34:08+07:00 | E3-012_s0 | 15/100 | train_loss=1.8098 | val_loss=1.8112 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.0075 | 24.7s | ok
+2026-11-26T09:34:34+07:00 | E3-012_s0 | 16/100 | train_loss=1.8098 | val_loss=1.8115 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.0075 | 25.3s | ok
+2026-11-26T09:34:58+07:00 | E3-012_s0 | 17/100 | train_loss=1.8099 | val_loss=1.8115 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.0075 | 24.5s | ok
+2026-11-26T09:34:59+07:00 | E3-012_s0 | END | status=Completed | reason=OK | stopped_by=early_stopping | best_epoch=2 | train_time_s=391.864

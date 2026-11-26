@@ -1,0 +1,19 @@
+{
+  "exp_id": "E3-012_s0",
+  "status": "Completed",
+  "stopped_by": "early_stopping",
+  "epochs_run": 17,
+  "best_epoch": 2,
+  "best_val_acc": 0.24937308442463083,
+  "best_val_macro_f1": 0.05702816362941251,
+  "best_val_loss": 1.805903781519922,
+  "train_loss_cuoi": 1.8098641758681946,
+  "train_acc_cuoi": 0.2513149186666202,
+  "val_loss_cuoi": 1.8114652083623572,
+  "epoch_time_s_tb": 23.007058823529412,
+  "train_time_s": 391.864,
+  "weights_quyet_dinh": "KEEP",
+  "weights_ma_ly_do": "OK",
+  "weights_sha256": "03a649b2654d4c56639045dfee68516d6c3d59dd104be9f22234b76456abcead",
+  "weights_size_mb": 22.404
+}
