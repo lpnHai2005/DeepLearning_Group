@@ -536,7 +536,7 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E1
 - Giả thuyết: Huấn luyện mô hình không có Data Augmentation sẽ dẫn đến overfitting nghiêm trọng; chênh lệch giữa Train Acc và Val Acc sẽ rất lớn (> 20%).
 - Thay đổi so với baseline: `augmentation = "none"`.
 - Lệnh: `python src/run_experiment.py --config configs/E4_aug_reg.json --member TV3 --only no_aug`
-- Kết quả: (chưa thực hiện)
+- Kết quả: status=Completed, best_val_loss=0.9103259716103023, val_acc=0.6818055168570633, val_macro_f1=0.6380659375439424, best_epoch=100, time_s=2507.098, run_dir=results/E4/E4-001_s0
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
 
