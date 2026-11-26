@@ -1,4 +1,6 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+e4e6be01,2026-11-26T17:51:50+07:00,TrungKien2005,TV1,T16,feat(T16): hỗ trợ WeightedRandomSampler và cấu hình E5,2,BTL02/configs/E5_imbalance.json; BTL02/src/data/loader.py
+b18cc3e3,2026-11-26T17:51:29+07:00,TrungKien2005,TV1,T15,feat(T15): thêm cấu hình E4 augmentation và điều chuẩn,1,BTL02/configs/E4_aug_reg.json
 e74807bb,2026-11-26T17:14:46+07:00,hoangbao2908,TV3,T17,test(T17): kiểm thử độc lập E6 transfer learning trên bản clone sạch đạt Pass (KT-014),1,BTL02/tracking/test_log.csv
 57925e50,2026-11-26T16:19:17+07:00,hoangbao2908,TV3,T14,done(T14): hoàn tất tổng hợp 15 cấu hình E3 và kết luận tối ưu vào nhật ký cho TV2 kiểm thử,8,BTL02/report/NHAT_KY_THUC_NGHIEM.md; BTL02/report/tables/BTL02_tables_report.docx; BTL02/report/tables/E1_report.md; BTL02/report/tables/E1_summary.csv; BTL02/report/tables/E1_summary.md; BTL02/report/tables/summary_all.csv; BTL02/report/tables/summary_all.md; BTL02/report/tables/summary_all_report.md
 0138e1ff,2026-11-26T16:19:16+07:00,hoangbao2908,TV3,T14,feat(T14): vẽ biểu đồ so sánh 15 cấu hình E3 kèm CSV và đăng ký figures_manifest,3,BTL02/figures/e3_comparison.csv; BTL02/figures/e3_comparison.png; BTL02/tracking/figures_manifest.csv
