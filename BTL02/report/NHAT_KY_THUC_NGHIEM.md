@@ -374,53 +374,55 @@
 - Nhận xét: Thời gian mỗi epoch nhanh nhất (24.4s/epoch, tổng 2477s). Tuy nhiên Val Acc giảm xuống 67.26% (thấp hơn baseline 0.89%), Val Macro-F1 đạt 62.98% và Val Loss đạt 0.9169. Kết quả đối sánh giữa bs=64 (69.24%), bs=128 (68.15%) và bs=256 (67.26%) thể hiện quy luật đơn điệu rõ ràng: batch size càng lớn thì độ chính xác tổng quát hóa càng giảm trên bài toán FER2013.
 - Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Kết luận chọn batch size 64 hoặc 128 là tối ưu, không nên dùng batch size 256.
 
-### [E3-005_s0] Khảo sát Lịch học Constant LR (sched_constant) — TV4 – 2026-11-26
-- Giả thuyết: Giữ nguyên learning rate không đổi (0.01) trong suốt 100 epoch sẽ giúp mô hình duy trì tốc độ cập nhật trọng số, tuy nhiên có nguy cơ dao động quanh cực tiểu ở các epoch cuối thay vì hội tụ sâu.
-- Thay đổi so với baseline: `scheduler = "constant"`.
-- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only sched_constant`
-- Kết quả: status=Completed, best_val_loss=0.9137963193743034, val_acc=0.6759543048202842, val_macro_f1=0.6376443348653521, best_epoch=95, time_s=2497.091, run_dir=results/E3/E3-005_s0
-- Nhận xét: Hoàn thành 100 epochs (24.7s/epoch). Val Acc đạt 67.60% (chênh lệch -0.0056 so với baseline, nằm trong dung sai $\sigma=0.0075$), Val Macro-F1 đạt 63.76% và Best Val Loss đạt 0.9138 tại epoch 95. Việc giữ LR cố định 0.01 vẫn cho kết quả khá tốt nhờ momentum của SGD Nesterov, nhưng do không giảm learning rate ở cuối nên không thể hội tụ mịn bằng Plateau hay OneCycle.
-- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB).
+### [E3-011_s0] Khảo sát SGD không Nesterov lr=0.01 (`sgd_no_nesterov_1e-2`) — TV1 – Đoàn Trung Kiên – 2026-11-26
+- Giả thuyết: Tắt Nesterov momentum (giữ SGD + momentum 0.9, lr=0.01) có thể làm hội tụ chậm hơn nhẹ hoặc tương đương Baseline trong dung sai 1 seed.
+- Thay đổi so với baseline: `nesterov = false`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV1 --only sgd_no_nesterov_1e-2`
+- Kết quả: status=Completed, best_val_loss=0.913428645905893, val_acc=0.68431317915854, val_macro_f1=0.6442004565407555, best_epoch=100, time_s=3751.397, run_dir=results/E3/E3-011_s0
+- Nhận xét: Hoàn tất 100 epochs (`best_epoch = 100`), `val_acc = 0.6843` (`+0.0028`, nằm trong ngưỡng `< std baseline = 0.0075`), `val_macro_f1 = 0.6442`, `best_val_loss = 0.9134`. Sự khác biệt giữa SGD có và không Nesterov ở `lr = 0.01` là không đáng kể về mặt thống kê trên 1 seed.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB). Tương đương Baseline.
 
-### [E3-006_s0] Khảo sát Lịch học OneCycleLR (sched_onecycle) — TV4 – 2026-11-26
-- Giả thuyết: OneCycleLR tăng dần learning rate từ nhỏ lên đỉnh (warmup) rồi giảm dần theo cosine xuống rất nhỏ, giúp mô hình vượt qua các cực tiểu địa phương gồ ghề trong giai đoạn đầu và hội tụ vào thung lũng phẳng tối ưu ở cuối quá trình huấn luyện.
-- Thay đổi so với baseline: `scheduler = "onecycle"`.
-- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only sched_onecycle`
-- Kết quả: status=Completed, best_val_loss=0.8997333023866327, val_acc=0.6862635831707997, val_macro_f1=0.6584174598142835, best_epoch=100, time_s=2533.215, run_dir=results/E3/E3-006_s0
-- Nhận xét: Xuất sắc vượt qua Baseline! Val Acc đạt 68.63% (+0.48% so với baseline 68.15%), Val Macro-F1 đạt 65.84% (+1.76% so với baseline 64.08%), và Best Val Loss giảm sâu xuống 0.8997 (phá mốc 0.90). Cơ chế super-convergence của OneCycleLR chứng minh hiệu quả vượt trội trên FER2013, đưa mô hình đạt phong độ cao nhất tại đúng epoch 100.
-- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Đề xuất đưa cấu hình OneCycleLR làm ứng viên sáng giá cho mô hình cuối E7.
+### [E3-012_s0] Khảo sát SGD Nesterov lr=0.03 (`sgd_nesterov_3e-2`) — TV1 – Đoàn Trung Kiên – 2026-11-26
+- Giả thuyết: Tăng bước học lên gấp 3 lần (`lr = 0.03`) có thể đẩy nhanh hội tụ ban đầu nhưng có rủi ro vượt quá giới hạn ổn định dẫn tới phân kỳ hoặc sập về lớp đa số.
+- Thay đổi so với baseline: `lr = 0.03`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV1 --only sgd_nesterov_3e-2`
+- Kết quả: status=Completed, best_val_loss=1.805903781519922, val_acc=0.24937308442463083, val_macro_f1=0.05702816362941251, best_epoch=2, time_s=409.531, run_dir=results/E3/E3-012_s0
+- Nhận xét: Đúng rủi ro dự báo: mô hình sập hoàn toàn về dự đoán duy nhất lớp đa số `Happy` (`val_acc = 0.2494`, `val_macro_f1 = 0.0570`, `best_val_loss = 1.8059`) ngay từ epoch 2 và dừng sớm tại epoch 17. Chứng tỏ `lr = 0.03` vượt ngưỡng ổn định của kiến trúc Baseline + SGD Nesterov.
+- Quyết định: Giữ weights (`KEEP` theo luật kỹ thuật của runner). Loại bỏ `lr = 0.03` cho SGD.
 
-### [E3-007_s0] Khảo sát Tối ưu hóa RMSprop lr=0.001 (rmsprop_1e-3) — TV4 – 2026-11-26
-- Giả thuyết: RMSprop điều chỉnh learning rate thích ứng theo căn bậc hai trung bình bình phương gradient (EMA gradient bình phương), giúp cân bằng bước cập nhật giữa các hướng dốc và phẳng, có thể hội tụ nhanh và đạt loss thấp.
-- Thay đổi so với baseline: `optimizer = "rmsprop"`, `lr = 0.001`.
-- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only rmsprop_1e-3`
-- Kết quả: status=Completed, best_val_loss=0.8809435215458693, val_acc=0.6857063248815826, val_macro_f1=0.6620334209448906, best_epoch=95, time_s=2526.565, run_dir=results/E3/E3-007_s0
-- Nhận xét: Kỷ lục Val Loss thấp nhất trong toàn bộ E3! Best Val Loss giảm kỷ lục xuống 0.8809 (thấp hơn baseline 0.9109 tới -0.0300). Val Acc đạt 68.57% (+0.42% so với baseline) và Val Macro-F1 đạt tới 66.20% (+2.12% so với baseline). RMSprop với lr=1e-3 khắc phục hoàn toàn nhược điểm thiên lệch lớp của AdamW, mang lại khả năng tổng quát hóa xuất sắc trên các lớp cảm xúc thiểu số.
-- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Ghi nhận RMSprop lr=1e-3 là thuật toán tối ưu tốt nhất về độ mượt của hàm mất mát.
+### [E3-013_s0] Khảo sát SGD Nesterov lr=0.003 (`sgd_nesterov_3e-3`) — TV1 – Đoàn Trung Kiên – 2026-11-26
+- Giả thuyết: Giảm bước học SGD xuống `0.003` giúp cập nhật êm hơn nhưng có thể hội tụ chậm trong 100 epochs và đạt val acc thấp hơn mốc `0.01`.
+- Thay đổi so với baseline: `lr = 0.003`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV1 --only sgd_nesterov_3e-3`
+- Kết quả: status=Completed, best_val_loss=0.9113988570763095, val_acc=0.674282529952633, val_macro_f1=0.6375821065412292, best_epoch=96, time_s=2267.82, run_dir=results/E3/E3-013_s0
+- Nhận xét: Hoàn tất 100 epochs, `val_acc = 0.6743` (`-0.0072`, sát mép dưới dung sai `0.0075`), `val_macro_f1 = 0.6376`, `best_val_loss = 0.9114`. Bước học nhỏ khiến `train_acc_cuoi − val_acc = +0.0186` thấp nhưng không đủ đà đạt hiệu năng như `lr = 0.01`.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB). Xác nhận `lr = 0.01` là điểm ngọt tối ưu cho SGD Nesterov.
 
-### [E3-008_s0] Khảo sát Tối ưu hóa RMSprop lr=0.0003 (rmsprop_3e-4) — TV4 – 2026-11-26
-- Giả thuyết: Giảm learning rate của RMSprop xuống 3e-4 để khảo sát tính nhạy cảm với bước học; lr nhỏ hơn có thể giúp hội tụ an toàn nhưng tốc độ tiếp cận nghiệm tối ưu có thể chậm hơn.
-- Thay đổi so với baseline: `optimizer = "rmsprop"`, `lr = 0.0003`.
-- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only rmsprop_3e-4`
-- Kết quả: status=Completed, best_val_loss=0.90139705034045, val_acc=0.6809696294232377, val_macro_f1=0.6332322205170513, best_epoch=87, time_s=2521.717, run_dir=results/E3/E3-008_s0
-- Nhận xét: Hoàn thành 100 epochs (25.0s/epoch). Val Acc đạt 68.10% (tương đương baseline 68.15%, sai khác chỉ -0.05%), Best Val Loss đạt 0.9014 (tốt hơn baseline 0.9109) và Macro-F1 đạt 63.32%. So với rmsprop_1e-3, mức lr 3e-4 hội tụ an toàn nhưng không bứt phá mạnh bằng 1e-3.
-- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Khẳng định họ thuật toán RMSprop rất phù hợp cho mạng CNN phân loại cảm xúc.
+### [E3-014_s0] Khảo sát Adam lr=0.001 (`adam_1e-3`) — TV1 – Đoàn Trung Kiên – 2026-11-26
+- Giả thuyết: Adam chuẩn (coupled weight decay `5e-4`, `lr = 1e-3`) có thể đạt hiệu năng tốt hơn AdamW và cạnh tranh trực tiếp với SGD Nesterov trên tập validation.
+- Thay đổi so với baseline: `optimizer = "adam"`, `lr = 0.001`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV1 --only adam_1e-3`
+- Kết quả: status=Completed, best_val_loss=0.8921920168396489, val_acc=0.6865422123154082, val_macro_f1=0.6591569191377215, best_epoch=99, time_s=2483.627, run_dir=results/E3/E3-014_s0
+- Nhận xét: Đạt kết quả rất khả quan: `val_acc = 0.6865` (`+0.0050`, nằm trong `< std baseline`), `val_macro_f1 = 0.6592` (`+1.84%` so với baseline), `best_val_loss = 0.8922` (phá mốc 0.90). Vượt trội rõ rệt so với `AdamW` cùng lr (`0.6723`, macro-F1 `0.5878`).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB). Là phương án thay thế đáng cân nhắc bên cạnh SGD Nesterov.
 
-### [E3-009_s0] Khảo sát Kích thước Batch bs=64 (bs_64) — TV4 – 2026-11-26
-- Giả thuyết: Giảm batch size từ 128 xuống 64 sẽ tăng nhiễu gradient ngẫu nhiên (stochastic noise), đóng vai trò như một cơ chế điều hòa tự nhiên (implicit regularization) giúp mô hình thoát khỏi cực tiểu sắc nhọn (sharp minima) và cải thiện khả năng tổng quát hóa trên tập Validation.
-- Thay đổi so với baseline: `batch_size = 64`.
-- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only bs_64`
-- Kết quả: status=Completed, best_val_loss=0.905830695789217, val_acc=0.6923934243521872, val_macro_f1=0.6642436768620258, best_epoch=82, time_s=2499.457, run_dir=results/E3/E3-009_s0
-- Nhận xét: ĐỘT PHÁ KỶ LỤC CỦA TOÀN BỘ E3! Val Acc đạt 69.24% (+1.09% so với baseline 68.15%, cao hơn std baseline 0.0075 đáng kể), Val Macro-F1 đạt đỉnh 66.42% (+2.34% so với baseline 64.08%) và Best Val Loss đạt 0.9058 tại epoch 82. Giả thuyết về lợi thế của batch size nhỏ trong việc tăng khả năng tổng quát hóa hoàn toàn được xác thực bằng số liệu thực nghiệm.
-- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Ứng viên số 1 về batch size cho mô hình cuối E7.
+### [E3-016_s0] Khảo sát Adam lr=0.0003 (`adam_3e-4`, chạy lại sau `E3-015_s0` bị Aborted) — TV1 – Đoàn Trung Kiên – 2026-11-26
+- Giả thuyết: Giảm bước học Adam từ `1e-3` xuống `3e-4` giúp tối ưu mượt hơn và cải thiện độ ổn định trên các lớp cảm xúc khó.
+- Thay đổi so với baseline: `optimizer = "adam"`, `lr = 0.0003`. *(Ghi chú: lần chạy trước `E3-015_s0` bị ngắt phiên tại epoch 46, đã được `sync_orphans()` đánh dấu `Aborted`, `DISCARD` và xóa checkpoint dở; không đưa vào thống kê.)*
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV1 --only adam_3e-4`
+- Kết quả: status=Completed, best_val_loss=0.9012737215711201, val_acc=0.6879353580384509, val_macro_f1=0.6586960077389981, best_epoch=100, time_s=2890.139, run_dir=results/E3/E3-016_s0
+- Nhận xét: Hoàn tất 100 epochs (`best_epoch = 100`), đạt `val_acc = 0.6879` (**cao nhất nhóm optimizer thay thế**, `+0.0064`, sát ngưỡng `std baseline = 0.0075`), `val_macro_f1 = 0.6587`, `best_val_loss = 0.9013`. Cùng với `adam_1e-3` (`0.6865`) và `rmsprop_1e-3` (`0.6857`), cho thấy bộ tối ưu thích ứng hoạt động tốt khi không tách weight decay quá mạnh như `AdamW`.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB). Hoàn tất đủ 15/15 biến thể E3.
 
-### [E3-010_s0] Khảo sát Kích thước Batch bs=256 (bs_256) — TV4 – 2026-11-26
-- Giả thuyết: Tăng batch size lên 256 sẽ giúp ước lượng gradient ổn định hơn trong mỗi bước và tăng tốc độ xử lý phần cứng, tuy nhiên có thể dẫn đến hiện tượng "generalization gap" khiến Val Acc giảm sút so với batch size nhỏ.
-- Thay đổi so với baseline: `batch_size = 256`.
-- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV4 --only bs_256`
-- Kết quả: status=Completed, best_val_loss=0.91694409404169, val_acc=0.6726107550849819, val_macro_f1=0.6298344029609881, best_epoch=94, time_s=2477.546, run_dir=results/E3/E3-010_s0
-- Nhận xét: Thời gian mỗi epoch nhanh nhất (24.4s/epoch, tổng 2477s). Tuy nhiên Val Acc giảm xuống 67.26% (thấp hơn baseline 0.89%), Val Macro-F1 đạt 62.98% và Val Loss đạt 0.9169. Kết quả đối sánh giữa bs=64 (69.24%), bs=128 (68.15%) và bs=256 (67.26%) thể hiện quy luật đơn điệu rõ ràng: batch size càng lớn thì độ chính xác tổng quát hóa càng giảm trên bài toán FER2013.
-- Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 22.4 MB). Kết luận chọn batch size 64 hoặc 128 là tối ưu, không nên dùng batch size 256.
+#### Tổng kết & Kết luận E3 (`T14` — Phụ trách R: TV3 – Võ Hoàng Bảo – 2026-11-26)
+- **Nguồn số liệu & biểu đồ**: Tổng hợp đầy đủ **15/15 biến thể `Completed`** trong `report/tables/E3_report.md` và biểu đồ so sánh `figures/e3_comparison.png` (`figures/e3_comparison.csv`, đã đăng ký `tracking/figures_manifest.csv`). Toàn bộ 15 biến thể đã được kiểm chứng chỉ thay đổi đúng yếu tố khảo sát so với `configs/baseline.json` (mốc đối chuẩn `0.6815 ± 0.0075`, macro-F1 `0.6408 ± 0.0195`).
+- **So sánh theo 3 trục khảo sát**:
+  1. **Optimizer × Learning rate**:
+     - `SGD Nesterov` rất nhạy với LR: `lr=0.03` phân kỳ/sập về lớp đa số (`0.2494`), `lr=0.003` hội tụ kém hơn (`0.6743`), **`lr=0.01`** là điểm tối ưu (`0.6815 ± 0.0075`; bỏ Nesterov `0.6843`, khác biệt `< std`).
+     - Các bộ tối ưu thích ứng không tách weight decay mạnh đều nhỉnh nhẹ baseline trong ngưỡng `< std`: `adam_3e-4` (`0.6879`, F1 `0.6587`), `adam_1e-3` (`0.6865`, F1 `0.6592`, loss `0.8922`), `rmsprop_1e-3` (`0.6857`, F1 `0.6620`, **loss thấp nhất E3 `0.8809`**). Ngược lại `AdamW` (`1e-3`: `0.6723`, `3e-4`: `0.6704`) tụt rõ rệt cả accuracy lẫn macro-F1 (`0.5630–0.5878`).
+  2. **Lịch học (Scheduler)**: **`OneCycleLR`** (`0.6863`, F1 `0.6584`, loss `0.8997`) nhỉnh nhẹ `ReduceLROnPlateau` (`0.6815`, trong ngưỡng `< std`), vượt `Cosine` (`0.6771`), `Constant` (`0.6760`) và vượt xa `StepLR` (`0.6648`, giảm bước cứng nhắc mỗi 20 epoch).
+  3. **Batch size (ảnh hưởng mạnh nhất toàn E3)**: Quy luật đơn điệu rõ rệt `bs=64` (**`0.6924`**, F1 **`0.6642`**, **`+0.0109 > std baseline 0.0075`**) > `bs=128` (`0.6815`) > `bs=256` (`0.6726`, `-0.0089`). Batch nhỏ tăng nhiễu gradient giúp tổng quát hóa tốt hơn trên tập FER-2013 nhiều nhãn nhiễu.
+- **Quyết định chọn cho `E7`**: Biến thể thắng rõ rệt nhất của E3 theo validation là **`SGD Nesterov lr=0.01 + ReduceLROnPlateau + batch_size=64`** (`val_acc = 0.6924`, vượt duy nhất ngưỡng `+std baseline` trong cả 15 cấu hình). Đề xuất đưa `batch_size = 64` vào cấu hình ứng viên `E7` (có thể phối hợp thử thêm `OneCycleLR` hoặc đối chứng `Adam 3e-4` ở bước tổng hợp E7). Chốt `done(T14)` chuyển TV2 (`T`) kiểm thử độc lập.
 
 ### [E4-001_s0] Khảo sát không dùng Data Augmentation — TV3 – <chưa thực hiện>
 - Giả thuyết: Huấn luyện mô hình không có Data Augmentation sẽ dẫn đến overfitting nghiêm trọng; chênh lệch giữa Train Acc và Val Acc sẽ rất lớn (> 20%).
