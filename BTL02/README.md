@@ -54,7 +54,7 @@ TV2 đã khởi tạo các script tracking. Theo ma trận hiện tại, TV4 là
 |---|---|---|
 | `README.md`, `requirements.txt`, khung thư mục | TV1 – Đoàn Trung Kiên | T02 |
 | `data/fer2013.csv`, `results/data_check.json`, `src/data/{fer2013,loader,augment,eda}.py` | TV1 – Đoàn Trung Kiên | T03–T05, T15–T16, T21 |
-| `src/models/{cnn,transfer}.py`, `src/engine/trainer.py`, `src/run_experiment.py`, `src/utils/`, `src/visual/grad_norms.py` | TV2 – Lê Phan Nguyên Hải | T06–T07, T11–T13, T17, T22 |
+| `src/models/{cnn,transfer}.py`, `src/engine/trainer.py`, `src/run_experiment.py`, `src/utils/`, `src/visual/grad_norms.py`, `src/e6_analysis.py` | TV2 – Lê Phan Nguyên Hải | T06–T07, T11–T13, T17, T22 |
 | `src/engine/evaluate.py`, `src/visual/plots.py`, `src/make_tables.py`, `notebooks/` | TV3 – Võ Hoàng Bảo | T08–T10, T14, T18–T19, T23 |
 | `src/visual/filters.py`, `src/visualize_filters.py`, `report/` | TV4 – Huỳnh Viễn Thông | T20, T24–T27 |
 | `tracking/*.csv`, Google Sheets và nghiệm thu T01 | TV4 – Huỳnh Viễn Thông | T01 (R theo ma trận) |
