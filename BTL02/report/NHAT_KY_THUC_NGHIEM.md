@@ -422,6 +422,30 @@
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
 
+### [E6-004_s0] Fine-tune VGG16 pretrained ở 48 px, tái hiện "fail case" (`vgg16_48_ft`) — TV1 – Đoàn Trung Kiên – 2026-11-26
+- Giả thuyết: Ảnh 48 px quá nhỏ cho 5 lần MaxPool của VGG16 (bản đồ đặc trưng còn 1×1 ở pool5) nên mô hình sẽ kém hoặc không tốt hơn baseline dù có trọng số ImageNet ("fail case" trong `demo_report.pdf` mục 5.1).
+- Thay đổi so với baseline: `resize = 48`, `channels = 3`, `transfer = {"name": "vgg16", "pretrained": true, "freeze_backbone": false}` (134,289,223 tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E6_transfer.json --member TV1 --only vgg16_48_ft`
+- Kết quả: status=Completed, best_val_loss=0.9373211630807676, val_acc=0.6937865700752298, val_macro_f1=0.6812115174655821, best_epoch=38, time_s=3268.183, run_dir=results/E6/E6-004_s0
+- Nhận xét: Giả thuyết **không đúng về độ chính xác**: `val_acc = 0.6938` (`+0.0123` so với baseline, lớn hơn std `0.0075` nhưng mới 1 seed), `val_macro_f1 = 0.6812`; early stopping dừng ở epoch 53, tốt nhất epoch 38. Hội tụ nhanh nhờ pretrained (val ≥ 0.60 từ epoch 4, ≥ 0.65 từ epoch 11). Cái giá là quá khớp và lãng phí: `train_acc_cuoi = 0.9509`, khoảng cách train − val `+0.2571` (baseline `+0.0397`), 134.3 M tham số (22.9× baseline) và `best.pt` 512.3 MB. Hai lần thử trước (`E6-005_s0` PermissionError khi ghi cache, `E6-003_s0` URLError khi tải checkpoint) là lỗi môi trường, không phải lỗi mô hình. Giải thích bằng kích thước bản đồ đặc trưng ở mục "Kết luận E6" bên dưới.
+- Quyết định: Giữ weights (`KEEP`, 512.3 MB, không đẩy lên git). Không đưa VGG16 48 px vào E7: lợi ích nhỏ so với chi phí và chưa đủ 3 seed.
+
+### [E6-001_s0] Fine-tune VGG16 pretrained ở 96 px, 30 epoch (`vgg16_96_ft`) — TV2 – Lê Phan Nguyên Hải – 2026-11-25
+- Giả thuyết: Phóng ảnh lên 96 px thì pool5 còn 3×3 thay vì 1×1, giữ được thông tin không gian nên VGG16 sẽ tốt hơn bản 48 px (đối chứng trực tiếp cho "fail case").
+- Thay đổi so với baseline: `resize = 96`, `channels = 3`, `epochs = 30` (VGG16 ở 96 px đắt), `transfer = {"name": "vgg16", "pretrained": true, "freeze_backbone": false}`.
+- Lệnh: `python src/run_experiment.py --config configs/E6_transfer.json --member TV2 --only vgg16_96_ft`
+- Kết quả: status=Completed, best_val_loss=0.9220232938318472, val_acc=0.6976873780997492, val_macro_f1=0.681773112029825, best_epoch=30, time_s=2214.106, run_dir=results/E6/E6-001_s0
+- Nhận xét: Cao nhất E6: `val_acc = 0.6977` (`+0.0162` so với baseline), `val_macro_f1 = 0.6818`, `best_val_loss = 0.9220` thấp nhất E6. Tốt nhất ở chính epoch 30 (chạy hết 30 epoch, chưa early stop) nên còn dư địa. So với 48 px chỉ hơn `+0.0039` (< std baseline 0.0075, 1 seed mỗi bên) → **chưa đủ bằng chứng** 96 px tốt hơn 48 px về độ chính xác; khác biệt rõ hơn ở `best_val_loss` (0.9220 so với 0.9373) và khoảng cách train − val (`+0.1876` so với `+0.2571`, nhưng run 96 px ngắn hơn nên chưa so được hoàn toàn). Val acc dao động mạnh cuối run (epoch 28–30: 0.6782 → 0.6425 → 0.6977). 71.3 s/epoch trên RTX 4060.
+- Quyết định: Giữ weights (`KEEP`, 512.3 MB, không đẩy lên git). Không chạy thêm epoch/seed cho VGG16 vì chi phí; ghi nhận là cận trên của nhóm transfer.
+
+### [E6-002_s0] ResNet18 huấn luyện từ đầu ở 96 px (`resnet18_96_scratch`) — TV1 – Đoàn Trung Kiên – 2026-11-26
+- Giả thuyết: ResNet18 từ đầu (khởi tạo ngẫu nhiên) là mốc để đo đóng góp riêng của trọng số ImageNet; kỳ vọng hội tụ chậm hơn và kém hơn bản pretrained.
+- Thay đổi so với baseline: `resize = 96`, `channels = 3`, `transfer = {"name": "resnet18", "pretrained": false, "freeze_backbone": false}` (11,180,103 tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E6_transfer.json --member TV1 --only resnet18_96_scratch`
+- Kết quả: status=Completed, best_val_loss=1.0006212015011144, val_acc=0.6770688213987183, val_macro_f1=0.6671904234002443, best_epoch=60, time_s=4182.096, run_dir=results/E6/E6-002_s0
+- Nhận xét: `val_acc = 0.6771` (`-0.0045`, trong std baseline), `val_macro_f1 = 0.6672`, `best_val_loss = 1.0006` (cao nhất trong các bản fine-tune). Đúng giả thuyết về tốc độ: epoch 1 chỉ `0.2862` (pretrained `0.5612`), val ≥ 0.65 ở epoch 45 (pretrained epoch 14), tốt nhất ở epoch 60 (pretrained 42). Quá khớp `+0.2437` dù có augmentation. 55.5 s/epoch trên RTX 3050.
+- Quyết định: Giữ weights (`KEEP`, 42.7 MB). Dùng làm mốc "từ đầu" trong Bảng E6.2.
+
 ### [E6-007_s0] Khảo sát ResNet-18 Fine-tuning toàn bộ (resnet18_96_ft) — TV4 – 2026-11-26
 - Giả thuyết: Khởi tạo từ trọng số ImageNet và fine-tune toàn bộ các tầng trên ảnh 96x96 (3 kênh) sẽ giúp mạng thừa hưởng các bộ lọc trích xuất đặc trưng bậc thấp mạnh mẽ, từ đó đạt độ chính xác cao hơn và hội tụ nhanh hơn mô hình CNN huấn luyện từ đầu.
 - Thay đổi so với baseline: `resize = 96`, `channels = 3`, `transfer = {"name": "resnet18", "pretrained": true, "freeze_backbone": false}`.
@@ -437,6 +461,20 @@
 - Kết quả: status=Completed, best_val_loss=1.4507161095534968, val_acc=0.45695179715798273, val_macro_f1=0.368315020130604, best_epoch=50, time_s=4918.338, run_dir=results/E6/E6-006_s0
 - Nhận xét: Đóng băng backbone ResNet-18 và chỉ huấn luyện classifier đạt Val Acc 45.70% (kém Baseline tới 22.46%) và Macro-F1 36.83%. Mặc dù số tham số huấn luyện giảm mạnh, nhưng vì đặc trưng ImageNet được tối ưu hóa cho phân loại 1,000 lớp vật thể tự nhiên đa dạng (động vật, đồ vật...) nên khi không được tinh chỉnh (fine-tune), chúng không thể biểu diễn tốt các nếp nhăn và biến đổi vi mô trên khuôn mặt người. Kết quả đối sánh giữa Fine-tuning (68.74%) và Frozen (45.70%) mang giá trị khoa học đắt giá: chứng minh việc fine-tune backbone là điều kiện tiên quyết khi áp dụng Transfer Learning cho bài toán FER2013.
 - Quyết định: Giữ weights (`KEEP`, mã `OK`, `best.pt` 42.7 MB) làm dữ liệu đối chứng phản biện cho Chương 4 và Chương 5 của Báo cáo.
+
+### Kết luận E6 (T17) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+Bảng số liệu sinh bằng `python src/e6_analysis.py` → `report/tables/E6_analysis.md` (Bảng E6.1 toàn bộ biến thể, E6.2 ResNet18 từ đầu so với pretrained, E6.3 kích thước bản đồ đặc trưng VGG16 đo bằng forward thật); bảng chung E6 của `make_tables.py` ở `report/tables/E6_report.md`. Mỗi biến thể 1 seed nên mọi chênh lệch dưới std baseline `0.0075` coi là chưa phân biệt được.
+
+**1. Vì sao VGG16 ở 48 px bị coi là "fail case".** VGG16 có 5 khối conv, mỗi khối kết thúc bằng MaxPool 2×2 stride 2. Ở 48 px cạnh ảnh đi `48 → 24 → 12 → 6 → 3 → 1` (Bảng E6.3, khớp `results/transfer_summary.csv`):
+- Khối conv5 chỉ chạy trên bản đồ 3×3, và pool5 (không `ceil_mode`) chỉ lấy cửa sổ 2×2 góc trên trái: **4/9 ô** của conv5 được dùng, hàng và cột thứ ba bị bỏ. Vùng tiếp nhận của conv5_3 là 196 px, lớn hơn cả ảnh 48 px, nên mỗi ô đã nhìn cả khuôn mặt (phần lớn là vùng đệm 0); ô còn lại sau pool5 là một vector 512 chiều toàn cục, **mất hết thông tin vị trí** (mắt, miệng nằm đâu).
+- torchvision không báo lỗi vì có `AdaptiveAvgPool2d(7, 7)`: bản đồ 1×1 được lặp thành 7×7. Đo thật cho thấy mỗi kênh trong 49 ô **chỉ có 1 giá trị**, nên FC1 nhận 25,088 đầu vào nhưng chỉ 512 số thật: 102,764,544 tham số FC1 tương đương một lớp `Linear(512, 4096)` với 2,101,248 tham số hiệu dụng, tức ~100.7 M tham số dư thừa vẫn phải lưu, cập nhật và chịu weight decay. Ở 96 px pool5 còn 3×3 (36/36 ô conv5 được dùng, 9 ô thông tin thật, 18.9 M tham số FC1 hiệu dụng).
+- `demo_report.pdf` chỉ nêu lý do "mạng quá sâu với 5 MaxPool, ảnh phải lớn" mà không có số liệu; `code/valid_imagenet_vgg16.html` sửa bằng cách phóng ảnh lên 128 px.
+
+**2. Kết quả thực tế: "fail" về hiệu quả, không phải về độ chính xác.** Với PyTorch, trọng số ImageNet và fine-tune toàn bộ, VGG16 48 px vẫn đạt `0.6938` (`+0.0123` so với baseline), chỉ kém VGG16 96 px `0.0039` (< std). Đặc trưng ImageNet tóm thành vector toàn cục vẫn đủ phân biệt cảm xúc ở mức này. Điểm "fail" thật: 134.3 M tham số (22.9× baseline 5.87 M), `best.pt` 512.3 MB, quá khớp mạnh (train − val `+0.2571` so với baseline `+0.0397`), và ~100.7 M tham số FC1 không mang thêm thông tin. Cách sửa nếu vẫn dùng VGG16 ở 48 px: bỏ pool5 hoặc thay classifier bằng GAP + `Linear(512, 7)`; hoặc phóng ảnh ≥ 96 px như `vgg16_96_ft`.
+
+**3. ResNet18 từ đầu so với pretrained (Bảng E6.2).** Fine-tune từ ImageNet (`0.6874`) hơn từ đầu (`0.6771`) `+0.0103`, vượt std baseline nhưng mới 1 seed; lợi ích rõ nhất là **tốc độ hội tụ** (epoch 1: 0.5612 so với 0.2862; val ≥ 0.65 ở epoch 14 so với 45; best epoch 42 so với 60). Cả hai đều quá khớp (train − val `+0.2983` và `+0.2437`). Đóng băng backbone chỉ đạt `0.4570`, train acc cuối `0.4436` còn thấp hơn val → **underfit**: một lớp `Linear(512, 7)` trên đặc trưng ImageNet cố định không tách được biểu cảm khuôn mặt xám, nên phải fine-tune backbone.
+
+**4. Quyết định cho E7 (T18).** Không biến thể transfer nào vừa hơn baseline rõ ràng vừa rẻ: VGG16 hơn `+0.012–0.016` với 22.9× tham số; ResNet18 fine-tune chỉ `+0.0059` (< std). Đề xuất E7 giữ họ CNN của baseline làm mô hình chính; nếu cần đa dạng cho ensemble, `resnet18_96_ft` là ứng viên rẻ nhất trong E6 nhưng phải chạy đủ 3 seed trước khi chọn.
 
 ### [E7-001_s0] Mô hình Tối ưu Cuối cùng (Final Best Model) — TV3 – <chưa thực hiện>
 - Giả thuyết: Tổng hợp cấu hình tốt nhất từ các thực nghiệm E1–E6 (kiến trúc, activation, optimizer, augmentation, xử lý mất cân bằng) sẽ mang lại độ chính xác validation cao nhất nhóm, vượt ngưỡng 70%.
