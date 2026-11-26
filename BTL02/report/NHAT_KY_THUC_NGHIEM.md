@@ -597,6 +597,22 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E1
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
 
+### [E5-003_s0] CE thường, mốc đối chứng của E5 (`ce`, Seed 0 — C1) — TV2 – Lê Phan Nguyên Hải – 2026-11-27
+- Giả thuyết: Biến thể `ce` có cấu hình trùng baseline (`sampler = "none"`, `class_weights = null`), nên phải cho lại đúng kết quả `baseline-002_s0` khi cùng seed 0 và cùng máy; đây là mốc để đọc recall từng lớp của `class_weight` và `weighted_random_sampler`.
+- Thay đổi so với baseline: không đổi gì.
+- Lệnh: `python src/run_experiment.py --config configs/E5_imbalance.json --member TV2 --only ce class_weight --seeds 0`
+- Kết quả: status=Completed, best_val_loss=0.915008519412615, val_acc=0.6815268877124547, val_macro_f1=0.6416322850865286, best_epoch=99, time_s=1560.584, run_dir=results/E5/E5-003_s0
+- Nhận xét: Chạy đủ 100 epoch trên RTX 4060 (~26 phút). **Tái lập tất định:** `val_acc = 0.6815`, `val_macro_f1 = 0.6416`, best epoch 99, cả 100 dòng `history.csv` (trừ cột thời gian) và sha256 `best.pt` (`021c02e6…`) trùng `baseline-002_s0`. Recall/precision từng lớp trên PublicTest: Angry 0.647/0.574, **Disgust 0.375/0.778 (21/56 ảnh)**, **Fear 0.421/0.585**, Happy 0.883/0.853, Sad 0.574/0.585, Surprise 0.836/0.787, Neutral 0.662/0.599. Hai lớp yếu nhất là Disgust và Fear; Disgust ít được đoán (precision cao, recall thấp). Run được hàng đợi cấp mã `E5-001_s0` trước khi biết TV4 đã dùng mã đó cho `weighted_random_sampler` (máy khác, chạy cùng lúc), nên đổi sang `E5-003_s0` khi gộp (thư mục, `config.json`, `metrics.json`, `run.log`, dòng CSV; `curves.png` vẽ lại; nội dung run không đổi, ghi chú ở dòng đầu `run.log`).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB). Dùng làm mốc CE của E5.
+
+### [E5-002_s0] CE có trọng số lớp (`class_weight`, Seed 0 — C1) — TV2 – Lê Phan Nguyên Hải – 2026-11-27
+- Giả thuyết: Trọng số lớp n/(7·số ảnh) (Disgust 9.41, Fear 1.29, Happy 0.57, …) làm lỗi trên lớp hiếm nặng hơn, nên recall Disgust và Fear tăng, đổi lại accuracy có thể giảm vì mô hình bớt đoán lớp đông.
+- Thay đổi so với baseline: `class_weights = [1.026605, 9.406619, 1.001046, 0.568439, 0.849127, 1.293373, 0.826039]` cho loss train (loss val vẫn là CE thường nên so được với các run khác).
+- Lệnh: `python src/run_experiment.py --config configs/E5_imbalance.json --member TV2 --only ce class_weight --seeds 0`
+- Kết quả: status=Completed, best_val_loss=0.9414065220987741, val_acc=0.6611869601560323, val_macro_f1=0.639682417264928, best_epoch=97, time_s=1509.854, run_dir=results/E5/E5-002_s0
+- Nhận xét: Chạy đủ 100 epoch (~25 phút), đỉnh ở epoch 97, lr cuối 0.000625. `val_acc = 0.6612`, **−0.0203 so với baseline** (vượt std 0.0075); `val_macro_f1 = 0.6397`, gần như không đổi so với `E5-003_s0` (0.6416). Recall/precision từng lớp: Angry 0.651/0.587, **Disgust 0.732/0.547 (41/56 ảnh, +0.357 recall)**, **Fear 0.355/0.515 (giảm 0.066)**, Happy 0.837/0.891, Sad 0.531/0.548, Surprise 0.851/0.759, Neutral 0.664/0.564. Trọng số 9.4 kéo mạnh Disgust nhưng Fear (trọng số chỉ 1.29) lại giảm recall, Sad và Happy cũng giảm; chỉ Disgust được lợi rõ (chưa xem ma trận nhầm lẫn nên chưa rõ Fear bị nhầm sang lớp nào). `train_acc_cuoi = 0.6653` gần val (0.6539 ở epoch cuối), khoảng train–val nhỏ hơn baseline nhiều vì loss có trọng số không tối ưu trực tiếp accuracy. So với `weighted_random_sampler` của TV4 (`E5-001_s0`, val 0.6824, macro-F1 0.6717, recall Disgust 0.679, Fear 0.450 theo `figures/e5_wrs_recall.csv`): sampler giữ accuracy và tăng cả hai lớp, class weight thì không.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB). Một seed: không chọn class weight cho E7 nếu mục tiêu là accuracy; nếu cần recall Disgust thì `weighted_random_sampler` tốt hơn. Kết luận nhóm E5 do TV1 (R của T16) tổng hợp.
+
 ### [E6-004_s0] Fine-tune VGG16 pretrained ở 48 px, tái hiện "fail case" (`vgg16_48_ft`) — TV1 – Đoàn Trung Kiên – 2026-11-26
 - Giả thuyết: Ảnh 48 px quá nhỏ cho 5 lần MaxPool của VGG16 (bản đồ đặc trưng còn 1×1 ở pool5) nên mô hình sẽ kém hoặc không tốt hơn baseline dù có trọng số ImageNet ("fail case" trong `demo_report.pdf` mục 5.1).
 - Thay đổi so với baseline: `resize = 48`, `channels = 3`, `transfer = {"name": "vgg16", "pretrained": true, "freeze_backbone": false}` (134,289,223 tham số).
