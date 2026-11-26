@@ -4,7 +4,9 @@
   "ghi_chu": [
     "8 biến thể đầu là khảo sát gốc E1, base giống configs/baseline.json.",
     "medium_01 và large (11 và 16 lớp conv, không BN như mẫu) chạy với SGD lr=0.01 không học được: E1-003_s0 và E1-004_s0 có loss đứng 1.81 từ epoch 1, đoán toàn lớp Happy (val_acc 0.2494), dừng sớm ở epoch 16.",
-    "4 biến thể *_adam1e-4 và *_bn dùng để tách nguyên nhân, mỗi biến thể đổi 1 yếu tố so với medium_01/large: *_adam1e-4 dùng đúng optimizer của notebook mẫu (demo_code.html compile bằng Adam lr=1e-4), giữ không BN; *_bn thêm BatchNorm, giữ SGD lr=0.01."
+    "4 biến thể *_adam1e-4 và *_bn dùng để tách nguyên nhân, mỗi biến thể đổi 1 yếu tố so với medium_01/large: *_adam1e-4 dùng đúng optimizer của notebook mẫu (demo_code.html compile bằng Adam lr=1e-4), giữ không BN; *_bn thêm BatchNorm, giữ SGD lr=0.01.",
+    "Kết quả đợt đầu: E1-010_s0 (medium_01_adam1e-4) học được (val 0.6392); E1-011_s0 (large_adam1e-4) dừng tay ở epoch 4, 4 epoch đều đứng 0.2494. large_adam1e-4 giữ trong config để truy vết E1-011_s0 nhưng không chạy lại.",
+    "Khác biệt còn lại so với mẫu là khởi tạo trọng số: Keras mặc định glorot_uniform, PyTorch mặc định kaiming_uniform a=√5 (phương sai nhỏ hơn khoảng 3 lần). Đo lúc khởi tạo trên LARGE không BN: chuẩn gradient tới conv1_1 là 7.6e-8 (mặc định) so với 1.0e-3 (Glorot), cỡ eps=1e-8 của Adam nên Adam không cứu được. *_glorot_adam1e-4 tái hiện đúng thiết lập mẫu (Glorot + Adam 1e-4); mẫu báo cáo MEDIUM_01 0.65 và LARGE 0.67."
   ],
   "base": {
     "model": "baseline",
@@ -37,7 +39,9 @@
     "medium_01_adam1e-4": {"model": "medium_01", "optimizer": "adam", "lr": 0.0001},
     "large_adam1e-4": {"model": "large", "optimizer": "adam", "lr": 0.0001},
     "medium_01_bn": {"model": "medium_01", "model_kwargs": {"bn": true}},
-    "large_bn": {"model": "large", "model_kwargs": {"bn": true}}
+    "large_bn": {"model": "large", "model_kwargs": {"bn": true}},
+    "medium_01_glorot_adam1e-4": {"model": "medium_01", "model_kwargs": {"init": "glorot"}, "optimizer": "adam", "lr": 0.0001},
+    "large_glorot_adam1e-4": {"model": "large", "model_kwargs": {"init": "glorot"}, "optimizer": "adam", "lr": 0.0001}
   },
   "seeds": [0]
 }
