@@ -164,15 +164,23 @@
 - Nhận xét: Hoàn tất 100 epochs (~34.5 phút, ~20.5s/ep), đạt **68.54%** `val_acc`, **65.23%** `val_macro_f1`, `best_val_loss = 0.9060` tại epoch 98. Tổng hợp đủ 3 seed (`E1-008_s0/s1/s2`): `val_acc = 0.6839 ± 0.0013` (**+0.0024**, trong ngưỡng `< std baseline = 0.0075`), `val_macro_f1 = 0.6478 ± 0.0040`, `best_val_loss = 0.9077`. Đúng với giả thuyết: thay `Flatten` bằng `GAP` cắt giảm **78.2%** tham số (`5.87M → 1.28M`, trọng số `22.39 MB → 4.90 MB`) mà hiệu năng vẫn tương đương (nhỉnh nhẹ) baseline, đặc biệt độ lệch chuẩn giữa 3 seed thu hẹp mạnh còn `0.0013` (~1/6 của baseline).
 - Quyết định: Giữ weights (`KEEP`, `best.pt` 4.90 MB). Chốt kết luận 3 seed cho `baseline_gap`: **hiệu quả tham số vượt trội** (tương đương baseline với 21.8% số tham số), đáng thử kết hợp với `no_bn` ở các thí nghiệm sau / `E7`.
 
-### [E2-001_s0] Khảo sát hàm kích hoạt LeakyReLU — TV3 – <chưa thực hiện>
-- Giả thuyết: LeakyReLU cho phép gradient nhỏ đi qua khi đầu vào âm, hạn chế hiện tượng Dying ReLU ở các lớp sâu.
-- Thay đổi so với baseline: `activation = "leaky_relu"`.
-- Lệnh: `python src/run_experiment.py --config configs/E2_activation.json --member TV3 --only leaky_relu`
-- Kết quả: (chưa thực hiện)
-- Nhận xét: (chưa thực hiện)
-- Quyết định: (chưa thực hiện)
+### [E2-001_s0] Khảo sát hàm kích hoạt ReLU kèm ghi chuẩn gradient (`relu`, Seed 0 — C1) — TV3 – Võ Hoàng Bảo – 2026-11-26
+- Giả thuyết: Chạy lại mốc đối chứng `ReLU` (giống Baseline) với cờ `log_grad_norms=true` để ghi chuẩn L2 gradient từng lớp (`grad_norms.csv`) làm mốc so sánh vanishing gradient với các hàm kích hoạt khác; `val_acc` kỳ vọng nằm trong khoảng dung sai `0.6815 ± 0.0075` của Baseline.
+- Thay đổi so với baseline: `activation = "relu"`, bật `log_grad_norms = true` (không đổi bước cập nhật trọng số).
+- Lệnh: `python src/run_experiment.py --config configs/E2_activation.json --member TV3 --only relu leaky_relu elu`
+- Kết quả: status=Completed, best_val_loss=0.9032580699054402, val_acc=0.6862635831707997, val_macro_f1=0.6542281383200632, best_epoch=98, time_s=3417.117, run_dir=results/E2/E2-001_s0
+- Nhận xét: Hoàn tất 100 epochs trên RTX 3050 (~57.0 phút). `val_acc` đạt **68.63%** (`+0.0047` so với trung bình baseline `68.15%`, nằm trong ngưỡng `< std baseline = 0.0075`), `val_macro_f1 = 65.42%`, `best_val_loss = 0.9033`. File `grad_norms.csv` ghi đủ **800 dòng** (100 epoch × 8 lớp Conv/Linear, 0 giá trị NaN): chuẩn L2 gradient lớp đầu `features.conv1_1` tăng ổn định từ `0.0594` (ep 1) lên `0.7241` (ep 100), trong khi lớp cuối `classifier.4` ở mức `1.0644 → 0.3592` — xác nhận dòng gradient truyền thông suốt về lớp đầu, không bị triệt tiêu.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Đạt chuẩn làm mốc đối chứng gradient cho toàn nhóm E2.
 
-### [E2-002_s0] Khảo sát hàm kích hoạt Sigmoid (Vanishing Gradient) — TV4 – <chưa thực hiện>
+### [E2-002_s0] Khảo sát hàm kích hoạt LeakyReLU (`leaky_relu`, Seed 0 — C1) — TV3 – Võ Hoàng Bảo – 2026-11-26
+- Giả thuyết: LeakyReLU cho phép gradient nhỏ đi qua khi đầu vào âm, hạn chế hiện tượng Dying ReLU ở các lớp Conv/FC và có thể cải thiện nhẹ `val_acc` / `val_macro_f1` so với ReLU.
+- Thay đổi so với baseline: `activation = "leaky_relu"`, bật `log_grad_norms = true`.
+- Lệnh: `python src/run_experiment.py --config configs/E2_activation.json --member TV3 --only relu leaky_relu elu`
+- Kết quả: status=Completed, best_val_loss=0.9016122124460156, val_acc=0.6935079409306213, val_macro_f1=0.666391284577099, best_epoch=98, time_s=3725.805, run_dir=results/E2/E2-002_s0
+- Nhận xét: Hoàn tất 100 epochs trên RTX 3050 (~62.1 phút). `val_acc` đạt **69.35%** (**`+0.0120` cao hơn baseline `68.15%`**, vượt dung sai `0.0075`, và nhỉnh hơn `E2-001_s0` `relu` **+0.72%** trên cùng máy và cùng seed 0); `val_macro_f1` tăng mạnh lên **66.64%** (`+2.56%` so với baseline `64.08%`, `+1.22%` so với `relu`); `best_val_loss = 0.9016` thấp hơn cả Baseline và ReLU. File `grad_norms.csv` đủ **800 dòng** (0 NaN), chuẩn gradient `features.conv1_1` (`0.0577 → 0.6187`) và `classifier.4` (`1.2091 → 0.3694`) cân bằng tốt suốt 100 epochs.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Kết quả rất tích cực, ủng hộ giả thuyết giảm Dying ReLU; `leaky_relu` là ứng viên hàm kích hoạt mạnh cho `E7` (nên cân nhắc chạy thêm 2 seed nếu tiếp tục dẫn đầu sau khi hoàn tất `elu`, `gelu`, `relu_no_bn`).
+
+### [E2-006_s0] Khảo sát hàm kích hoạt Sigmoid (Vanishing Gradient) — TV4 – <chưa thực hiện>
 - Giả thuyết: Dùng Sigmoid thay cho ReLU ở mạng sâu 6 lớp Conv sẽ gặp hiện tượng triệt tiêu gradient nghiêm trọng (đặc biệt khi không có BN), mô hình gần như không học được.
 - Thay đổi so với baseline: `activation = "sigmoid"`.
 - Lệnh: `python src/run_experiment.py --config configs/E2_activation.json --member TV4 --only sigmoid`
