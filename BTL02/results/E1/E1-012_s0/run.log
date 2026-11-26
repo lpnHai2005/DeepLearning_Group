@@ -1,0 +1,11 @@
+2026-11-26T15:34:19+07:00 | E1-012_s0 | START | device=cuda | epochs=100 | amp=True | optimizer=sgd | lr=0.01 | seed=0
+2026-11-26T15:34:40+07:00 | E1-012_s0 | 1/100 | train_loss=1.8154 | val_loss=1.7121 | val_acc=0.3168 | val_macro_f1=0.1822 | lr=0.01 | 20.6s | ok
+2026-11-26T15:35:00+07:00 | E1-012_s0 | 2/100 | train_loss=1.6632 | val_loss=1.5353 | val_acc=0.4037 | val_macro_f1=0.2564 | lr=0.01 | 20.3s | ok
+2026-11-26T15:35:20+07:00 | E1-012_s0 | 3/100 | train_loss=1.5048 | val_loss=1.4904 | val_acc=0.4452 | val_macro_f1=0.3141 | lr=0.01 | 20.4s | ok
+2026-11-26T15:35:41+07:00 | E1-012_s0 | 4/100 | train_loss=1.3893 | val_loss=1.3759 | val_acc=0.4812 | val_macro_f1=0.3574 | lr=0.01 | 20.5s | ok
+2026-11-26T15:36:01+07:00 | E1-012_s0 | 5/100 | train_loss=1.3257 | val_loss=1.2177 | val_acc=0.5247 | val_macro_f1=0.4032 | lr=0.01 | 20.3s | ok
+2026-11-26T15:36:22+07:00 | E1-012_s0 | 6/100 | train_loss=1.2740 | val_loss=1.2732 | val_acc=0.5024 | val_macro_f1=0.3931 | lr=0.01 | 20.9s | ok
+2026-11-26T15:36:43+07:00 | E1-012_s0 | 7/100 | train_loss=1.2422 | val_loss=1.1747 | val_acc=0.5450 | val_macro_f1=0.4382 | lr=0.01 | 20.8s | ok
+2026-11-26T15:37:04+07:00 | E1-012_s0 | 8/100 | train_loss=1.2086 | val_loss=1.1380 | val_acc=0.5743 | val_macro_f1=0.4591 | lr=0.01 | 20.8s | ok
+2026-11-26T15:37:25+07:00 | E1-012_s0 | 9/100 | train_loss=1.1801 | val_loss=1.2404 | val_acc=0.5433 | val_macro_f1=0.4131 | lr=0.01 | 20.8s | ok
+2026-11-26T16:09:33+07:00 | E1-012_s0 | END | status=Aborted | reason=INTERRUPTED@epoch9 | stopped_by=killed | best_epoch=8 | train_time_s=185.383

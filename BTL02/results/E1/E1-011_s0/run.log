@@ -1,0 +1,6 @@
+2026-11-26T15:17:24+07:00 | E1-011_s0 | START | device=cuda | epochs=100 | amp=True | optimizer=adam | lr=0.0001 | seed=0
+2026-11-26T15:17:51+07:00 | E1-011_s0 | 1/100 | train_loss=1.8213 | val_loss=1.8114 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.0001 | 26.5s | ok
+2026-11-26T15:18:16+07:00 | E1-011_s0 | 2/100 | train_loss=1.8134 | val_loss=1.8121 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.0001 | 25.6s | ok
+2026-11-26T15:18:41+07:00 | E1-011_s0 | 3/100 | train_loss=1.8122 | val_loss=1.8152 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.0001 | 25.1s | ok
+2026-11-26T15:19:07+07:00 | E1-011_s0 | 4/100 | train_loss=1.8120 | val_loss=1.8121 | val_acc=0.2494 | val_macro_f1=0.0570 | lr=0.0001 | 26.0s | ok
+2026-11-26T16:09:33+07:00 | E1-011_s0 | END | status=Aborted | reason=INTERRUPTED@epoch4 | stopped_by=killed | best_epoch=1 | train_time_s=103.23
