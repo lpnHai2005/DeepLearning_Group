@@ -10,10 +10,10 @@ from pathlib import Path
 import numpy as np
 import torch
 import torch.nn.functional as F
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import DataLoader, Dataset, WeightedRandomSampler
 
 from src.data.augment import build_augmentation
-from src.data.fer2013 import load_fer2013
+from src.data.fer2013 import EMOTIONS, load_fer2013
 
 BTL02 = Path(__file__).resolve().parents[2]
 
@@ -95,7 +95,7 @@ def _make_dataset(split, image_size, channels, mean, std, augmentation=None):
     return _FerDataset(images, labels, image_size, channels, mean, std, augmentation)
 
 
-def _loader(dataset, config, *, shuffle: bool, seed: int):
+def _loader(dataset, config, *, shuffle: bool, seed: int, sampler=None):
     batch_size = int(_cfg(config, "batch_size", default=128))
     workers = int(_cfg(config, "num_workers", default=0))
     if batch_size <= 0:
@@ -109,9 +109,34 @@ def _loader(dataset, config, *, shuffle: bool, seed: int):
     return DataLoader(
         dataset,
         batch_size=batch_size,
-        shuffle=shuffle,
+        shuffle=shuffle if sampler is None else False,
+        sampler=sampler,
         num_workers=workers,
         pin_memory=bool(_cfg(config, "pin_memory", default=device.startswith("cuda"))),
+        generator=generator,
+    )
+
+
+def _training_sampler(labels, config: Mapping, seed: int):
+    """Tạo sampler train có seed; trọng số lấy riêng từ nhãn Training."""
+    name = str(_cfg(config, "sampler", default="none")).strip().lower()
+    if name in {"", "none", "shuffle"}:
+        return None
+    if name not in {"weighted_random", "weightedrandomsampler"}:
+        raise ValueError(f"Sampler không hỗ trợ: {name!r}")
+
+    y = torch.as_tensor(labels, dtype=torch.int64)
+    if y.numel() == 0 or torch.any(y < 0) or torch.any(y >= len(EMOTIONS)):
+        raise ValueError("Nhãn Training không hợp lệ để tạo WeightedRandomSampler")
+    counts = torch.bincount(y, minlength=len(EMOTIONS))
+    if torch.any(counts == 0):
+        raise ValueError("Mỗi lớp phải có mẫu trong Training để tạo WeightedRandomSampler")
+    sample_weights = counts.to(torch.double).reciprocal()[y]
+    generator = torch.Generator().manual_seed(seed)
+    return WeightedRandomSampler(
+        sample_weights,
+        num_samples=len(y),
+        replacement=True,
         generator=generator,
     )
 
@@ -131,7 +156,11 @@ def make_loaders(config: Mapping):
     augmentation = _cfg(config, "augmentation", "augment", default="flip_affine")
     train_ds = _make_dataset(data["train"], image_size, channels, mean, std, build_augmentation(augmentation))
     val_ds = _make_dataset(data["val"], image_size, channels, mean, std)
-    return _loader(train_ds, config, shuffle=True, seed=seed), _loader(val_ds, config, shuffle=False, seed=seed)
+    sampler = _training_sampler(data["train"][1], config, seed)
+    return (
+        _loader(train_ds, config, shuffle=True, seed=seed, sampler=sampler),
+        _loader(val_ds, config, shuffle=False, seed=seed),
+    )
 
 
 def make_test_loader(config: Mapping):

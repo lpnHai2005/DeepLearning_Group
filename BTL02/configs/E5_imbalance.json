@@ -1,0 +1,40 @@
+{
+  "group": "E5",
+  "task_id": "T16",
+  "base": {
+    "model": "baseline",
+    "epochs": 100,
+    "batch_size": 128,
+    "optimizer": "sgd",
+    "lr": 0.01,
+    "momentum": 0.9,
+    "nesterov": true,
+    "weight_decay": 0.0005,
+    "scheduler": "plateau",
+    "factor": 0.5,
+    "lr_patience": 5,
+    "early_stopping_patience": 15,
+    "label_smoothing": 0.0,
+    "augmentation": "flip_affine",
+    "sampler": "none",
+    "class_weights": null,
+    "amp": true,
+    "num_workers": 0
+  },
+  "variants": {
+    "ce": {},
+    "class_weight": {
+      "class_weights": [
+        1.026604684427,
+        9.406618610747,
+        1.001046061578,
+        0.568438768439,
+        0.849127477078,
+        1.29337297833,
+        0.826039418789
+      ]
+    },
+    "weighted_random_sampler": {"sampler": "weighted_random"}
+  },
+  "seeds": [0]
+}
