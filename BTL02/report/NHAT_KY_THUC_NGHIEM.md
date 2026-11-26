@@ -290,7 +290,7 @@
 - Giả thuyết: Dùng Sigmoid thay cho ReLU ở mạng sâu 6 lớp Conv sẽ gặp hiện tượng triệt tiêu gradient nghiêm trọng (đặc biệt khi không có BN), mô hình gần như không học được.
 - Thay đổi so với baseline: `activation = "sigmoid"`.
 - Lệnh: `python src/run_experiment.py --config configs/E2_activation.json --member TV4 --only sigmoid`
-- Kết quả: (chưa thực hiện)
+- Kết quả: status=Completed, best_val_loss=0.9687542175309974, val_acc=0.641404290888827, val_macro_f1=0.5951930862888543, best_epoch=92, time_s=3590.856, run_dir=results/E2/E2-006_s0
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
 
