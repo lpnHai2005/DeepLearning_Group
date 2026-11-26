@@ -9,7 +9,7 @@ không có softmax (CrossEntropyLoss đã gồm sẵn).
 Các cấu hình "small", "medium", "medium_01", "large" tái hiện 4 CNN trong notebook mẫu (demo_code.html, Keras:
 SMALL_CNN, MEDIUM_CNN, MEDIUM1_CNN, LARGE_CNN). Mẫu không dùng BatchNorm; "baseline" là cấu hình đề xuất của
 nhóm (mục 3.2 trong PHAN_CONG_NHIEM_VU.md) và có BatchNorm. Muốn đổi một yếu tố để làm thí nghiệm E1/E2, truyền
-tham số ghi đè: build_model("baseline", bn=False), build_model("baseline", activation="gelu"), ...
+tham số ghi đè: build_model("baseline", bn=False), build_model("baseline", activation="gelu"), build_model("large", init="glorot"), ...
 
 In số tham số và kích thước bản đồ đặc trưng: python src/models/cnn.py [--out results/model_summary.csv]
 """
@@ -43,6 +43,20 @@ PRESETS = {
 }
 
 
+# init: "default" giữ khởi tạo mặc định của PyTorch (Conv2d/Linear: kaiming_uniform_ với a=√5, phương sai khoảng
+# 1/(3·fan_in)), mọi run có trước khi thêm tham số này đều dùng cách đó. "glorot" giống Keras mặc định (glorot_uniform cho trọng số,
+# bias = 0) để tái hiện notebook mẫu; mạng sâu không BN rất nhạy với lựa chọn này (E1, nhiệm vụ T12).
+INITS = ("default", "glorot")
+
+
+def _glorot_init(model):
+    for m in model.modules():
+        if isinstance(m, (nn.Conv2d, nn.Linear)):
+            nn.init.xavier_uniform_(m.weight)
+            if m.bias is not None:
+                nn.init.zeros_(m.bias)
+
+
 def _act(name):
     if name not in ACTIVATIONS:
         raise ValueError(f"activation '{name}' không hợp lệ, chọn một trong {sorted(ACTIVATIONS)}")
@@ -51,10 +65,12 @@ def _act(name):
 
 class CNN(nn.Module):
     def __init__(self, blocks, fc_units=512, dropout_conv=0.25, dropout_fc=0.5, bn=True, activation="relu",
-                 head="flatten", in_channels=1, input_size=INPUT_SIZE, num_classes=NUM_CLASSES):
+                 head="flatten", in_channels=1, input_size=INPUT_SIZE, num_classes=NUM_CLASSES, init="default"):
         super().__init__()
         if head not in ("flatten", "gap"):
             raise ValueError("head phải là 'flatten' hoặc 'gap'")
+        if init not in INITS:
+            raise ValueError(f"init '{init}' không hợp lệ, chọn một trong {sorted(INITS)}")
         if input_size // 2 ** len(blocks) < 1:
             raise ValueError(f"{len(blocks)} lần MaxPool làm ảnh {input_size}x{input_size} co về 0 điểm ảnh; giảm số khối")
         feats, c_in = [], in_channels
@@ -80,6 +96,8 @@ class CNN(nn.Module):
         else:
             cls += [nn.Linear(in_feat, num_classes)]
         self.classifier = nn.Sequential(*cls)
+        if init == "glorot":
+            _glorot_init(self)
 
     def forward(self, x):
         return self.classifier(self.features(x))

@@ -97,3 +97,46 @@ def test_one_sgd_step_lowers_loss():
         loss_fn(m(x), y).backward()
         opt.step()
     assert loss_fn(m(x), y).item() < before
+
+
+def test_default_init_unchanged_by_init_argument():
+    """init="default" phải cho đúng trọng số như trước khi có tham số init (các run cũ không đổi)."""
+    torch.manual_seed(0)
+    a = build_model("large")
+    torch.manual_seed(0)
+    b = build_model("large", init="default")
+    for (na, pa), (nb, pb) in zip(a.state_dict().items(), b.state_dict().items()):
+        assert na == nb and torch.equal(pa, pb)
+
+
+def test_glorot_init_matches_keras_glorot_uniform():
+    """Trọng số Conv/Linear nằm trong [-limit, limit], limit = sqrt(6/(fan_in+fan_out)) như Keras; bias = 0."""
+    torch.manual_seed(0)
+    m = build_model("large", init="glorot")
+    layers = [x for x in m.modules() if isinstance(x, (nn.Conv2d, nn.Linear))]
+    assert len(layers) == 16 + 2  # 16 Conv + 2 Dense của LARGE_CNN
+    for layer in layers:
+        w = layer.weight
+        rf = w[0][0].numel() if w.dim() > 2 else 1
+        fan_in, fan_out = w.shape[1] * rf, w.shape[0] * rf
+        limit = (6 / (fan_in + fan_out)) ** 0.5
+        assert w.abs().max() <= limit
+        assert w.abs().max() > 0.9 * limit  # dùng gần hết khoảng, không phải phân phối hẹp hơn
+        assert torch.count_nonzero(layer.bias) == 0
+
+
+def test_glorot_init_keeps_gradient_in_deep_net_without_bn():
+    """Lý do thêm init (E1): ở LARGE không BN, gradient tới conv1_1 với init mặc định nhỏ hơn Glorot nhiều bậc."""
+    x, y = torch.randn(16, 1, 48, 48), torch.randint(0, 7, (16,))
+    norms = {}
+    for init in ("default", "glorot"):
+        torch.manual_seed(0)
+        m = build_model("large", init=init).eval()
+        nn.CrossEntropyLoss()(m(x), y).backward()
+        norms[init] = m.features.conv1_1.weight.grad.norm().item()
+    assert norms["glorot"] > 100 * norms["default"]
+
+
+def test_unknown_init_raises():
+    with pytest.raises(ValueError):
+        build_model("baseline", init="he")
