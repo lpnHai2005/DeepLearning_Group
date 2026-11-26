@@ -324,10 +324,18 @@
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
 
-### [E6-001_s0] Khảo sát Transfer Learning ResNet-18 Pretrained — TV4 – <chưa thực hiện>
-- Giả thuyết: ResNet-18 tiền huấn luyện trên ImageNet (được điều chỉnh đầu vào grayscale và fine-tune) sẽ giúp trích xuất đặc trưng khuôn mặt tốt hơn và vượt mốc Accuracy của mô hình CNN huấn luyện từ đầu.
-- Thay đổi so với baseline: Backbone ResNet-18 pretrained.
-- Lệnh: `python src/run_experiment.py --config configs/E6_transfer.json --member TV4 --only resnet18_pretrained`
+### [E6-001_s0] Khảo sát ResNet-18 Fine-tuning toàn bộ (resnet18_96_ft) — TV4 – 2026-11-26
+- Giả thuyết: Khởi tạo từ trọng số ImageNet và fine-tune toàn bộ các tầng trên ảnh 96x96 (3 kênh) sẽ giúp mạng thừa hưởng các bộ lọc trích xuất đặc trưng bậc thấp mạnh mẽ, từ đó đạt độ chính xác cao hơn và hội tụ nhanh hơn mô hình CNN huấn luyện từ đầu.
+- Thay đổi so với baseline: `resize = 96`, `channels = 3`, `transfer = {"name": "resnet18", "pretrained": true, "freeze_backbone": false}`.
+- Lệnh: `python src/run_experiment.py --config configs/E6_transfer.json --member TV4 --only resnet18_96_ft`
+- Kết quả: (chưa thực hiện)
+- Nhận xét: (chưa thực hiện)
+- Quyết định: (chưa thực hiện)
+
+### [E6-002_s0] Khảo sát ResNet-18 Đóng băng Backbone (resnet18_96_frozen) — TV4 – 2026-11-26
+- Giả thuyết: Đóng băng toàn bộ backbone ResNet-18 tiền huấn luyện ImageNet và chỉ huấn luyện lớp phân loại (Linear Probing / Feature Extractor) sẽ giúp giảm tối đa số tham số cần cập nhật và chống overfitting, tuy nhiên do đặc trưng ImageNet (vật thể tự nhiên) khác biệt với ảnh khuôn mặt cảm xúc xám nên độ chính xác có thể bị giới hạn so với fine-tune toàn bộ.
+- Thay đổi so với baseline: `resize = 96`, `channels = 3`, `transfer = {"name": "resnet18", "pretrained": true, "freeze_backbone": true}`.
+- Lệnh: `python src/run_experiment.py --config configs/E6_transfer.json --member TV4 --only resnet18_96_frozen`
 - Kết quả: (chưa thực hiện)
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
