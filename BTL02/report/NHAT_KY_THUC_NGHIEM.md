@@ -92,45 +92,111 @@
 
 > **Hướng dẫn cho các thành viên**: Mỗi khi chạy xong một run bằng lệnh `python src/run_experiment.py`, thành viên phụ trách thêm một mục theo cú pháp mẫu dưới đây. Sau đó chạy `python src/make_tables.py --update-log report/NHAT_KY_THUC_NGHIEM.md` để tự động điền dòng `- Kết quả:`.
 
-### [E1-001_s0] Khảo sát kiến trúc SMALL_CNN — TV1 – <chưa thực hiện>
-- Giả thuyết: Mô hình SMALL_CNN chỉ có 2 khối Conv và không có BatchNorm sẽ huấn luyện nhanh hơn nhưng độ chính xác thấp hơn Baseline đáng kể (dự kiến < 60%).
-- Thay đổi so với baseline: `model = "small"` (không BN, 4 Conv, FC 1024).
-- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only small`
+> **Ghi chú đánh số E1**: `E1-001`…`E1-008` là 8 biến thể gốc theo thứ tự trong `configs/E1_arch.json` (small, medium, medium_01, large, baseline_w0.5, baseline_w2, baseline_no_bn, baseline_gap). Seed 0 cả 8 biến thể do TV2 chạy trên RTX 4060 (commit `2945b830`). `E1-009_s1` là **small seed 1** chạy lại sau khi `E1-001_s1` bị ngắt (Aborted): theo luật của `run_experiment.py`, số đã có run lỗi ở seed đó không được dùng lại nên run chạy lại nhận số mới, không phải biến thể mới. Mốc so sánh: baseline 3 seed `val_acc = 0.6815 ± 0.0075`.
+
+### [E1-001_s0] Tái hiện SMALL_CNN của notebook mẫu (`small`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-25
+- Giả thuyết: SMALL_CNN của mẫu (2 khối, 6 lớp Conv, không BN, FC 1024) có lớp FC rất lớn sau Flatten nên nhiều tham số nhưng nông; dự kiến hội tụ được nhưng quá khớp mạnh hơn baseline.
+- Thay đổi so với baseline: `model = "small"` (blocks `[[64,64],[128,128,256,256]]`, không BN, dropout 0.2/0.5, `38,901,191` tham số, gấp 6.6 lần baseline).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --seeds 0`
 - Kết quả: status=Completed, best_val_loss=0.9094449157799874, val_acc=0.6915575369183616, val_macro_f1=0.6731403436946511, best_epoch=96, time_s=2133.077, run_dir=results/E1/E1-001_s0
-- Nhận xét: (chưa thực hiện)
-- Quyết định: (chưa thực hiện)
+- Nhận xét: Chạy đủ 100 epoch (~35.6 phút), đỉnh ở epoch 96. `val_acc = 0.6916`, cao hơn baseline 0.0101, nhưng `train_acc_cuoi = 0.8167` nên khoảng cách train–val khoảng 0.125, lớn gấp 3 lần baseline: phần lớn tham số nằm ở lớp FC đầu (Flatten 256×12×12 → 1024). Chênh lệch so với baseline xấp xỉ 1 điểm nên đã chạy thêm seed 1, 2 (`E1-009_s1`, `E1-001_s2`).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 148.4 MB). Không chọn làm kiến trúc chính dù val cao, vì chi phí tham số và mức quá khớp; xem kết luận 3 seed ở `E1-001_s2`.
 
-### [E1-002_s0] Khảo sát kiến trúc MEDIUM_01 — TV1 – <chưa thực hiện>
-- Giả thuyết: Tái hiện mô hình MEDIUM_01 từ notebook mẫu (12.1M tham số, không BN) xem mức độ quá khớp (overfitting) khi thiếu chuẩn hóa theo lô.
-- Thay đổi so với baseline: `model = "medium_01"`.
-- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only medium_01`
+### [E1-002_s0] Tái hiện MEDIUM_CNN của notebook mẫu (`medium`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-25
+- Giả thuyết: MEDIUM_CNN (3 khối, 8 lớp Conv, không BN) sâu hơn SMALL, bản đồ đặc trưng nhỏ hơn trước Flatten nên ít tham số hơn SMALL; dự kiến tương đương hoặc tốt hơn SMALL.
+- Thay đổi so với baseline: `model = "medium"` (blocks `[[64]*2,[128]*3,[256]*3]`, không BN, FC 1024, `11,327,303` tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --seeds 0`
 - Kết quả: status=Completed, best_val_loss=0.9161594292020758, val_acc=0.6951797157982725, val_macro_f1=0.6788904667222425, best_epoch=100, time_s=1691.147, run_dir=results/E1/E1-002_s0
-- Nhận xét: (chưa thực hiện)
-- Quyết định: (chưa thực hiện)
+- Nhận xét: Chạy đủ 100 epoch (~28.2 phút), đỉnh ở epoch 100 nên có thể chưa bão hòa. `val_acc = 0.6952` (+0.0137 so với baseline), `val_macro_f1 = 0.6789`. Khoảng cách train–val khoảng 0.110. Mạng 8 lớp Conv không BN vẫn học bình thường với SGD lr 0.01. Đã chạy thêm seed 1, 2 (`E1-002_s1`, `E1-002_s2`).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 43.2 MB). Xem kết luận 3 seed ở `E1-002_s2`.
 
-### [E1-003_s0] Khảo sát kiến trúc LARGE_CNN — TV1 – <chưa thực hiện>
-- Giả thuyết: Tái hiện mô hình LARGE_CNN (20.4M tham số, 16 lớp Conv) để đánh giá chi phí tính toán và hiện tượng biến mất gradient khi thiếu BatchNorm.
-- Thay đổi so với baseline: `model = "large"`.
-- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only large`
+### [E1-003_s0] Tái hiện MEDIUM1_CNN của notebook mẫu (`medium_01`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-25
+- Giả thuyết: MEDIUM1_CNN (3 khối, 11 lớp Conv, không BN) sâu hơn MEDIUM; nếu độ sâu có ích thì val tăng, nếu không có BN thì có nguy cơ khó tối ưu.
+- Thay đổi so với baseline: `model = "medium_01"` (blocks `[[64]*3,[128]*4,[256]*4]`, không BN, FC 1024, `12,101,895` tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --seeds 0`
 - Kết quả: status=Completed, best_val_loss=1.8107485001915573, val_acc=0.2493730844246308, val_macro_f1=0.0570281636294125, best_epoch=1, time_s=326.687, run_dir=results/E1/E1-003_s0
-- Nhận xét: (chưa thực hiện)
-- Quyết định: (chưa thực hiện)
+- Nhận xét: **Mạng không học được.** `train_loss` đứng ở khoảng 1.81 từ epoch 1 đến 16 (`history.csv`), `train_acc = 0.2513`, `val_acc = 0.2494` đúng bằng tỷ lệ lớp Happy trong PublicTest (895/3589) và `val_macro_f1 = 0.0570`: mô hình luôn đoán một lớp. Early stopping dừng ở epoch 16 (best_epoch 1, ~5.4 phút). Không có NaN. Đây là lỗi tối ưu, chưa cho biết gì về năng lực của kiến trúc: MEDIUM 8 lớp Conv cùng cấu hình vẫn học được, còn notebook mẫu huấn luyện các mạng này bằng Adam lr=1e-4, không phải SGD lr 0.01.
+- Quyết định: Giữ run làm failure case trong bảng, **không kết luận về độ sâu từ run này**. Weights (`best.pt` 46.2 MB, ở epoch 1) không có giá trị sử dụng. Đã thêm 2 biến thể để tách nguyên nhân: `medium_01_adam1e-4` (optimizer của mẫu, vẫn không BN) và `medium_01_bn` (thêm BN, giữ SGD 0.01).
 
-### [E1-004_s0] Khảo sát loại bỏ BatchNorm (No BN) — TV3 – <chưa thực hiện>
-- Giả thuyết: Khi loại bỏ toàn bộ các lớp BatchNorm trong Baseline, gradient sẽ kém ổn định hơn, tốc độ hội tụ chậm hơn và validation accuracy giảm ít nhất 3-5%.
-- Thay đổi so với baseline: `bn = False`.
-- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV3 --only no_bn`
+### [E1-004_s0] Tái hiện LARGE_CNN của notebook mẫu (`large`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-25
+- Giả thuyết: LARGE_CNN (4 khối, 16 lớp Conv, không BN, FC 2048) là mạng sâu nhất; nếu MEDIUM1 đã khó tối ưu thì LARGE càng dễ bị kẹt.
+- Thay đổi so với baseline: `model = "large"` (blocks `[[64]*4,[128]*4,[256]*4,[512]*4]`, không BN, FC 2048, `20,406,599` tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --seeds 0`
 - Kết quả: status=Completed, best_val_loss=1.8107463234013648, val_acc=0.2493730844246308, val_macro_f1=0.0570281636294125, best_epoch=1, time_s=397.254, run_dir=results/E1/E1-004_s0
-- Nhận xét: (chưa thực hiện)
-- Quyết định: (chưa thực hiện)
+- Nhận xét: **Sập giống hệt `E1-003_s0`**: loss đứng ở khoảng 1.81, `val_acc = 0.2494`, `val_macro_f1 = 0.0570`, dừng sớm ở epoch 16 (~6.6 phút). Quy luật trong E1: không BN, SGD lr 0.01 thì 6–8 lớp Conv (small, medium, baseline_no_bn) học được, còn 11–16 lớp Conv (medium_01, large) không học được.
+- Quyết định: Giữ run làm failure case, không kết luận về độ sâu. Weights (`best.pt` 77.9 MB, ở epoch 1) không có giá trị sử dụng. Đã thêm `large_adam1e-4` và `large_bn` để tách nguyên nhân như với `medium_01`.
 
-### [E1-005_s0] Khảo sát Global Average Pooling (GAP) — TV3 – <chưa thực hiện>
-- Giả thuyết: Thay thế Flatten bằng Global Average Pooling (GAP) sẽ giảm mạnh số lượng tham số ở phần phân loại và giúp mô hình chống overfitting tốt hơn.
-- Thay đổi so với baseline: `head = "gap"`.
-- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV3 --only gap`
+### [E1-005_s0] Thu hẹp baseline còn ×0.5 số kênh (`baseline_w0.5`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-25
+- Giả thuyết: Giảm một nửa số kênh mỗi khối làm số tham số giảm còn khoảng 45%; dự kiến val giảm nhẹ nhưng ít quá khớp hơn.
+- Thay đổi so với baseline: `model_kwargs.blocks = [[32,32],[64,64],[128,128]]` (`2,650,279` tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --seeds 0`
 - Kết quả: status=Completed, best_val_loss=0.9146933610075928, val_acc=0.6701030927835051, val_macro_f1=0.6329196107692682, best_epoch=90, time_s=1397.591, run_dir=results/E1/E1-005_s0
-- Nhận xét: (chưa thực hiện)
-- Quyết định: (chưa thực hiện)
+- Nhận xét: Chạy đủ 100 epoch (~23.3 phút), đỉnh ở epoch 90. `val_acc = 0.6701` (−0.0114 so với baseline), `val_macro_f1 = 0.6329`. Khoảng cách train–val chỉ khoảng 0.017, nhỏ nhất trong E1: mạng hẹp thiếu năng lực (underfit nhẹ) hơn là quá khớp. Mức giảm sát ngưỡng 1 điểm và chỉ có 1 seed.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 10.1 MB). Chạy thêm seed 1, 2 trước khi kết luận.
+
+### [E1-006_s0] Mở rộng baseline ×2 số kênh (`baseline_w2`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-25
+- Giả thuyết: Gấp đôi số kênh làm số tham số tăng khoảng 2.4 lần; dự kiến val tăng nhẹ nếu baseline đang thiếu năng lực, giảm nếu quá khớp.
+- Thay đổi so với baseline: `model_kwargs.blocks = [[128,128],[256,256],[512,512]]` (`14,017,159` tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --seeds 0`
+- Kết quả: status=Completed, best_val_loss=0.9472882772229382, val_acc=0.6701030927835051, val_macro_f1=0.5823856011107499, best_epoch=99, time_s=2603.728, run_dir=results/E1/E1-006_s0
+- Nhận xét: Chạy đủ 100 epoch (~43.4 phút), đỉnh ở epoch 99. `val_acc = 0.6701`, bằng đúng `baseline_w0.5` (cùng 2405/3589 mẫu đúng, chỉ là trùng số), nhưng `val_macro_f1 = 0.5824` thấp hơn hẳn (w0.5 0.6329, baseline 0.6408) và `best_val_loss = 0.9473` cao nhất trong các run học được: mạng rộng đoán lệch về lớp lớn, các lớp nhỏ kém hơn. Mở rộng kênh không giúp ích ở cấu hình huấn luyện hiện tại.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 53.5 MB). Chạy thêm seed 1, 2 trước khi kết luận, vì mức chênh val_acc sát ngưỡng 1 điểm.
+
+### [E1-007_s0] Bỏ BatchNorm khỏi baseline (`baseline_no_bn`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-25
+- Giả thuyết: Bỏ BN làm gradient kém ổn định và hội tụ chậm hơn; dự kiến val giảm.
+- Thay đổi so với baseline: `model_kwargs = {"bn": false}` (`5,866,951` tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --seeds 0`
+- Kết quả: status=Completed, best_val_loss=0.9086250141491362, val_acc=0.6907216494845361, val_macro_f1=0.6639630435039692, best_epoch=91, time_s=1413.567, run_dir=results/E1/E1-007_s0
+- Nhận xét: Chạy đủ 100 epoch (~23.6 phút), đỉnh ở epoch 91. `val_acc = 0.6907` (+0.0092), trái với giả thuyết. Mạng 6 lớp Conv đủ nông để học được không cần BN với SGD lr 0.01. Mức tăng dưới 1 điểm nên đã giao TV3 chạy seed 1, 2 (`E1-007_s1`, `E1-007_s2`).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB). Xem kết luận 3 seed ở `E1-007_s2`.
+
+### [E1-008_s0] Thay Flatten bằng Global Average Pooling (`baseline_gap`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-25
+- Giả thuyết: GAP bỏ gần hết tham số của phần phân loại; dự kiến val tương đương baseline và quá khớp ít hơn.
+- Thay đổi so với baseline: `model_kwargs = {"head": "gap"}` (`1,280,327` tham số, 21.8% baseline).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --seeds 0`
+- Kết quả: status=Completed, best_val_loss=0.9088872493426092, val_acc=0.6829200334354973, val_macro_f1=0.6449168262056626, best_epoch=74, time_s=1273.726, run_dir=results/E1/E1-008_s0
+- Nhận xét: Early stopping dừng ở epoch 89 (best_epoch 74, ~21.2 phút). `val_acc = 0.6829` (+0.0014, trong dung sai), `val_macro_f1 = 0.6449`. Đã giao TV3 chạy seed 1, 2 (`E1-008_s1`, `E1-008_s2`).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 4.9 MB). Xem kết luận 3 seed ở `E1-008_s2`.
+
+### [E1-001_s1] SMALL_CNN (`small`, Seed 1 — C1) — TV1 – Đoàn Trung Kiên – 2026-11-25
+- Giả thuyết: Kiểm tra độ ổn định của `small` ở seed 1 trên máy khác (RTX 3050).
+- Thay đổi so với baseline: `model = "small"`, `seed = 1`.
+- Lệnh: (TV1 điền đúng lệnh đã chạy, dạng `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only ... --seeds ...`)
+- Kết quả: status=Aborted, best_val_loss=0.914619894338604, val_acc=0.6893285037614935, val_macro_f1=0.6668776907716686, best_epoch=77, time_s=, run_dir=results/E1/E1-001_s1
+- Nhận xét: Run bị ngắt ở epoch 77/100 (`run.log`: `END | status=Aborted | reason=INTERRUPTED@epoch77`). Không dùng run này trong bảng; chạy lại thành `E1-009_s1`.
+- Quyết định: Bỏ (`DISCARD`, đã xóa weights dở).
+
+### [E1-009_s1] SMALL_CNN chạy lại (`small`, Seed 1 — C1) — TV1 – Đoàn Trung Kiên – 2026-11-25
+- Giả thuyết: Chạy lại `small` seed 1 sau khi `E1-001_s1` bị ngắt.
+- Thay đổi so với baseline: `model = "small"`, `seed = 1`.
+- Lệnh: (TV1 điền đúng lệnh đã chạy, dạng `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only ... --seeds ...`)
+- Kết quả: status=Completed, best_val_loss=0.914619894338604, val_acc=0.6921147952075787, val_macro_f1=0.6766273703235255, best_epoch=98, time_s=3261.997, run_dir=results/E1/E1-009_s1
+- Nhận xét: (TV1 viết)
+- Quyết định: (TV1 viết)
+
+### [E1-001_s2] SMALL_CNN (`small`, Seed 2 — C1) — TV1 – Đoàn Trung Kiên – 2026-11-25
+- Giả thuyết: Hoàn thiện 3 seed cho `small`.
+- Thay đổi so với baseline: `model = "small"`, `seed = 2`.
+- Lệnh: (TV1 điền đúng lệnh đã chạy, dạng `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only ... --seeds ...`)
+- Kết quả: status=Completed, best_val_loss=0.918979596945528, val_acc=0.6965728615213151, val_macro_f1=0.6820279907366499, best_epoch=83, time_s=3215.931, run_dir=results/E1/E1-001_s2
+- Nhận xét: (TV1 viết) Tổng hợp 3 seed (`E1-001_s0`, `E1-009_s1`, `E1-001_s2`) theo `report/tables/E1_summary.md`: `val_acc = 0.6934 ± 0.0027` (+0.0119), khoảng cách train–val trung bình 0.123.
+- Quyết định: (TV1 viết)
+
+### [E1-002_s1] MEDIUM_CNN (`medium`, Seed 1 — C1) — TV1 – Đoàn Trung Kiên – 2026-11-26
+- Giả thuyết: Kiểm tra độ ổn định của `medium` ở seed 1.
+- Thay đổi so với baseline: `model = "medium"`, `seed = 1`.
+- Lệnh: (TV1 điền đúng lệnh đã chạy, dạng `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only ... --seeds ...`)
+- Kết quả: status=Completed, best_val_loss=0.9076775662179576, val_acc=0.6890498746168849, val_macro_f1=0.6730121936066201, best_epoch=100, time_s=2891.625, run_dir=results/E1/E1-002_s1
+- Nhận xét: (TV1 viết)
+- Quyết định: (TV1 viết)
+
+### [E1-002_s2] MEDIUM_CNN (`medium`, Seed 2 — C1) — TV1 – Đoàn Trung Kiên – 2026-11-26
+- Giả thuyết: Hoàn thiện 3 seed cho `medium`.
+- Thay đổi so với baseline: `model = "medium"`, `seed = 2`.
+- Lệnh: (TV1 điền đúng lệnh đã chạy, dạng `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only ... --seeds ...`)
+- Kết quả: status=Completed, best_val_loss=0.9119477483282252, val_acc=0.6915575369183616, val_macro_f1=0.6670449351732132, best_epoch=98, time_s=3099.882, run_dir=results/E1/E1-002_s2
+- Nhận xét: (TV1 viết) Tổng hợp 3 seed (`E1-002_s0/s1/s2`) theo `report/tables/E1_summary.md`: `val_acc = 0.6919 ± 0.0031` (+0.0104), khoảng cách train–val trung bình 0.101.
+- Quyết định: (TV1 viết)
 
 ### [E1-007_s1] Khảo sát loại bỏ BatchNorm (`baseline_no_bn`, Seed 1 — C2) — TV3 – Võ Hoàng Bảo – 2026-11-25
 - Giả thuyết: Kiểm chứng độc lập trên máy khác (RTX 3050, seed 1) xem mức tăng bất ngờ của `baseline_no_bn` ở `E1-007_s0` (`0.6907` trên RTX 4060 của TV2) có tái lập ổn định hay chỉ là dao động 1 seed.
