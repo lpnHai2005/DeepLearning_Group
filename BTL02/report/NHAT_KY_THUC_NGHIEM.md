@@ -544,7 +544,7 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E1
 - Giả thuyết: Lớp Disgust chỉ có 436 ảnh trong khi Happy có hơn 7,000 ảnh. Dùng WeightedRandomSampler sẽ tăng đáng kể Recall của lớp Disgust và Fear mà không làm suy giảm quá nhiều tổng Accuracy.
 - Thay đổi so với baseline: Kỹ thuật lấy mẫu có trọng số cân bằng lớp.
 - Lệnh: `python src/run_experiment.py --config configs/E5_imbalance.json --member TV4 --only weighted_sampler`
-- Kết quả: (chưa thực hiện)
+- Kết quả: status=Completed, best_val_loss=0.9361300506974436, val_acc=0.6823627751462803, val_macro_f1=0.6716885337089461, best_epoch=100, time_s=2471.275, run_dir=results/E5/E5-001_s0
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
 
