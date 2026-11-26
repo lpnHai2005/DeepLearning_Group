@@ -270,6 +270,22 @@
 - Nhận xét: **Học được và cao nhất E1 tới thời điểm này:** `val_acc = 0.7086` ở epoch 90 (+0.0271 so với baseline, vượt kỷ lục public Kaggle 0.69), `val_macro_f1 = 0.6953`. Chạy đủ 100 epoch (~43.5 phút). Quá khớp mạnh nhất E1: `train_acc_cuoi = 0.8902`; val_loss thấp nhất 0.916 ở epoch 38 rồi tăng lên 1.246 ở epoch 100. Mới có 1 seed.
 - Quyết định: Giữ weights (`KEEP`, `best.pt` 77.9 MB). Ứng viên kiến trúc cho E7, nhưng cần chạy thêm seed 1, 2 trước khi kết luận và nên kết hợp với điều chuẩn của E4 (dropout, weight decay, label smoothing) vì khoảng cách train–val lớn.
 
+### [E1-014_s1] LARGE_CNN thêm BatchNorm (`large_bn`, Seed 1) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+- Giả thuyết: Như `E1-014_s0`; chạy thêm seed để xác nhận `large_bn` hơn baseline vượt std baseline chứ không phải do seed.
+- Thay đổi so với baseline: `model = "large"`, `model_kwargs = {"bn": true}` (`20,410,439` tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only large_bn --seeds 1 2`
+- Kết quả: status=Completed, best_val_loss=0.9088867051450613, val_acc=0.7046531067149624, val_macro_f1=0.6910078526038917, best_epoch=84, time_s=2552.002, run_dir=results/E1/E1-014_s1
+- Nhận xét: Dừng sớm ở epoch 99 (đỉnh epoch 84, ~42.5 phút): `val_acc = 0.7047`, `val_macro_f1 = 0.6910`, gần seed 0. Quá khớp giống seed 0: `train_acc_cuoi = 0.9022` (khoảng train–val 0.198); val_loss thấp nhất 0.909 ở epoch 40 rồi tăng lên 1.375 ở epoch cuối, trong khi val_acc vẫn nhích lên tới epoch 84.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 77.9 MB).
+
+### [E1-014_s2] LARGE_CNN thêm BatchNorm (`large_bn`, Seed 2) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
+- Giả thuyết: Như `E1-014_s1`.
+- Thay đổi so với baseline: `model = "large"`, `model_kwargs = {"bn": true}` (`20,410,439` tham số).
+- Lệnh: `python src/run_experiment.py --config configs/E1_arch.json --member TV2 --only large_bn --seeds 1 2`
+- Kết quả: status=Completed, best_val_loss=0.8999231593062135, val_acc=0.7046531067149624, val_macro_f1=0.6903086854238897, best_epoch=85, time_s=2547.809, run_dir=results/E1/E1-014_s2
+- Nhận xét: Dừng sớm ở epoch 100 (đỉnh epoch 85, ~42.5 phút): `val_acc = 0.7047` (trùng số ảnh đúng với seed 1, 2529/3589, nhưng loss và F1 khác), `val_macro_f1 = 0.6903`. `train_acc_cuoi = 0.9110` (khoảng train–val 0.206); val_loss thấp nhất 0.900 ở epoch 42 rồi tăng lên 1.350. Ba seed của `large_bn`: 0.7086 / 0.7047 / 0.7047, thấp nhất vẫn cao hơn seed tốt nhất của baseline (0.6890).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 77.9 MB). Đủ 3 seed, tổng hợp ở Kết luận E1.
+
 ### [E1-015_s0] MEDIUM1_CNN init Glorot + Adam 1e-4, đúng thiết lập mẫu (`medium_01_glorot_adam1e-4`, Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-26
 - Giả thuyết: Khác biệt còn lại giữa `E1-010_s0` (0.6392) và mẫu (0.65) là khởi tạo trọng số: Keras mặc định Glorot uniform, PyTorch mặc định kaiming_uniform a=√5 có phương sai nhỏ hơn khoảng 3 lần. Đổi sang Glorot thì gradient ở các lớp đầu lớn hơn nhiều bậc (đo lúc khởi tạo: 1.1e-2 so với 7.6e-6 tới `conv1_1`) nên mạng học nhanh và tốt hơn.
 - Thay đổi so với baseline: `model = "medium_01"`, `model_kwargs = {"init": "glorot"}`, `optimizer = "adam"`, `lr = 1e-4` (so với `E1-010_s0` chỉ đổi init).
@@ -335,7 +351,7 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E1
 | LARGE | mặc định | SGD 0.01 | không | 0.2494 | `E1-004_s0` |
 | LARGE | mặc định | Adam 1e-4 | không | kẹt 0.2494, dừng tay epoch 4 | `E1-011_s0` (Aborted) |
 | LARGE | Glorot | Adam 1e-4 | không | 0.6236 (mẫu 0.67) | `E1-016_s0` |
-| LARGE | mặc định | SGD 0.01 | có | **0.7086** | `E1-014_s0` |
+| LARGE | mặc định | SGD 0.01 | có | **0.7060 ± 0.0023** (3 seed) | `E1-014_s0`–`_s2` |
 
 - Kết luận: mạng sâu không BN sập do **khởi tạo**. Init mặc định của PyTorch (kaiming_uniform a=√5) có phương sai nhỏ hơn Glorot của Keras khoảng 3 lần; qua 11–16 lớp, gradient tới lớp đầu chỉ còn cỡ 1e-7 (LARGE, 7.6e-8), nhỏ ngang `eps` của Adam, nên đổi optimizer chỉ cứu được MEDIUM1. Đổi sang Glorot tái hiện được mẫu ở MEDIUM1 nhưng LARGE vẫn thiếu khớp sau 100 epoch. **BatchNorm loại bỏ hoàn toàn sự phụ thuộc vào init** và cho kết quả tốt nhất ở cả hai độ sâu.
 
@@ -347,10 +363,11 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E1
 - `baseline_no_bn` `0.6941 ± 0.0033` (+0.0125, vượt std baseline): ở 6 lớp conv, bỏ BN không gây sập mà còn cao hơn baseline. BN chỉ cần thiết khi mạng sâu (mục 1).
 - `baseline_gap` `0.6839 ± 0.0013` (+0.0024, dưới std baseline) với **1.28 M tham số (22% baseline)**: lớp FC sau Flatten chiếm 80% tham số của baseline nhưng không đóng góp vào độ chính xác. GAP là cách rẻ nhất để giảm kích thước mô hình.
 
-**4. Độ sâu khi có BN.** `medium_01_bn` `0.6913` và `large_bn` **`0.7086`** (cao nhất E1, +0.0270, vượt kỷ lục public Kaggle 0.69), 1 seed mỗi biến thể. Đổi lại quá khớp mạnh nhất E1 (khoảng train–val `0.167` và `0.182`; val_loss của `large_bn` thấp nhất 0.916 ở epoch 38 rồi tăng lên 1.246). **Tăng sâu có lợi hơn tăng rộng** cho FER2013 ở cùng cấu hình huấn luyện.
+**4. Độ sâu khi có BN.** `large_bn` **`0.7060 ± 0.0023`** (3 seed: 0.7086 / 0.7047 / 0.7047), cao nhất E1, **+0.0244** so với baseline (hơn 3 lần std baseline; seed thấp nhất vẫn cao hơn seed tốt nhất của baseline 0.6890), vượt kỷ lục public Kaggle 0.69. `val_macro_f1 = 0.6922 ± 0.0027`, hơn baseline `+0.051`, và dao động giữa các seed nhỏ hơn baseline khoảng 3 lần. `medium_01_bn` `0.6913` (1 seed). Đổi lại quá khớp mạnh nhất E1: khoảng train–val của `large_bn` `0.182 / 0.198 / 0.206` (baseline `0.040`), val_loss thấp nhất ở epoch 38–42 (0.900–0.916) rồi tăng lên 1.25–1.37 dù val_acc vẫn nhích tới epoch 84–90. Chi phí: 20.4 M tham số (3.5× baseline), ~25.5 s/epoch. **Tăng sâu có lợi hơn tăng rộng** cho FER2013 ở cùng cấu hình huấn luyện.
 
 **5. Quyết định cho E7 (T18).**
-- Ứng viên kiến trúc chính: `large_bn`. Cần chạy thêm seed 1, 2 trước khi chốt, và nên kết hợp với điều chuẩn của E4 (label smoothing, dropout, weight decay) vì khoảng train–val lớn.
+- Baseline vẫn là mốc so sánh của E2–E6 (mỗi thí nghiệm đổi một yếu tố so với baseline); `large_bn` chỉ là ứng viên kiến trúc cho mô hình cuối.
+- Ứng viên kiến trúc chính: `large_bn` (`0.7060 ± 0.0023`, đủ 3 seed). Nên kết hợp với điều chuẩn của E4 (label smoothing, dropout, weight decay) vì khoảng train–val lớn.
 - Ứng viên dự phòng đã đủ 3 seed: `baseline_no_bn` (0.6941) và `small` (0.6934). Nếu cần mô hình nhỏ, dùng head GAP.
 - Kết quả E2–E5 đo trên baseline nên chưa chắc còn đúng khi đổi sang `large_bn`; E7 nên so cả "baseline + lựa chọn tốt nhất" lẫn "large_bn + lựa chọn tốt nhất", mỗi bên 3 seed, thay vì cộng dồn mức cải thiện.
 
