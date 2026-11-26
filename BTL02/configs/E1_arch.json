@@ -1,6 +1,11 @@
 {
   "group": "E1",
   "task_id": "T12",
+  "ghi_chu": [
+    "8 biến thể đầu là khảo sát gốc E1, base giống configs/baseline.json.",
+    "medium_01 và large (11 và 16 lớp conv, không BN như mẫu) chạy với SGD lr=0.01 không học được: E1-003_s0 và E1-004_s0 có loss đứng 1.81 từ epoch 1, đoán toàn lớp Happy (val_acc 0.2494), dừng sớm ở epoch 16.",
+    "4 biến thể *_adam1e-4 và *_bn dùng để tách nguyên nhân, mỗi biến thể đổi 1 yếu tố so với medium_01/large: *_adam1e-4 dùng đúng optimizer của notebook mẫu (demo_code.html compile bằng Adam lr=1e-4), giữ không BN; *_bn thêm BatchNorm, giữ SGD lr=0.01."
+  ],
   "base": {
     "model": "baseline",
     "model_kwargs": {},
@@ -28,7 +33,11 @@
     "baseline_w0.5": {"model_kwargs": {"blocks": [[32, 32], [64, 64], [128, 128]]}},
     "baseline_w2": {"model_kwargs": {"blocks": [[128, 128], [256, 256], [512, 512]]}},
     "baseline_no_bn": {"model_kwargs": {"bn": false}},
-    "baseline_gap": {"model_kwargs": {"head": "gap"}}
+    "baseline_gap": {"model_kwargs": {"head": "gap"}},
+    "medium_01_adam1e-4": {"model": "medium_01", "optimizer": "adam", "lr": 0.0001},
+    "large_adam1e-4": {"model": "large", "optimizer": "adam", "lr": 0.0001},
+    "medium_01_bn": {"model": "medium_01", "model_kwargs": {"bn": true}},
+    "large_bn": {"model": "large", "model_kwargs": {"bn": true}}
   },
   "seeds": [0]
 }
