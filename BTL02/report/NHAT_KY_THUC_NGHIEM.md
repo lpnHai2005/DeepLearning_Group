@@ -540,6 +540,38 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E1
 - Nhận xét: (chưa thực hiện)
 - Quyết định: (chưa thực hiện)
 
+### [E4-004_s0] Khảo sát không dùng Data Augmentation (`aug_none`, Seed 0 — C1) — TV3 – Võ Hoàng Bảo – 2026-11-26
+- Giả thuyết: Tắt toàn bộ Data Augmentation sẽ khiến mô hình ghi nhớ tập huấn luyện rất nhanh, gây quá khớp nghiêm trọng (`Train − Val > 20%`) và kéo tụt `val_acc` so với Baseline (`0.6815 ± 0.0075`).
+- Thay đổi so với baseline: `augmentation = "none"`.
+- Lệnh: `python src/run_experiment.py --config configs/E4_aug_reg.json --member TV3 --only aug_none aug_flip aug_flip_affine aug_random_erasing`
+- Kết quả: status=Completed, best_val_loss=1.0511874254449358, val_acc=0.6656450264697688, val_macro_f1=0.6495204410982652, best_epoch=71, time_s=1172.345, run_dir=results/E4/E4-004_s0
+- Nhận xét: Xác nhận hoàn toàn giả thuyết! Không có augmentation, mô hình đạt `train_acc_cuoi = 96.18%` nhưng `val_acc` chỉ đạt **66.56%** (`-0.0159` thấp hơn rõ rệt mốc baseline `68.15%`, vượt xa `std = 0.0075`), `best_val_loss` vọt lên `1.0512`, khoảng cách quá khớp **`Train − Val = +0.2962` (+29.62%)** và dừng sớm tại epoch `86/100` (`best_epoch = 71`, 19.5 phút).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Làm mốc đối chứng quá khớp cho nhóm Augmentation trong E4.
+
+### [E4-005_s0] Khảo sát chỉ lật ngang (`aug_flip`, Seed 0 — C1) — TV3 – Võ Hoàng Bảo – 2026-11-26
+- Giả thuyết: Chỉ bật `RandomHorizontalFlip(p=0.5)` giúp tăng gấp đôi biến thiên đối xứng trái–phải, giảm bớt quá khớp so với `aug_none` nhưng vẫn chưa đủ chống overfit bằng `flip_affine`.
+- Thay đổi so với baseline: `augmentation = "flip"`.
+- Lệnh: `python src/run_experiment.py --config configs/E4_aug_reg.json --member TV3 --only aug_none aug_flip aug_flip_affine aug_random_erasing`
+- Kết quả: status=Completed, best_val_loss=1.001622456964858, val_acc=0.6692672053496795, val_macro_f1=0.6470134243853707, best_epoch=93, time_s=1361.514, run_dir=results/E4/E4-005_s0
+- Nhận xét: Hoàn tất 100 epochs (22.7 phút). Lật ngang giúp giảm khoảng cách quá khớp từ `+0.2962` (`aug_none`) xuống **`+0.2341`** (`train_acc_cuoi = 90.34%`) và giảm `best_val_loss` từ `1.0512` xuống `1.0016`, tuy nhiên `val_acc = 66.93%` (`-0.0123` so với baseline) vẫn thấp hơn rõ rệt Baseline và vẫn quá khớp mạnh.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Chứng minh chỉ dùng Flip là chưa đủ cho FER-2013.
+
+### [E4-006_s0] Khảo sát đối chứng Flip + Affine (`aug_flip_affine`, Seed 0 — C1) — TV3 – Võ Hoàng Bảo – 2026-11-26
+- Giả thuyết: Bật đầy đủ `Flip + RandomAffine` (xoay ±10°, dịch ±10%, tỉ lệ 0.9–1.1 — giống Baseline) sẽ cắt giảm mạnh quá khớp và đẩy `val_acc` trở lại quanh mốc Baseline (`0.6815 ± 0.0075`).
+- Thay đổi so với baseline: `augmentation = "flip_affine"` (mốc đối chứng trong nhóm E4, seed 0 trên `Hbao`).
+- Lệnh: `python src/run_experiment.py --config configs/E4_aug_reg.json --member TV3 --only aug_none aug_flip aug_flip_affine aug_random_erasing`
+- Kết quả: status=Completed, best_val_loss=0.9032580699054402, val_acc=0.6862635831707997, val_macro_f1=0.6542281383200632, best_epoch=98, time_s=2069.332, run_dir=results/E4/E4-006_s0
+- Nhận xét: Bước nhảy lớn nhất trong cả chuỗi Augmentation! Thêm `RandomAffine` kéo khoảng cách `Train − Val` giảm mạnh gần **5×** từ `+0.2341` (`aug_flip`) xuống chỉ còn **`+0.0500`** (`train_acc_cuoi = 73.62%`), `best_val_loss` hạ sâu từ `1.0016` xuống **`0.9033`**, `val_acc` vọt lên **`68.63%`** (`+0.0047`, trong ngưỡng `< std baseline`; tái lập trùng khớp tuyệt đối tới chữ số thứ 16 với `E2-001_s0` trên cùng máy `Hbao` seed 0!) và `val_macro_f1 = 65.42%`.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Khẳng định `flip_affine` là yếu tố chống quá khớp cốt lõi của Baseline.
+
+### [E4-007_s0] Khảo sát Flip + Affine + RandomErasing (`aug_random_erasing`, Seed 0 — C1) — TV3 – Võ Hoàng Bảo – 2026-11-26
+- Giả thuyết: Cộng thêm `RandomErasing(p=0.5)` che ngẫu nhiên vùng nhỏ trên khuôn mặt có thể ép mô hình học đặc trưng cục bộ đa dạng hơn và tiếp tục thu hẹp khoảng cách `Train − Val`, nhưng cũng có rủi ro che mất vùng mắt/miệng quan trọng trên ảnh nhỏ 48×48.
+- Thay đổi so với baseline: `augmentation = "random_erasing"` (`flip + affine + RandomErasing(p=0.5)`).
+- Lệnh: `python src/run_experiment.py --config configs/E4_aug_reg.json --member TV3 --only aug_none aug_flip aug_flip_affine aug_random_erasing`
+- Kết quả: status=Completed, best_val_loss=0.9010044118095222, val_acc=0.6798551128448036, val_macro_f1=0.6405506586565944, best_epoch=99, time_s=2230.471, run_dir=results/E4/E4-007_s0
+- Nhận xét: Hoàn tất 100 epochs (37.2 phút). `RandomErasing(p=0.5)` kéo khoảng cách `Train − Val` xuống gần bằng 0 (**`+0.0069`**, `train_acc_cuoi = 68.67%`) và đưa `best_val_loss` xuống thấp nhất nhóm (`0.9010`), nhưng mô hình học chậm hơn đáng kể (đến tận epoch 92 mới giảm lr lần đầu) và đạt `val_acc = 67.99%` (`-0.0017`, trong `< std baseline`, thấp hơn `aug_flip_affine` `0.6863` là `-0.64%`), `val_macro_f1 = 64.06%`. Với ảnh độ phân giải nhỏ `48×48` và `p = 0.5`, che ngẫu nhiên quá mạnh kèm `Dropout(0.25/0.5)` làm tăng độ khó bài toán huấn luyện (hướng nhẹ về underfit trong 100 epochs).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Kết luận trong nhóm Augmentation của E4: **`aug_flip_affine` (`0.6863`)** cho điểm cân bằng tối ưu giữa chống quá khớp và độ chính xác; `aug_random_erasing` (`p=0.5`) chống quá khớp mạnh nhất nhưng chưa vượt `flip_affine` trong 100 epochs.
+
 ### [E5-001_s0] Khảo sát mất cân bằng lớp bằng WeightedRandomSampler — TV4 – <chưa thực hiện>
 - Giả thuyết: Lớp Disgust chỉ có 436 ảnh trong khi Happy có hơn 7,000 ảnh. Dùng WeightedRandomSampler sẽ tăng đáng kể Recall của lớp Disgust và Fear mà không làm suy giảm quá nhiều tổng Accuracy.
 - Thay đổi so với baseline: Kỹ thuật lấy mẫu có trọng số cân bằng lớp.
