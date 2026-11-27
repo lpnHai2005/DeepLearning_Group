@@ -1,0 +1,7 @@
+tta,eval_type,n_models,val_acc_mean,val_acc_std,val_macro_f1_mean,val_macro_f1_std,val_nll
+none,single_mean,3,0.705953,0.002252,0.692202,0.002696,1.217528
+none,ensemble,3,0.7236,,0.713421,,0.978011
+flip,single_mean,3,0.714962,0.002429,0.701497,0.001395,1.11567
+flip,ensemble,3,0.724993,,0.710649,,0.940189
+ten_crop,single_mean,3,0.68357,0.004256,0.668576,0.006072,1.123247
+ten_crop,ensemble,3,0.699081,,0.68387,,0.971639

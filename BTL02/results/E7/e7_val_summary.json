@@ -1,0 +1,228 @@
+{
+  "task_id": "T18",
+  "split": "PublicTest",
+  "generated_at": "2026-11-27T20:19:28+07:00",
+  "command": "python src/eval_e7.py --run-dirs results/E1/E1-014_s0 results/E1/E1-014_s1 results/E1/E1-014_s2 --tta none flip ten_crop",
+  "exp_ids": [
+    "E1-014_s0",
+    "E1-014_s1",
+    "E1-014_s2"
+  ],
+  "tta_modes": [
+    "none",
+    "flip",
+    "ten_crop"
+  ],
+  "best_tta": "flip",
+  "best_val_acc": 0.7249930342713848,
+  "best_val_macro_f1": 0.7106490328298641,
+  "best_val_nll": 0.9401886187837987,
+  "summary": [
+    {
+      "tta": "none",
+      "eval_type": "single_mean",
+      "n_models": 3,
+      "val_acc_mean": 0.705953,
+      "val_acc_std": 0.002252,
+      "val_acc_fmt": "0.7060 ± 0.0023",
+      "val_macro_f1_mean": 0.692202,
+      "val_macro_f1_std": 0.002696,
+      "val_macro_f1_fmt": "0.6922 ± 0.0027",
+      "val_nll": 1.217528
+    },
+    {
+      "tta": "none",
+      "eval_type": "ensemble",
+      "n_models": 3,
+      "val_acc_mean": 0.7236,
+      "val_acc_std": "",
+      "val_acc_fmt": "0.7236",
+      "val_macro_f1_mean": 0.713421,
+      "val_macro_f1_std": "",
+      "val_macro_f1_fmt": "0.7134",
+      "val_nll": 0.978011
+    },
+    {
+      "tta": "flip",
+      "eval_type": "single_mean",
+      "n_models": 3,
+      "val_acc_mean": 0.714962,
+      "val_acc_std": 0.002429,
+      "val_acc_fmt": "0.7150 ± 0.0024",
+      "val_macro_f1_mean": 0.701497,
+      "val_macro_f1_std": 0.001395,
+      "val_macro_f1_fmt": "0.7015 ± 0.0014",
+      "val_nll": 1.11567
+    },
+    {
+      "tta": "flip",
+      "eval_type": "ensemble",
+      "n_models": 3,
+      "val_acc_mean": 0.724993,
+      "val_acc_std": "",
+      "val_acc_fmt": "0.7250",
+      "val_macro_f1_mean": 0.710649,
+      "val_macro_f1_std": "",
+      "val_macro_f1_fmt": "0.7106",
+      "val_nll": 0.940189
+    },
+    {
+      "tta": "ten_crop",
+      "eval_type": "single_mean",
+      "n_models": 3,
+      "val_acc_mean": 0.68357,
+      "val_acc_std": 0.004256,
+      "val_acc_fmt": "0.6836 ± 0.0043",
+      "val_macro_f1_mean": 0.668576,
+      "val_macro_f1_std": 0.006072,
+      "val_macro_f1_fmt": "0.6686 ± 0.0061",
+      "val_nll": 1.123247
+    },
+    {
+      "tta": "ten_crop",
+      "eval_type": "ensemble",
+      "n_models": 3,
+      "val_acc_mean": 0.699081,
+      "val_acc_std": "",
+      "val_acc_fmt": "0.6991",
+      "val_macro_f1_mean": 0.68387,
+      "val_macro_f1_std": "",
+      "val_macro_f1_fmt": "0.6839",
+      "val_nll": 0.971639
+    }
+  ],
+  "per_seed": [
+    {
+      "exp_id": "E1-014_s0",
+      "seed": 0,
+      "tta": "none",
+      "val_acc": 0.708554,
+      "val_macro_f1": 0.695289,
+      "val_nll": 1.201433,
+      "weights_sha256": "8c79c23b35dd8e109ea57998844ae295279744a63964b233c0cee5e51933fbcf"
+    },
+    {
+      "exp_id": "E1-014_s1",
+      "seed": 1,
+      "tta": "none",
+      "val_acc": 0.704653,
+      "val_macro_f1": 0.691008,
+      "val_nll": 1.259272,
+      "weights_sha256": "48f04f121fc4000de04fb0d64efa53f336220ca65567b7b1078a62b9ae2d1a00"
+    },
+    {
+      "exp_id": "E1-014_s2",
+      "seed": 2,
+      "tta": "none",
+      "val_acc": 0.704653,
+      "val_macro_f1": 0.690309,
+      "val_nll": 1.191879,
+      "weights_sha256": "5e20695d5006b177b7198e2efec195c6380c7c5d6efc6b7a641bd3bf5e03c2fd"
+    },
+    {
+      "exp_id": "E1-014_s0",
+      "seed": 0,
+      "tta": "flip",
+      "val_acc": 0.716634,
+      "val_macro_f1": 0.702221,
+      "val_nll": 1.106113,
+      "weights_sha256": "8c79c23b35dd8e109ea57998844ae295279744a63964b233c0cee5e51933fbcf"
+    },
+    {
+      "exp_id": "E1-014_s1",
+      "seed": 1,
+      "tta": "flip",
+      "val_acc": 0.712176,
+      "val_macro_f1": 0.699889,
+      "val_nll": 1.138212,
+      "weights_sha256": "48f04f121fc4000de04fb0d64efa53f336220ca65567b7b1078a62b9ae2d1a00"
+    },
+    {
+      "exp_id": "E1-014_s2",
+      "seed": 2,
+      "tta": "flip",
+      "val_acc": 0.716077,
+      "val_macro_f1": 0.702381,
+      "val_nll": 1.102684,
+      "weights_sha256": "5e20695d5006b177b7198e2efec195c6380c7c5d6efc6b7a641bd3bf5e03c2fd"
+    },
+    {
+      "exp_id": "E1-014_s0",
+      "seed": 0,
+      "tta": "ten_crop",
+      "val_acc": 0.688214,
+      "val_macro_f1": 0.675349,
+      "val_nll": 1.106895,
+      "weights_sha256": "8c79c23b35dd8e109ea57998844ae295279744a63964b233c0cee5e51933fbcf"
+    },
+    {
+      "exp_id": "E1-014_s1",
+      "seed": 1,
+      "tta": "ten_crop",
+      "val_acc": 0.682641,
+      "val_macro_f1": 0.66676,
+      "val_nll": 1.144995,
+      "weights_sha256": "48f04f121fc4000de04fb0d64efa53f336220ca65567b7b1078a62b9ae2d1a00"
+    },
+    {
+      "exp_id": "E1-014_s2",
+      "seed": 2,
+      "tta": "ten_crop",
+      "val_acc": 0.679855,
+      "val_macro_f1": 0.663619,
+      "val_nll": 1.11785,
+      "weights_sha256": "5e20695d5006b177b7198e2efec195c6380c7c5d6efc6b7a641bd3bf5e03c2fd"
+    }
+  ],
+  "per_class": {
+    "Angry": {
+      "precision": 0.6354166666666666,
+      "recall": 0.6531049250535332,
+      "f1": 0.6441393875395988,
+      "support": 467
+    },
+    "Disgust": {
+      "precision": 0.8717948717948718,
+      "recall": 0.6071428571428571,
+      "f1": 0.7157894736842105,
+      "support": 56
+    },
+    "Fear": {
+      "precision": 0.6684210526315789,
+      "recall": 0.5120967741935484,
+      "f1": 0.5799086757990868,
+      "support": 496
+    },
+    "Happy": {
+      "precision": 0.8822882288228823,
+      "recall": 0.8960893854748604,
+      "f1": 0.8891352549889135,
+      "support": 895
+    },
+    "Sad": {
+      "precision": 0.6213450292397661,
+      "recall": 0.6508422664624809,
+      "f1": 0.6357516828721018,
+      "support": 653
+    },
+    "Surprise": {
+      "precision": 0.8206896551724138,
+      "recall": 0.8602409638554217,
+      "f1": 0.84,
+      "support": 415
+    },
+    "Neutral": {
+      "precision": 0.6419939577039275,
+      "recall": 0.700164744645799,
+      "f1": 0.669818754925138,
+      "support": 607
+    }
+  },
+  "artifacts": {
+    "best_predictions": "results/E7/e7_val_best_predictions.npz",
+    "per_class_csv": "results/E7/e7_val_per_class.csv",
+    "gradcam_cases_csv": "results/E7/e7_gradcam_cases.csv",
+    "summary_csv": "report/tables/E7_tta_ensemble.csv",
+    "summary_md": "report/tables/E7_tta_ensemble.md"
+  }
+}
