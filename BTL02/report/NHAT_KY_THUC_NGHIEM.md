@@ -3,7 +3,7 @@
 > **Môn học**: Deep Learning (Học sâu) – Bài tập lớn 02 (FER-2013)  
 > **Người lập mẫu & phụ trách chính**: TV4 – Huỳnh Viễn Thông (Nhiệm vụ T24)  
 > **Các thành viên tham gia**: TV1 – Đoàn Trung Kiên, TV2 – Lê Phan Nguyên Hải, TV3 – Võ Hoàng Bảo, TV4 – Huỳnh Viễn Thông  
-> **Cập nhật lần cuối**: 2026-11-26  
+> **Cập nhật lần cuối**: 2026-11-27  
 
 ---
 
@@ -61,6 +61,14 @@
 ---
 
 ## 3. Nhật ký Chi tiết Từng Lần Chạy (Run Log)
+
+### [baseline-001_s1] Baseline CNN phiên bản 60 epoch trước đóng băng (Seed 1) — TV1 – Đoàn Trung Kiên – 2026-11-24
+- Giả thuyết: Thử nghiệm cấu hình Baseline CNN 6 Conv trên máy TV1 (RTX 3050) với giới hạn 60 epoch ban đầu trước khi chốt ngân sách 100 epoch cho `configs/baseline.json`.
+- Thay đổi so với baseline đóng băng: Chạy bản `epochs = 60` (trước khi nâng lên `100` epoch ở bộ `baseline-002_s0/_s1/_s2`).
+- Lệnh: `python src/run_experiment.py --config configs/baseline.json --member TV1 --seeds 1`
+- Kết quả: status=Completed, best_val_loss=0.9354210293170104, val_acc=0.6564502646976874, val_macro_f1=0.590580758179016, best_epoch=53, time_s=2955.496, run_dir=results/baseline/baseline-001_s1
+- Nhận xét: Hoàn tất 60/60 epoch trên RTX 3050 (~49.3 phút), đạt `val_acc = 0.6565` và `val_macro_f1 = 0.5906` (đỉnh epoch 53, lr cuối 0.00125). Kết quả thấp hơn rõ rệt (~2.5 điểm %) so với bộ 100 epoch vì mô hình chưa đủ số vòng lặp để hội tụ hẳn.
+- Quyết định: Giữ lưu vết lịch sử (`KEEP/OK`), nhưng **không dùng làm mốc đối chuẩn chính thức**; nhóm nâng ngân sách lên 100 epoch, đóng băng `configs/baseline.json` và chạy lại đủ 3 seed chuẩn `baseline-002_s0/_s1/_s2` (`68.15% ± 0.75%`).
 
 ### [baseline-002_s0] Baseline CNN (Seed 0) — TV2 – Lê Phan Nguyên Hải – 2026-11-25
 - Giả thuyết: Mô hình Baseline CNN kiểu VGG 3 khối có BatchNorm huấn luyện 100 epoch với SGD lr=0.01 kèm Plateau scheduler sẽ bão hòa ở khoảng epoch 80-95 và đạt độ chính xác trên 67%.
@@ -625,6 +633,14 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E2
 - Nhận xét: Đạt kết quả rất khả quan: `val_acc = 0.6865` (`+0.0050`, nằm trong `< std baseline`), `val_macro_f1 = 0.6592` (`+1.84%` so với baseline), `best_val_loss = 0.8922` (phá mốc 0.90). Vượt trội rõ rệt so với `AdamW` cùng lr (`0.6723`, macro-F1 `0.5878`).
 - Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB). Là phương án thay thế đáng cân nhắc bên cạnh SGD Nesterov.
 
+### [E3-015_s0] Khảo sát Adam lr=0.0003 (`adam_3e-4`, bị ngắt giữa chừng) — TV1 – Đoàn Trung Kiên – 2026-11-26
+- Giả thuyết: Giảm bước học Adam từ `1e-3` xuống `3e-4` giúp tối ưu mượt hơn và cải thiện độ ổn định trên các lớp cảm xúc khó.
+- Thay đổi so với baseline: `optimizer = "adam"`, `lr = 0.0003`.
+- Lệnh: `python src/run_experiment.py --config configs/E3_optim.json --member TV1 --only adam_3e-4`
+- Kết quả: status=Aborted, best_val_loss=0.9523329204687936, val_acc=0.6497631652270828, val_macro_f1=0.578402721067604, best_epoch=44, time_s=, run_dir=results/E3/E3-015_s0
+- Nhận xét: Phiên chạy bị ngắt giữa chừng tại epoch 46 (`stopped_by = killed`, `INTERRUPTED@epoch46`, `train_time_s = 1287.6s` trên RTX 3050) khi mô hình mới đạt `val_acc = 0.6498` (epoch 44) và vẫn đang tiếp tục hội tụ.
+- Quyết định: Hệ thống tự động đánh dấu `Aborted`, `DISCARD` và xóa `best.pt` dở, loại khỏi bảng thống kê `E3_summary.csv`; chạy lại hoàn chỉnh thành `E3-016_s0` ngay bên dưới.
+
 ### [E3-016_s0] Khảo sát Adam lr=0.0003 (`adam_3e-4`, chạy lại sau `E3-015_s0` bị Aborted) — TV1 – Đoàn Trung Kiên – 2026-11-26
 - Giả thuyết: Giảm bước học Adam từ `1e-3` xuống `3e-4` giúp tối ưu mượt hơn và cải thiện độ ổn định trên các lớp cảm xúc khó.
 - Thay đổi so với baseline: `optimizer = "adam"`, `lr = 0.0003`. *(Ghi chú: lần chạy trước `E3-015_s0` bị ngắt phiên tại epoch 46, đã được `sync_orphans()` đánh dấu `Aborted`, `DISCARD` và xóa checkpoint dở; không đưa vào thống kê.)*
@@ -769,6 +785,22 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E2
 
 Đây là kết luận mô tả từ một seed mỗi biến thể; CE/class-weight chạy trên RTX 4060, sampler trên RTX 3060. Recall CE/class-weight hiện chỉ có trong nhật ký run, chưa có prediction artifact tại checkout để TV3 tự tính lại. T16 R đã bàn giao phần tổng hợp; trạng thái `Verified` vẫn thuộc TV3 sau khi có thể kiểm tra dự đoán độc lập.
 
+### [E6-005_s0] Thử chạy VGG16 pretrained 48 px (`vgg16_48_ft` — Failed lỗi quyền cache) — TV1 – Đoàn Trung Kiên – 2026-11-26
+- Giả thuyết: Tái hiện "fail case" VGG16 pretrained tại đầu vào `48×48` (`resize = 48`, `channels = 3`).
+- Thay đổi so với baseline: `resize = 48`, `channels = 3`, `transfer = {"name": "vgg16", "pretrained": true, "freeze_backbone": false}`.
+- Lệnh: `python src/run_experiment.py --config configs/E6_transfer.json --member TV1 --only vgg16_48_ft`
+- Kết quả: status=Failed, best_val_loss=, val_acc=, val_macro_f1=, best_epoch=0, time_s=16.356, run_dir=results/E6/E6-005_s0
+- Nhận xét: Lỗi môi trường ngay lúc nạp trọng số pretrained (`PermissionError: [WinError 5] Access is denied: 'C:\\Users\\Kien/.cache\\torch'`), chưa vào vòng huấn luyện (`best_epoch = 0`, `16.4s`). Không phải lỗi của mô hình hay mã nguồn.
+- Quyết định: Hệ thống tự ghi `Failed`, `DISCARD` (`EXCEPTION:PermissionError`), loại khỏi thống kê E6; cấp lại quyền thư mục cache và chạy lại.
+
+### [E6-003_s0] Thử chạy VGG16 pretrained 48 px (`vgg16_48_ft` — Failed lỗi mạng tải weights) — TV1 – Đoàn Trung Kiên – 2026-11-26
+- Giả thuyết: Chạy lại `vgg16_48_ft` sau khi khắc phục quyền ghi cache Torch.
+- Thay đổi so với baseline: `resize = 48`, `channels = 3`, `transfer = {"name": "vgg16", "pretrained": true, "freeze_backbone": false}`.
+- Lệnh: `python src/run_experiment.py --config configs/E6_transfer.json --member TV1 --only vgg16_48_ft`
+- Kết quả: status=Failed, best_val_loss=, val_acc=, val_macro_f1=, best_epoch=0, time_s=17.202, run_dir=results/E6/E6-003_s0
+- Nhận xét: Lỗi socket khi tải checkpoint ImageNet (`URLError: [WinError 10013] An attempt was made to access a socket in a way forbidden by its access permissions`, `17.2s`, `best_epoch = 0`). Là sự cố môi trường/mạng cục bộ trên máy trạm.
+- Quyết định: Hệ thống tự ghi `Failed`, `DISCARD` (`EXCEPTION:URLError`), loại khỏi thống kê E6; sau khi tải xong trọng số ImageNet vào cache, chạy lại thành công ở `E6-004_s0` ngay bên dưới.
+
 ### [E6-004_s0] Fine-tune VGG16 pretrained ở 48 px, tái hiện "fail case" (`vgg16_48_ft`) — TV1 – Đoàn Trung Kiên – 2026-11-26
 - Giả thuyết: Ảnh 48 px quá nhỏ cho 5 lần MaxPool của VGG16 (bản đồ đặc trưng còn 1×1 ở pool5) nên mô hình sẽ kém hoặc không tốt hơn baseline dù có trọng số ImageNet ("fail case" trong `demo_report.pdf` mục 5.1).
 - Thay đổi so với baseline: `resize = 48`, `channels = 3`, `transfer = {"name": "vgg16", "pretrained": true, "freeze_backbone": false}` (134,289,223 tham số).
@@ -894,3 +926,23 @@ Bảng số liệu sinh bằng `python src/e6_analysis.py` → `report/tables/E6
   - **`figures/filters_grad_cam_correct.csv` (7/7 lớp cảm xúc, khớp 100%):** dùng đúng 7 ca dự đoán đúng độ tự tin cao nhất đại diện đủ 7 lớp từ `e7_gradcam_cases.csv` (`#248 Angry`, `#560 Disgust`, `#1535 Fear`, `#1623 Happy`, `#3283 Sad`, `#2338 Surprise`, `#1953 Neutral`), đều trích xuất Grad-CAM từ lớp conv cuối `conv4_4` (`cam_max = 1.0`).
   - **`figures/filters_grad_cam_wrong.csv` (8/8 cặp nhầm tiêu biểu, khớp 100%):** dùng đúng 8 ca dự đoán sai độ tự tin cao (`conf 0.9957–1.0000`) từ `e7_gradcam_cases.csv` đại diện các cặp nhầm chính (`#2930 Fear→Surprise`, `#441 Sad→Angry`, `#3148 Sad→Happy`, `#1202 Fear→Sad`, `#1774 Neutral→Happy`, `#606 Fear→Angry`, `#1892 Disgust→Angry`, `#432 Sad→Fear`), đều hook tại `conv4_4`.
   - **Kết luận vai `C2` (`T20`):** Xác nhận danh sách ca đúng/sai dùng cho Grad-CAM khớp 100% với dự đoán đã lưu (`PublicTest`, không đụng `PrivateTest`), đã đăng ký đủ 8 hình `filters_*.png` vào `tracking/figures_manifest.csv` — sẵn sàng cho TV2 (`T`) kiểm thử độc lập.
+
+---
+
+## 5. Sơ đồ Kiến trúc/Pipeline (`T24`), Trực quan hóa Bộ lọc (`T20`) & Kiểm toán Toàn vẹn Nhật ký
+
+### 5.1. Bộ 3 sơ đồ kiến trúc & pipeline sinh từ mô hình thật (`T24` — TV4)
+Toàn bộ sơ đồ được sinh tự động bằng lệnh `python -m src.visual.architecture_diagram` từ forward thật của `src/models/cnn.py` (`describe()`) và đã đăng ký vào `tracking/figures_manifest.csv`:
+- `figures/arch_cnn_baseline.png` (+ `figures/arch_cnn_baseline.csv`, SHA-256 `0cff89968d62`): Kiến trúc Baseline CNN 6 Conv (`5,867,847` tham số, `64×24×24 → 128×12×12 → 256×6×6 → FC 512 → 7`).
+- `figures/arch_cnn_comparison.png` (+ `figures/arch_cnn_comparison.csv`, SHA-256 `e3f418705f5b`): So sánh 5 kiến trúc `baseline`, `small`, `medium`, `medium_01`, `large` về số lớp Conv và tham số.
+- `figures/pipeline_overview.png` (+ `figures/pipeline_overview.csv`, SHA-256 `46558c732b28`): Quy trình dữ liệu (`Training` / `PublicTest` / khóa `PrivateTest`), huấn luyện AMP, đánh giá TTA/Ensemble và kiểm thử.
+
+### 5.2. Trực quan hóa bộ lọc & Grad-CAM trên mô hình cuối `E1-014_s0` (`T20` — TV4)
+Thực hiện trên checkpoint `results/E1/E1-014_s0/best.pt` (`large_bn`, SHA-256 `8c79c23b35dd8e10...`, chỉ dùng `PublicTest`, tuyệt đối không chạm `PrivateTest`) bằng `python src/visualize_filters.py --run-dir results/E1/E1-014_s0 --data-csv data/fer2013.csv --sample-idx 1623 --cases-csv results/E7/e7_gradcam_cases.csv --steps 100 --register-manifest`:
+- Xác nhận lớp Conv đầu `features.conv1_1` `(64, 1, 3, 3)` và lớp Conv cuối `conv4_4` `(512, 512, 3, 3)` (output `6×6×512`).
+- Đã xuất và đăng ký đủ **8 hình** kèm file dữ liệu `.csv`/`.npz` vào `tracking/figures_manifest.csv`: `filters_weights_first`, `filters_weights_last`, `filters_feature_maps`, `filters_actmax_filter`, `filters_actmax_class`, `filters_grad_cam`, `filters_grad_cam_correct` (7 ca đúng đủ 7 lớp) và `filters_grad_cam_wrong` (8 ca sai tự tin cao minh họa trực quan nhiễu nhãn FER-2013 và vùng chú ý khuôn mặt).
+
+### 5.3. Kiểm toán toàn vẹn `T24` (`NHAT_KY_THUC_NGHIEM.md` vs `tracking/experiments.csv`)
+- **Độ phủ run thực nghiệm**: Đủ **87 / 87** run chính thức trong `tracking/experiments.csv` (Baseline + E1–E7 + `E7-TEST`; không tính 5 run thăm dò/hạ tầng nội bộ `_probe-001_s0`, `_nb-001..003_s0`, `_qa-001_s0`).
+- **Độ phủ run lỗi / bị ngắt / metric thấp**: Đầy đủ 100% cả **6 run `Aborted`/`Failed`** (`E1-001_s1`, `E1-011_s0`, `E1-012_s0`, `E3-015_s0`, `E6-003_s0`, `E6-005_s0`) và toàn bộ các run sập/metric thấp (`E1-003_s0`, `E1-004_s0`, `E2-007_s0/_s1/_s2`, `E2-009_s0`, `E2-010_s0`, `E3-012_s0`, `E6-006_s0`) đều có mục riêng với giả thuyết, nhận xét nguyên nhân và quyết định rõ ràng.
+- **Độ khớp số liệu**: Chạy đồng bộ `python src/make_tables.py --update-log report/NHAT_KY_THUC_NGHIEM.md` và kiểm toán tự động xác nhận **0/87 dòng lệch** giữa `- Kết quả:` trong nhật ký và `tracking/experiments.csv`. Sẵn sàng bàn giao TV3 kiểm thử độc lập `T24`.
