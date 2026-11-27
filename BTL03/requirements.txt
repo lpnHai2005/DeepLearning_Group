@@ -1,0 +1,21 @@
+# BTL03 – Chuyển code từ Keras sang PyTorch
+# Phiên bản Python chuẩn đã kiểm chạy: Python 3.12 (3.12.9 / 3.12.10)
+#
+# Nếu máy có GPU NVIDIA (CUDA 12.4), khuyến nghị cài PyTorch bản CUDA trước:
+#   pip install torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
+# Sau đó cài toàn bộ các thư viện còn lại:
+#   pip install -r requirements.txt
+
+torch>=2.6.0              # đã kiểm chạy: 2.6.0+cu124
+torchvision>=0.21.0       # đã kiểm chạy: 0.21.0+cu124
+numpy>=2.0.0              # đã kiểm chạy: 2.5.4
+pandas>=2.2.0             # đã kiểm chạy: 3.1.1
+scipy>=1.14.0             # đã kiểm chạy: 1.18.1 (dùng trong Func_apxm_MLP)
+matplotlib>=3.9.0         # đã kiểm chạy: 3.11.2
+seaborn>=0.13.2           # đã kiểm chạy: 0.13.2
+scikit-learn>=1.5.0       # đã kiểm chạy: 1.9.1
+scikit-image>=0.24.0      # đã kiểm chạy: 0.26.0
+pillow>=10.4.0            # đã kiểm chạy: 13.0.0 (dùng trong 2_obj_detection)
+tensorboard>=2.18.0       # đã kiểm chạy: 2.21.0 (dùng trong 4. Training Utilities)
+jupyter>=1.1.1            # đã kiểm chạy: 1.1.1
+ipykernel>=6.29.0         # đã kiểm chạy: 7.4.0
