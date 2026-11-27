@@ -823,10 +823,53 @@ Bảng số liệu sinh bằng `python src/e6_analysis.py` → `report/tables/E6
 
 **4. Quyết định cho E7 (T18).** Không biến thể transfer nào vừa hơn baseline rõ ràng vừa rẻ: VGG16 hơn `+0.012–0.016` với 22.9× tham số; ResNet18 fine-tune chỉ `+0.0059` (< std). Đề xuất E7 giữ họ CNN của baseline làm mô hình chính; nếu cần đa dạng cho ensemble, `resnet18_96_ft` là ứng viên rẻ nhất trong E6 nhưng phải chạy đủ 3 seed trước khi chọn.
 
-### [E7-001_s0] Mô hình Tối ưu Cuối cùng (Final Best Model) — TV3 – <chưa thực hiện>
-- Giả thuyết: Tổng hợp cấu hình tốt nhất từ các thực nghiệm E1–E6 (kiến trúc, activation, optimizer, augmentation, xử lý mất cân bằng) sẽ mang lại độ chính xác validation cao nhất nhóm, vượt ngưỡng 70%.
-- Thay đổi so với baseline: Cấu hình tối ưu toàn diện.
-- Lệnh: `python src/run_experiment.py --config configs/E7_final.json --member TV3 --seeds 0 1 2`
-- Kết quả: (chưa thực hiện)
-- Nhận xét: (chưa thực hiện)
-- Quyết định: (chưa thực hiện)
+### [E7-001_s0] Sàng lọc E7 Bước 1: `large_bn` + `batch_size = 64` (`large_bn_bs64`, Seed 0 — C2) — TV2 – Lê Phan Nguyên Hải – 2026-11-27
+- Giả thuyết: Trong E3 (`T14`), `batch_size = 64` là yếu tố duy nhất vượt `+std baseline` (`+0.0109`). Kiểm tra trên cùng GPU RTX 4060 xem hạ `batch_size` từ 128 xuống 64 có tiếp tục cải thiện `large_bn` (`E1-014_s0 = 0.7086`, `F1 = 0.6953`) hay không.
+- Thay đổi so với `large_bn` (`E1-014_s0`): `batch_size = 64` (giữ nguyên `model = "large"`, `bn = true`, `dropout_conv = 0.2`, `dropout_fc = 0.5`, `SGD Nesterov lr = 0.01`).
+- Lệnh: `python -u src/run_experiment.py --config configs/E7_final.json --member TV2 --only large_bn_bs64 large_bn_bs64_leaky large_bn_bs64_leaky_wrs baseline_best --seeds 0`
+- Kết quả: status=Completed, best_val_loss=0.9025232671661675, val_acc=0.6971301198105322, val_macro_f1=0.677833402782655, best_epoch=69, time_s=2216.511, run_dir=results/E7/E7-001_s0
+- Nhận xét: Hoàn tất 84 epoch (dừng sớm, `best_epoch = 69`, 36.9 phút trên RTX 4060). Dù vẫn vượt Baseline 6 Conv (`+0.0156`), nhưng so trực tiếp với mốc cùng GPU **`E1-014_s0` (`0.7086` / F1 `0.6953`)** lại **giảm `-0.0114` accuracy** (vượt quá `std baseline = 0.0075`) và giảm `-0.0175` macro-F1; khoảng quá khớp tương đương (`Train − Val = +0.1868`). Với mạng sâu 16 Conv có BatchNorm, hạ batch size xuống 64 làm thống kê batch của BN kém ổn định hơn `batch_size = 128` ở `lr = 0.01`.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 81.71 MB). Không chọn làm cấu hình cuối theo luật tiền đăng ký.
+
+### [E7-002_s0] Sàng lọc E7 Bước 1: `large_bn` + `bs_64` + `leaky_relu` (`large_bn_bs64_leaky`, Seed 0 — C2) — TV2 – Lê Phan Nguyên Hải – 2026-11-27
+- Giả thuyết: Cộng thêm `activation = "leaky_relu"` (tốt nhất E2 trên Baseline: `+0.0120`) vào `large_bn_bs64` để kiểm tra khả năng cải thiện trên mạng sâu 16 lớp có BN.
+- Thay đổi so với `large_bn`: `batch_size = 64`, `model_kwargs = {"bn": true, "activation": "leaky_relu"}`.
+- Lệnh: `python -u src/run_experiment.py --config configs/E7_final.json --member TV2 --only large_bn_bs64 large_bn_bs64_leaky large_bn_bs64_leaky_wrs baseline_best --seeds 0`
+- Kết quả: status=Completed, best_val_loss=0.9030571929855112, val_acc=0.6910002786291446, val_macro_f1=0.672465413778312, best_epoch=64, time_s=2081.334, run_dir=results/E7/E7-002_s0
+- Nhận xét: Dừng sớm tại epoch 79 (`best_epoch = 64`, 34.7 phút). Đạt `val_acc = 0.6910` (`-0.0176` so với `E1-014_s0`), `val_macro_f1 = 0.6725` (`-0.0228`), dù khoảng cách quá khớp giảm nhẹ xuống `+0.1589`. Đổi sang `LeakyReLU(0.1)` trên `large_bn` kết hợp `bs=64` làm giảm thêm hiệu năng so với `E7-001_s0` (`0.6971`).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 81.71 MB). Không chọn làm cấu hình cuối.
+
+### [E7-003_s0] Sàng lọc E7 Bước 1: `large_bn` + `bs_64` + `leaky_relu` + `WeightedRandomSampler` (`large_bn_bs64_leaky_wrs`, Seed 0 — C2) — TV2 – Lê Phan Nguyên Hải – 2026-11-27
+- Giả thuyết: Bổ sung `sampler = "weighted_random"` (E5 nâng mạnh macro-F1 `+0.0309` trên Baseline) nhằm kéo tăng macro-F1 trên lớp thiểu số (`Disgust`/`Fear`) cho nhánh `large_bn_bs64_leaky`.
+- Thay đổi so với `large_bn`: `batch_size = 64`, `model_kwargs = {"bn": true, "activation": "leaky_relu"}`, `sampler = "weighted_random"`.
+- Lệnh: `python -u src/run_experiment.py --config configs/E7_final.json --member TV2 --only large_bn_bs64 large_bn_bs64_leaky large_bn_bs64_leaky_wrs baseline_best --seeds 0`
+- Kết quả: status=Completed, best_val_loss=0.9367389397290331, val_acc=0.6935079409306213, val_macro_f1=0.6873613364184453, best_epoch=93, time_s=2633.831, run_dir=results/E7/E7-003_s0
+- Nhận xét: Chạy đủ 100 epoch (`best_epoch = 93`, 43.9 phút). Đúng như xu hướng E5, thêm `WeightedRandomSampler` giúp kéo `val_macro_f1` tăng rõ rệt `+0.0149` so với `E7-002_s0` (`0.6725 → 0.6874`) và nhích `val_acc` từ `0.6910` lên `0.6935`, nhưng vẫn thấp hơn rõ rệt mốc `E1-014_s0` (`0.7086` / F1 `0.6953`) ở cả Accuracy (`-0.0150`) lẫn Macro-F1 (`-0.0079`), đồng thời `Train − Val` tăng lên `+0.2053`.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 81.71 MB). Không chọn làm cấu hình cuối.
+
+### [E7-004_s0] Đối chứng E7 Bước 1: Baseline 6 Conv + tổ hợp tốt nhất E2–E4 (`baseline_best`, Seed 0 — C2) — TV2 – Lê Phan Nguyên Hải – 2026-11-27
+- Giả thuyết: Gộp các yếu tố tốt nhất đo trên Baseline (`leaky_relu`, `bs=64`, `dropout_fc=0.25`, `wd=1e-3`, `label_smoothing=0.1`) để đối chứng xem phần tăng hiệu năng đến từ độ sâu kiến trúc (`large_bn`) hay từ bộ siêu tham số huấn luyện.
+- Thay đổi so với `configs/baseline.json`: `model_kwargs = {"activation": "leaky_relu", "dropout_fc": 0.25}`, `batch_size = 64`, `weight_decay = 0.001`, `label_smoothing = 0.1` (`5,867,847` tham số).
+- Lệnh: `python -u src/run_experiment.py --config configs/E7_final.json --member TV2 --only large_bn_bs64 large_bn_bs64_leaky large_bn_bs64_leaky_wrs baseline_best --seeds 0`
+- Kết quả: status=Completed, best_val_loss=0.869294905004876, val_acc=0.70130955697966, val_macro_f1=0.6783639705148158, best_epoch=91, time_s=1504.033, run_dir=results/E7/E7-004_s0
+- Nhận xét: Kết quả đối chứng rất xuất sắc! Chỉ với `5.87M` tham số (nhỏ hơn `large_bn` 3.5×) và 25.1 phút train, `baseline_best` bứt phá từ Baseline gốc (`0.6815 ± 0.0075`) lên **`0.7013`** (**`+0.0198`**, vượt ngưỡng 70% lần đầu tiên cho mạng 6 Conv!), đạt **`best_val_loss = 0.8693` thấp nhất toàn bộ dự án BTL02** và kiểm soát quá khớp rất gọn (`Train − Val = +0.0931`, bằng một nửa `large_bn`). Điều này khẳng định các lựa chọn E2–E4 thực sự cộng hưởng mạnh trên chính kiến trúc Baseline mà chúng được tìm ra, nhưng **không chuyển tuyến tính sang `large_bn`**. Tuy nhiên theo luật chọn tiền đăng ký, `baseline_best` vẫn thấp hơn `E1-014_s0` ở cả `val_acc` (`-0.0072`) lẫn `val_macro_f1` (`0.6784` vs `0.6953`, `-0.0169`).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 23.49 MB) làm bằng chứng đối chứng đắt giá cho Chương 4. Không chọn làm mô hình cuối vì thua `large_bn` ở cả hai chỉ số.
+
+### Kết luận E7 (T18 — Phụ trách R: TV3 – Võ Hoàng Bảo – 2026-11-27)
+- **Nguồn số liệu & biểu đồ (100% trên PublicTest, chưa chạm PrivateTest):**
+  - Bảng sàng lọc 4 biến thể E7: `report/tables/E7_report.md` / `E7_summary.csv` (sinh từ `python src/make_tables.py`).
+  - Bảng tổng hợp 3 seed + TTA + Ensemble của mô hình cuối: `report/tables/E7_tta_ensemble.md` / `E7_tta_ensemble.csv`, `results/E7/e7_val_summary.json`, `results/E7/e7_val_per_class.csv`, các file dự đoán `results/E7/val_predictions_ens_{none,flip,ten_crop}.npz` và `results/E7/e7_val_best_predictions.npz` (sinh bằng `python src/eval_e7.py --run-dirs results/E1/E1-014_s0 results/E1/E1-014_s1 results/E1/E1-014_s2 --tta none flip ten_crop`).
+  - 5 biểu đồ kèm CSV đã đăng ký vào `tracking/figures_manifest.csv`: `figures/e7_val_tta_ensemble.png`, `e7_val_confusion.png`, `e7_val_error_hist.png`, `e7_val_correct_grid.png`, `e7_val_wrong_grid.png`, và danh sách ca đúng/sai điển hình `results/E7/e7_gradcam_cases.csv` bàn giao TV4 (`T20`).
+- **1. Kết quả Bước 1 sàng lọc và quyết định chọn cấu hình cuối:**
+  - Trên cùng RTX 4060 (`seed 0`), cả 4 ứng viên mới (`E7-001_s0` `0.6971`, `E7-002_s0` `0.6910`, `E7-003_s0` `0.6935`, `E7-004_s0` `0.7013`) đều thấp hơn mốc `E1-014_s0` (`large_bn`: `0.7086`, macro-F1 `0.6953`) ở cả Accuracy lẫn Macro-F1.
+  - Áp dụng đúng luật tiền đăng ký trong `configs/E7_final.json`: **chốt bộ 3 seed `large_bn` (`E1-014_s0`, `E1-014_s1`, `E1-014_s2` — đã `Verified` ở `T12`, xác minh khớp 100% SHA-256 3 file `best.pt`: `8c79c23b35dd`, `48f04f121fc4`, `5e20695d5006`) làm mô hình cuối**, không lặp train thừa.
+- **2. Hiệu quả của TTA và Ensemble 3 seed trên PublicTest (`E7_tta_ensemble.md`):**
+  - **Đơn lẻ 3 seed (`none`):** `val_acc = 0.7060 ± 0.0023`, `val_macro_f1 = 0.6922 ± 0.0027`, `Val NLL = 1.2175`.
+  - **TTA `flip` (đơn lẻ):** tăng đều trên cả 3 seed (`0.7166 / 0.7122 / 0.7161` → **`0.7150 ± 0.0024`**, `+0.90%`, `F1 = 0.7015 ± 0.0014`, `NLL = 1.1157`).
+  - **Ensemble 3 seed (`none`):** nhảy vọt lên **`0.7236`** (`+1.76%` so với đơn lẻ), `F1 = 0.7134` (`+2.12%`), đồng thời hạ mạnh `Val NLL` từ `1.2175` xuống `0.9780` (`-0.2395`), khắc phục rõ rệt hiện tượng dự đoán quá tự tin của từng seed `large_bn` đơn lẻ.
+  - **Ensemble 3 seed + TTA `flip` (CAO NHẤT TOÀN BẢNG):** đạt **`val_acc = 0.7250` (`72.50%`, vượt Baseline `68.15%` tới `+4.35%` và vượt mốc kỷ lục PublicTest `69%` của đề bài tới `+3.50%`!)**, **`val_macro_f1 = 0.7106`** (`+6.98%` trên Baseline `64.08%`), và **`Val NLL = 0.9402`** (thấp nhất toàn bộ 6 tổ hợp!).
+  - **TTA `ten_crop` (cắt `44×44` rồi phóng về `48×48`):** giảm hiệu năng rõ rệt (`0.6836 ± 0.0043` đơn lẻ, `0.6991` ensemble) do ảnh FER-2013 đã cắt sát mặt ở kích thước nhỏ `48×48`, cắt góc kèm nội suy bilinear làm mất vùng lông mày/miệng ở rìa ảnh và làm mờ chi tiết biểu cảm vi mô.
+- **3. Hiệu năng từng lớp trên PublicTest của tổ hợp thắng (`Ensemble 3 seed + TTA=flip`):**
+  - Angry `rec 65.31% / F1 64.41%`, **Disgust `rec 60.71% (34/56) / prec 87.18% / F1 71.58%`** (`+23.21%` recall so với CE baseline `37.50%`), **Fear `rec 51.21% (254/496) / F1 57.99%`** (vượt mốc 50% lần đầu tiên), Happy `rec 89.61% / F1 88.91%`, Sad `rec 65.08% / F1 63.58%`, Surprise `rec 86.02% / F1 84.00%`, Neutral `rec 70.02% / F1 66.98%`.
+- **4. Quyết định tiền đăng ký cho `T19` (PrivateTest):**
+  - Theo đúng luật trong `configs/E7_final.json` (chọn tổ hợp có `val_acc` cao nhất trên PublicTest): **chốt duy nhất `Ensemble 3 seed large_bn (E1-014_s0, E1-014_s1, E1-014_s2) + TTA = flip`** để chạy lệnh `--eval-test` **đúng 1 lần duy nhất** trên `PrivateTest` ở `T19` (có TV2 chứng kiến và TV4 xác minh khóa lần 2). Chốt `done(T18)` chuyển TV4 (`T`) kiểm thử độc lập (đồng thời TV1 `C1` kiểm độc lập ensemble 3 seed và TV2 `C2` kiểm độc lập TTA `flip`/`ten_crop`).

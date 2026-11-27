@@ -58,5 +58,9 @@
 | E6 – resnet18_96_ft | 1 | 0.6874 | 0.6698 | 0.9718 | 11,180,103 | +0.2983 | RTX 3060 (79.4s) | +0.0059 (< std baseline) |
 | E6 – resnet18_96_frozen | 1 | 0.4570 | 0.3683 | 1.4507 | 11,180,103 | -0.0133 | RTX 3060 (75.0s) | -0.2246 (thấp hơn) |
 | E6 – vgg16_96_ft | 1 | 0.6977 | 0.6818 | 0.9220 | 134,289,223 | +0.1876 | RTX 4060 (71.3s) | +0.0162 (cao hơn) |
+| E7 – large_bn_bs64 | 1 | 0.6971 | 0.6778 | 0.9025 | 20,410,439 | +0.1868 | RTX 4060 (26.2s) | +0.0156 (cao hơn) |
+| E7 – large_bn_bs64_leaky | 1 | 0.6910 | 0.6725 | 0.9031 | 20,410,439 | +0.1589 | RTX 4060 (26.2s) | +0.0095 (cao hơn) |
+| E7 – large_bn_bs64_leaky_wrs | 1 | 0.6935 | 0.6874 | 0.9367 | 20,410,439 | +0.2053 | RTX 4060 (26.2s) | +0.0120 (cao hơn) |
+| E7 – baseline_best | 1 | 0.7013 | 0.6784 | 0.8693 | 5,867,847 | +0.0931 | RTX 4060 (14.9s) | +0.0198 (cao hơn) |
 
 _* Ghi chú: `Train–Val` = `train_acc_cuoi − val_acc`; `train_acc_cuoi` được đo trong chế độ huấn luyện (có bật data augmentation và dropout), chỉ dùng để so sánh xu hướng quá khớp giữa các cấu hình. Ký hiệu `—` thể hiện không xác định (1 seed không có độ lệch chuẩn mẫu, hoặc thời gian không lấy trung bình qua nhiều GPU khác nhau)._
