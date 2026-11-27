@@ -427,6 +427,30 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E1
 - Nhận xét (TV2 viết khi tổng hợp T13): Dừng sớm ở epoch 44 (đỉnh epoch 29, ~21.5 phút): `val_acc = 0.4511` (−0.2304), `val_macro_f1 = 0.3303`, `train_acc_cuoi = 0.4152`, train_loss cuối 1.51. Epoch 1 có dấu hiệu vanishing gradient: chuẩn gradient `conv1_1` chỉ `1.8e-3` (ReLU `5.9e-2`, nhỏ hơn 33 lần), tỉ lệ lớp đầu/lớp cuối `2.5e-3`. Nhưng gradient hồi phục nhanh nhờ BN: `1.3e-2` ở epoch 3, `0.28` ở epoch 10, ngang ReLU từ đó tới cuối (Hình `figures/e2_grad_norms.png` (b)). val_acc dao động mạnh (0.23–0.45), lr bị cắt 3 lần, rồi dừng sớm khi mạng vẫn thiếu khớp nặng.
 - Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB). Loại sigmoid khỏi ứng viên E7.
 
+### [E2-007_s1] Khảo sát hàm kích hoạt Sigmoid có BN (`sigmoid`, Seed 1) — TV2 – Lê Phan Nguyên Hải – 2026-11-27
+- Giả thuyết: Sigmoid có BN dao động mạnh giữa các epoch nên một seed không đủ; chạy thêm seed 1, 2 để có mean ± std (bổ sung sau KT-017).
+- Thay đổi so với baseline: `activation = "sigmoid"`, bật `log_grad_norms = true` (cùng cấu hình `E2-007_s0`, khác seed).
+- Lệnh (tái lập): `python src/run_experiment.py --config configs/E2_activation.json --member TV2 --only sigmoid --seeds 0 1 2`
+- Kết quả: status=Completed, best_val_loss=1.3039109300989133, val_acc=0.49986068542769574, val_macro_f1=0.3894467131185843, best_epoch=69, time_s=1230.553, run_dir=results/E2/E2-007_s1
+- Nhận xét: Dừng sớm ở epoch 84 (đỉnh epoch 69, lr bị cắt 7 lần): `val_acc = 0.4999`, `val_macro_f1 = 0.3894`, `train_acc_cuoi = 0.4422`, vẫn thiếu khớp nặng. Gradient lặp lại đúng mẫu của seed 0: `conv1_1` ở epoch 1 là `2.1e-3`, tỉ lệ lớp đầu/lớp cuối `2.8e-3`, hồi phục lên `0.23` ở epoch 10.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB).
+
+### [E2-007_s2] Khảo sát hàm kích hoạt Sigmoid có BN (`sigmoid`, Seed 2) — TV2 – Lê Phan Nguyên Hải – 2026-11-27
+- Giả thuyết: Như `E2-007_s1`.
+- Thay đổi so với baseline: `activation = "sigmoid"`, bật `log_grad_norms = true` (cùng cấu hình `E2-007_s0`, khác seed).
+- Lệnh (tái lập): `python src/run_experiment.py --config configs/E2_activation.json --member TV2 --only sigmoid --seeds 0 1 2`
+- Kết quả: status=Completed, best_val_loss=1.3958264401643912, val_acc=0.46614655893006407, val_macro_f1=0.3487409219043109, best_epoch=62, time_s=1129.014, run_dir=results/E2/E2-007_s2
+- Nhận xét: Dừng sớm ở epoch 77 (đỉnh epoch 62, lr bị cắt 8 lần): `val_acc = 0.4661`, `val_macro_f1 = 0.3487`, `train_acc_cuoi = 0.4131`. Gradient `conv1_1` ở epoch 1 là `1.9e-3`, tỉ lệ `2.5e-3`, hồi phục lên `0.31` ở epoch 10.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB).
+
+### [E2-010_s0] Chạy lại Sigmoid có BN seed 0 trên main mới nhất (`sigmoid`, Seed 0, cho KT-017) — TV2 – Lê Phan Nguyên Hải – 2026-11-27
+- Giả thuyết: KT-017 Fail vì run của TV1 (`0.4790`, đỉnh epoch 85) lệch run gốc `E2-007_s0` (`0.4511`, RTX 3060) +0.0279. Code không đổi: giữa commit `286d85e8` (run gốc) và `99e0e02c` (run này) chỉ thêm tuỳ chọn `sampler`, mặc định `none` giữ nguyên DataLoader `shuffle=True`; `config.json` của hai run trùng nhau trừ mã run, máy và thời gian. Nếu nguyên nhân là sai khác giữa GPU cộng với early stopping trên đường val dao động mạnh, run này sẽ cũng lệch run gốc.
+- Thay đổi so với baseline: `activation = "sigmoid"`, bật `log_grad_norms = true` (trùng cấu hình và seed của `E2-007_s0`, máy RTX 4060). Mã mới vì `E2-007_s0` đã có.
+- Lệnh (tái lập): `python src/run_experiment.py --config configs/E2_activation.json --member TV2 --only sigmoid --seeds 0 1 2`
+- Kết quả: status=Completed, best_val_loss=1.3347707404569518, val_acc=0.4889941487879632, val_macro_f1=0.38680280564429353, best_epoch=57, time_s=1073.093, run_dir=results/E2/E2-010_s0
+- Nhận xét: Dừng sớm ở epoch 72 (đỉnh epoch 57, lr bị cắt 5 lần): `val_acc = 0.4890`, `val_macro_f1 = 0.3868`, `train_acc_cuoi = 0.4314`. So với run gốc: +0.0379; so với run của TV1: +0.0100. Ba lần chạy cùng seed 0 trên ba GPU (RTX 3060, GPU của TV1, RTX 4060) cho `0.4511 / 0.4790 / 0.4890`, chênh nhau tới 0.038. Epoch 1 đã khác ở chữ số thứ 3 (train_loss `1.8274` so với `1.8285`), sau đó tách xa dần. Run gốc là run dừng sớm nhất (epoch 44, đỉnh 29) nên thấp nhất. Phần định tính thì tái lập đúng: gradient `conv1_1` ở epoch 1 là `1.8e-3` (gốc `1.8e-3`), tỉ lệ lớp đầu/lớp cuối `2.3e-3` (gốc `2.5e-3`), hồi phục lên `0.29` ở epoch 10 (gốc `0.28`). Mức dao động val_acc giữa hai epoch liền nhau trung bình 0.027 (gốc 0.031), lớn nhất 0.135. Vì vậy dung sai 0.0075 (std baseline) không áp dụng được cho sigmoid. Xem Kết luận E2 mục 6.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB).
+
 ### [E2-008_s0] Khảo sát Tanh không BatchNorm (`tanh_no_bn`, Seed 0 — C2) — TV4 – Huỳnh Viễn Thông – 2026-11-26
 - Giả thuyết: Bỏ BN để xem tanh có bị triệt tiêu gradient như sigmoid không; nếu không thì vanishing gradient là đặc tính riêng của sigmoid (đạo hàm ≤ 0.25, đầu ra không đối xứng quanh 0).
 - Thay đổi so với baseline: `activation = "tanh"`, `bn = false`, bật `log_grad_norms = true` (`5,866,951` tham số).
@@ -444,14 +468,14 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E1
 - Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB) làm bằng chứng cho báo cáo (mục E2).
 
 ### Kết luận E2 (T13) — TV2 – Lê Phan Nguyên Hải – 2026-11-27
-Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E2_summary.md` (Bảng 4.2). Hình chuẩn gradient sinh bằng `python src/visual/grad_norms.py --group E2 --epoch 1` → `figures/e2_grad_norms.png` (dữ liệu `figures/e2_grad_norms.csv`). Mỗi biến thể 1 seed, chạy trên 2 máy (TV3 RTX 3050, TV4 RTX 3060). Mốc so sánh là baseline 3 seed `0.6815 ± 0.0075`; chênh lệch dưới std coi là chưa phân biệt được.
+Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E2_summary.md` (Bảng 4.2). Hình chuẩn gradient sinh bằng `python src/visual/grad_norms.py --group E2 --epoch 1` → `figures/e2_grad_norms.png` (dữ liệu `figures/e2_grad_norms.csv`). Mỗi biến thể 1 seed, chạy trên 2 máy (TV3 RTX 3050, TV4 RTX 3060); riêng `sigmoid` có 4 run (seed 0, 1, 2 và một lần chạy lại seed 0, máy RTX 3060 và RTX 4060), Bảng 4.2 tính mean ± std trên cả 4 run. Mốc so sánh là baseline 3 seed `0.6815 ± 0.0075`; chênh lệch dưới std coi là chưa phân biệt được.
 
 **1. Họ ReLU (có BN).**
 - `relu` `0.6863` (+0.0047, dưới std). Cấu hình trùng baseline, chỉ bật ghi gradient và chạy máy khác; lệch `baseline-002_s0` 0.0048 là sai khác giữa các GPU. Cùng máy thì tái lập đúng tới từng chữ số (xem `E5-003_s0`).
 - `leaky_relu` `0.6935` (+0.0120) và `gelu` `0.6918` (+0.0103, best_val_loss thấp nhất E2 0.8807) vượt std baseline, nhưng mới 1 seed và chỉ nhỉnh hơn ngưỡng.
 - `elu` `0.6553` (−0.0262): thiếu khớp (`train_acc_cuoi` 0.644 thấp hơn val), gradient không có vấn đề (tỉ lệ lớp đầu/lớp cuối ở epoch 1 là 0.016).
 
-**2. Hàm bão hòa.** `tanh` `0.6414` và `tanh_no_bn` `0.6523` kém ReLU 3–4 điểm và đều thiếu khớp. `sigmoid` `0.4511` thiếu khớp nặng. `sigmoid_no_bn` `0.2494` không học được.
+**2. Hàm bão hòa.** `tanh` `0.6414` và `tanh_no_bn` `0.6523` kém ReLU 3–4 điểm và đều thiếu khớp. `sigmoid` `0.4765 ± 0.0220` (4 run, khoảng 0.451–0.500) thiếu khớp nặng. `sigmoid_no_bn` `0.2494` không học được.
 
 **3. Vanishing gradient của Sigmoid (Hình e2_grad_norms).** Chuẩn gradient lớp Conv đầu ở epoch 1:
 
@@ -465,7 +489,7 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E2
 
 - **Xác nhận giả thuyết:** không có BN, sigmoid triệt tiêu gradient. Mỗi lớp Conv nhân gradient thêm khoảng 0.1 lần, khớp với đạo hàm sigmoid ≤ 0.25. Qua 6 lớp Conv, lớp đầu nhận gradient nhỏ hơn lớp ra khoảng 2.5 triệu lần, nên mạng chỉ học được tần suất lớp (train_loss đứng ở 1.81 = entropy phân bố lớp).
 - **Vanishing gradient là đặc tính của sigmoid, không phải do bỏ BN hay do bão hòa nói chung:** `tanh_no_bn` (cũng bão hòa) và `relu_no_bn` có tỉ lệ lớp đầu/lớp cuối ngang nhau (0.035 và 0.042), lớn hơn `sigmoid_no_bn` khoảng 100.000 lần. Khác biệt: đạo hàm tanh tại 0 là 1 và đầu ra đối xứng quanh 0, còn sigmoid là 0.25 và đầu ra luôn dương.
-- **BN sửa được gradient nhưng không sửa được độ chính xác:** với BN, gradient lớp đầu của sigmoid về ngang ReLU sau 10 epoch, nhưng val_acc vẫn chỉ 0.4511 và `train_acc_cuoi` 0.4152. Ở bản có BN, nút thắt không còn là vanishing gradient mà là sigmoid học rất chậm với cấu hình SGD lr 0.01 cố định, khiến plateau cắt lr và early stopping dừng ở epoch 44. Chưa tách được nguyên nhân cụ thể (đầu ra không đối xứng quanh 0 hay vùng bão hòa); E2 không chạy thêm vì sigmoid đã bị loại.
+- **BN sửa được gradient nhưng không sửa được độ chính xác:** với BN, gradient lớp đầu của sigmoid về ngang ReLU sau 10 epoch, nhưng val_acc vẫn chỉ `0.4765 ± 0.0220` và `train_acc_cuoi` 0.41–0.44 ở cả 4 run. Ở bản có BN, nút thắt không còn là vanishing gradient mà là sigmoid học rất chậm với cấu hình SGD lr 0.01 cố định, khiến plateau cắt lr 3–8 lần và early stopping dừng ở epoch 44–84. Chưa tách được nguyên nhân cụ thể (đầu ra không đối xứng quanh 0 hay vùng bão hòa); E2 không chạy thêm vì sigmoid đã bị loại.
 
 **4. BatchNorm ở độ sâu baseline.** `relu_no_bn` `0.6913` khớp `baseline_no_bn` của E1 (`0.6941 ± 0.0033`, 3 seed, RTX 4060) trên một máy khác, xác nhận chéo kết luận E1: với 6 lớp Conv và ReLU, bỏ BN không gây vanishing gradient và không làm giảm độ chính xác. Với hàm bão hòa: `tanh_no_bn` hơn `tanh` khoảng 1 điểm (1 seed), còn sigmoid thì BN là điều kiện để học được.
 
@@ -473,6 +497,21 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E2
 - Giữ họ ReLU. `leaky_relu` và `gelu` là ứng viên thay ReLU, nhưng cần chạy thêm seed 1, 2 trước khi chọn vì mức hơn (≈ +0.01) chỉ vừa vượt std baseline với 1 seed.
 - Loại `sigmoid`, `tanh`, `elu`.
 - Báo cáo (T22, mục E2): dùng `E2-009_s0` cùng Hình e2_grad_norms làm bằng chứng vanishing gradient của Sigmoid mà đề yêu cầu so với ReLU.
+
+**6. Tái lập Sigmoid có BN (KT-017 Fail, chạy lại 2026-11-27).**
+
+| Run | Máy | Seed | Dừng / đỉnh (epoch) | Số lần cắt lr | val_acc | conv1_1 epoch 1 |
+|---|---|---|---|---|---|---|
+| `E2-007_s0` (gốc) | RTX 3060 | 0 | 44 / 29 | 3 | 0.4511 | 1.8e-3 |
+| KT-017 (TV1, không push) | GPU TV1 | 0 | 100 / 85 | — | 0.4790 | đạt (theo KT-017) |
+| `E2-010_s0` | RTX 4060 | 0 | 72 / 57 | 5 | 0.4890 | 1.8e-3 |
+| `E2-007_s1` | RTX 4060 | 1 | 84 / 69 | 7 | 0.4999 | 2.1e-3 |
+| `E2-007_s2` | RTX 4060 | 2 | 77 / 62 | 8 | 0.4661 | 1.9e-3 |
+
+- Code không phải nguyên nhân: cấu hình trùng nhau, phần code đổi giữa hai commit (tuỳ chọn `sampler`) không tác động khi `sampler = none`. Cùng máy thì run tái lập tới từng chữ số (`E5-003_s0` trùng `baseline-002_s0`).
+- Nguyên nhân: khác GPU làm số học dấu phẩy động lệch ngay từ epoch 1, và với sigmoid độ lệch đó bị khuếch đại. Đường val_acc dao động trung bình 0.02–0.03 mỗi epoch, nhảy lớn nhất 0.10–0.18, nên epoch đỉnh, số lần cắt lr và thời điểm early stopping thay đổi theo máy. Run gốc dừng sớm nhất nên thấp nhất. Cùng seed 0, ba GPU cho kết quả chênh tới 0.038; ba seed trên cùng một máy chênh 0.034 (std `0.0172`).
+- Dung sai 0.0075 là std của baseline (cấu hình ổn định), không áp dụng được cho một biến thể có std khoảng 0.02. Đề xuất kiểm lại T13 theo một trong hai cách: (a) với sigmoid, so run chạy lại với mean ± std 4 run (`0.4765 ± 0.0220`); run của TV1 lệch +0.0025, nằm trong 1 std; (b) dùng dung sai 0.0075 cho một biến thể ổn định của E2 (`relu`, `gelu` hoặc `leaky_relu`).
+- Kết luận định tính của E2 không đổi: sigmoid có BN thấp hơn ReLU khoảng 0.21 ở cả 4 run, và mẫu gradient (lớp đầu nhỏ ở epoch 1, hồi phục ở epoch 10) tái lập ở mọi run.
 
 ### [E3-001_s0] Khảo sát AdamW lr=0.001 — TV4 – 2026-11-25
 - Giả thuyết: AdamW kết hợp với lịch học Plateau sẽ hội tụ nhanh hơn SGD trong 30 epoch đầu nhưng độ chính xác cực đại có thể tương đương hoặc hơi thấp hơn một chút so với SGD Nesterov.
