@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+6e47da90,2026-11-27T09:34:30+07:00,TrungKien2005,TV1,T13,test(T13): kiểm thử độc lập sigmoid và chuẩn gradient,2,BTL02/tracking/tasks.csv; BTL02/tracking/test_log.csv
 3cb5c116,2026-11-27T08:59:35+07:00,VthongVthongVthong,TV4,T24,"docs(T24): bổ sung đầy đủ nhật ký và nhận xét 4 run E4/E5 của TV4 (E4-001..003_s0, E5-001_s0)",1,BTL02/report/NHAT_KY_THUC_NGHIEM.md
 720d6ef0,2026-11-27T08:33:25+07:00,VthongVthongVthong,TV4,T15,feat(T15): cập nhật biểu đồ overfit E4 đủ 10/10 biến thể theo 3 nhóm (TV4),5,BTL02/figures/e4_overfit.csv; BTL02/figures/e4_overfit.png; BTL02/figures/e4_overfit_summary.csv; BTL02/src/visual/e4_overfit.py; BTL02/tracking/figures_manifest.csv
 94f5a93f,2026-11-27T00:46:41+07:00,HiCyclone,TV2,T14,"test(T14): kiểm thử độc lập E3 tối ưu trên bản clone sạch đạt Pass, chạy lại bs_64 lệch 0.0022 (KT-016)",1,BTL02/tracking/test_log.csv
