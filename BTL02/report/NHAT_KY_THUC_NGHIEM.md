@@ -179,32 +179,32 @@
 - Thay đổi so với baseline: `model = "small"`, `seed = 1`.
 - Lệnh: (TV1 điền đúng lệnh đã chạy, dạng `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only ... --seeds ...`)
 - Kết quả: status=Completed, best_val_loss=0.914619894338604, val_acc=0.6921147952075787, val_macro_f1=0.6766273703235255, best_epoch=98, time_s=3261.997, run_dir=results/E1/E1-009_s1
-- Nhận xét: (TV1 viết)
-- Quyết định: (TV1 viết)
+- Nhận xét: Run hoàn tất, đạt `val_acc = 0.6921`, `val_macro_f1 = 0.6766`, `best_val_loss = 0.9146` tại epoch 98. Đây là seed 1 chạy lại hợp lệ thay cho `E1-001_s1` bị ngắt. Tổng hợp ba seed trong `report/tables/E1_summary.md` cho biến thể `small` là `val_acc = 0.6934 ± 0.0027`, cao hơn baseline khoảng `0.0119`; tuy vậy, `Train–Val gap` trung bình là `0.1227` (chỉ dùng để xem xu hướng theo chú thích bảng) và mô hình có 38.9M tham số.
+- Quyết định: Giữ weights (`KEEP`, theo `experiments.csv`) và dùng run này thay seed 1 bị `Aborted` khi tổng hợp ba seed `small`. Giữ `small` làm phương án đối chiếu; không chọn làm mô hình chốt vì mô hình `large_bn` có kết quả tổng hợp validation cao hơn (`val_acc = 0.7060 ± 0.0023`, `macro-F1 = 0.6922 ± 0.0027`).
 
 ### [E1-001_s2] SMALL_CNN (`small`, Seed 2 — C1) — TV1 – Đoàn Trung Kiên – 2026-11-25
 - Giả thuyết: Hoàn thiện 3 seed cho `small`.
 - Thay đổi so với baseline: `model = "small"`, `seed = 2`.
 - Lệnh: (TV1 điền đúng lệnh đã chạy, dạng `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only ... --seeds ...`)
 - Kết quả: status=Completed, best_val_loss=0.918979596945528, val_acc=0.6965728615213151, val_macro_f1=0.6820279907366499, best_epoch=83, time_s=3215.931, run_dir=results/E1/E1-001_s2
-- Nhận xét: (TV1 viết) Tổng hợp 3 seed (`E1-001_s0`, `E1-009_s1`, `E1-001_s2`) theo `report/tables/E1_summary.md`: `val_acc = 0.6934 ± 0.0027` (+0.0119), khoảng cách train–val trung bình 0.123.
-- Quyết định: (TV1 viết)
+- Nhận xét: Run seed 2 đạt `val_acc = 0.6966`, `val_macro_f1 = 0.6820`, `best_val_loss = 0.9190` tại epoch 83. Tổng hợp đúng ba run hoàn tất (`E1-001_s0`, `E1-009_s1`, `E1-001_s2`) trong `report/tables/E1_summary.md` cho `val_acc = 0.6934 ± 0.0027`, `macro-F1 = 0.6773 ± 0.0045`, cao hơn baseline `0.0119`; `Train–Val gap` trung bình `0.1227` được dùng như chỉ báo xu hướng, không phải phép đo tách riêng overfit.
+- Quyết định: Giữ weights (`KEEP`, theo `experiments.csv`) và đưa seed 2 vào tổng hợp ba seed của `small`. Không chọn `small` làm mô hình chốt: biến thể này có 38.9M tham số và `large_bn` đạt validation cao hơn trong bảng E1 (`0.7060 ± 0.0023` accuracy, `0.6922 ± 0.0027` macro-F1).
 
 ### [E1-002_s1] MEDIUM_CNN (`medium`, Seed 1 — C1) — TV1 – Đoàn Trung Kiên – 2026-11-26
 - Giả thuyết: Kiểm tra độ ổn định của `medium` ở seed 1.
 - Thay đổi so với baseline: `model = "medium"`, `seed = 1`.
 - Lệnh: (TV1 điền đúng lệnh đã chạy, dạng `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only ... --seeds ...`)
 - Kết quả: status=Completed, best_val_loss=0.9076775662179576, val_acc=0.6890498746168849, val_macro_f1=0.6730121936066201, best_epoch=100, time_s=2891.625, run_dir=results/E1/E1-002_s1
-- Nhận xét: (TV1 viết)
-- Quyết định: (TV1 viết)
+- Nhận xét: Run hoàn tất 100 epoch, đạt `val_acc = 0.6890`, `val_macro_f1 = 0.6730`, `best_val_loss = 0.9077`. Sau khi đủ ba seed, `report/tables/E1_summary.md` ghi nhận `medium` đạt `val_acc = 0.6919 ± 0.0031` và `macro-F1 = 0.6730 ± 0.0059`, cao hơn baseline khoảng `0.0104`; `Train–Val gap` trung bình `0.101` cần được hiểu theo chú thích bảng vì train accuracy được đo khi bật augmentation và dropout.
+- Quyết định: Giữ weights (`KEEP`, theo `experiments.csv`) và dùng run trong tổng hợp ba seed. Giữ `medium` làm phương án gọn hơn `large_bn` (11.3M so với 20.4M tham số), nhưng không chọn làm cấu hình chốt theo kết quả E1 vì validation thấp hơn `large_bn` (`0.7060 ± 0.0023` accuracy, `0.6922 ± 0.0027` macro-F1).
 
 ### [E1-002_s2] MEDIUM_CNN (`medium`, Seed 2 — C1) — TV1 – Đoàn Trung Kiên – 2026-11-26
 - Giả thuyết: Hoàn thiện 3 seed cho `medium`.
 - Thay đổi so với baseline: `model = "medium"`, `seed = 2`.
 - Lệnh: (TV1 điền đúng lệnh đã chạy, dạng `python src/run_experiment.py --config configs/E1_arch.json --member TV1 --only ... --seeds ...`)
 - Kết quả: status=Completed, best_val_loss=0.9119477483282252, val_acc=0.6915575369183616, val_macro_f1=0.6670449351732132, best_epoch=98, time_s=3099.882, run_dir=results/E1/E1-002_s2
-- Nhận xét: (TV1 viết) Tổng hợp 3 seed (`E1-002_s0/s1/s2`) theo `report/tables/E1_summary.md`: `val_acc = 0.6919 ± 0.0031` (+0.0104), khoảng cách train–val trung bình 0.101.
-- Quyết định: (TV1 viết)
+- Nhận xét: Run seed 2 đạt `val_acc = 0.6916`, `val_macro_f1 = 0.6670`, `best_val_loss = 0.9119` tại epoch 98, gần với seed 1 (`val_acc = 0.6890`). Tổng hợp ba seed (`E1-002_s0/s1/s2`) trong `report/tables/E1_summary.md` là `val_acc = 0.6919 ± 0.0031`, `macro-F1 = 0.6730 ± 0.0059`, cao hơn baseline khoảng `0.0104`; `Train–Val gap` trung bình `0.101` chỉ được dùng để xem xu hướng theo chú thích bảng.
+- Quyết định: Giữ weights (`KEEP`, theo `experiments.csv`) và đưa seed 2 vào tổng hợp ba seed của `medium`. Giữ đây là phương án ít tham số hơn `large_bn`, nhưng không chọn làm cấu hình chốt theo kết quả E1 vì chỉ số tổng hợp validation của `large_bn` cao hơn.
 
 ### [E1-007_s1] Khảo sát loại bỏ BatchNorm (`baseline_no_bn`, Seed 1 — C2) — TV3 – Võ Hoàng Bảo – 2026-11-25
 - Giả thuyết: Kiểm chứng độc lập trên máy khác (RTX 3050, seed 1) xem mức tăng bất ngờ của `baseline_no_bn` ở `E1-007_s0` (`0.6907` trên RTX 4060 của TV2) có tái lập ổn định hay chỉ là dao động 1 seed.
