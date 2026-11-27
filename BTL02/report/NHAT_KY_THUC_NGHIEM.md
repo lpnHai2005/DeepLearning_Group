@@ -716,6 +716,20 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E2
 - Nhận xét: Chạy đủ 100 epoch (~25 phút), đỉnh ở epoch 97, lr cuối 0.000625. `val_acc = 0.6612`, **−0.0203 so với baseline** (vượt std 0.0075); `val_macro_f1 = 0.6397`, gần như không đổi so với `E5-003_s0` (0.6416). Recall/precision từng lớp: Angry 0.651/0.587, **Disgust 0.732/0.547 (41/56 ảnh, +0.357 recall)**, **Fear 0.355/0.515 (giảm 0.066)**, Happy 0.837/0.891, Sad 0.531/0.548, Surprise 0.851/0.759, Neutral 0.664/0.564. Trọng số 9.4 kéo mạnh Disgust nhưng Fear (trọng số chỉ 1.29) lại giảm recall, Sad và Happy cũng giảm; chỉ Disgust được lợi rõ (chưa xem ma trận nhầm lẫn nên chưa rõ Fear bị nhầm sang lớp nào). `train_acc_cuoi = 0.6653` gần val (0.6539 ở epoch cuối), khoảng train–val nhỏ hơn baseline nhiều vì loss có trọng số không tối ưu trực tiếp accuracy. So với `weighted_random_sampler` của TV4 (`E5-001_s0`, val 0.6824, macro-F1 0.6717, recall Disgust 0.679, Fear 0.450 theo `figures/e5_wrs_recall.csv`): sampler giữ accuracy và tăng cả hai lớp, class weight thì không.
 - Quyết định: Giữ weights (`KEEP`, `best.pt` 22.4 MB). Một seed: không chọn class weight cho E7 nếu mục tiêu là accuracy; nếu cần recall Disgust thì `weighted_random_sampler` tốt hơn. Kết luận nhóm E5 do TV1 (R của T16) tổng hợp.
 
+### T16 – Tổng hợp E5: recall lớp hiếm và đánh đổi accuracy (TV1 – R)
+
+Đã đối chiếu đủ ba run `Completed` và bảng `report/tables/E5_report.md`/`E5_summary.csv` với `tracking/experiments.csv`. Accuracy và macro-F1 trong bảng dưới lấy từ các run; recall của `E5-001_s0` được tính lại từ `val_predictions.npz`. Recall CE và class-weight được ghi trong nhận xét của TV2 cho các run tương ứng; checkpoint và prediction file của hai run này không có trong workspace hiện tại, nên các số đó vẫn chờ TV3 truy xuất độc lập.
+
+| Biến thể | Val accuracy | Macro-F1 | Recall Disgust | Recall Fear | So với CE |
+|---|---:|---:|---:|---:|---|
+| CE (`E5-003_s0`) | 68.15% | 64.16% | 37.50% (21/56) | 42.1% | Mốc |
+| Class-weight (`E5-002_s0`) | 66.12% | 63.97% | 73.2% (41/56) | 35.5% | Accuracy −2.03 điểm % |
+| WeightedRandomSampler (`E5-001_s0`) | 68.24% | 67.17% | 67.86% (38/56) | 44.96% (223/496) | Accuracy +0.08 điểm % |
+
+**Kết luận:** Class-weight tăng recall Disgust khoảng 35.7 điểm % nhưng làm recall Fear giảm khoảng 6.6 điểm % và accuracy giảm 2.03 điểm %. WeightedRandomSampler tăng Disgust khoảng 30.4 điểm % và Fear khoảng 2.9 điểm % so với CE, trong khi giữ accuracy gần như nguyên vẹn và tăng macro-F1 khoảng 3.01 điểm %. Trong ba run seed 0, sampler là lựa chọn cân bằng tốt nhất cho cả hai lớp hiếm; class-weight chỉ phù hợp nếu ưu tiên Disgust và chấp nhận suy giảm Fear/accuracy.
+
+Đây là kết luận mô tả từ một seed mỗi biến thể; CE/class-weight chạy trên RTX 4060, sampler trên RTX 3060. Recall CE/class-weight hiện chỉ có trong nhật ký run, chưa có prediction artifact tại checkout để TV3 tự tính lại. T16 R đã bàn giao phần tổng hợp; trạng thái `Verified` vẫn thuộc TV3 sau khi có thể kiểm tra dự đoán độc lập.
+
 ### [E6-004_s0] Fine-tune VGG16 pretrained ở 48 px, tái hiện "fail case" (`vgg16_48_ft`) — TV1 – Đoàn Trung Kiên – 2026-11-26
 - Giả thuyết: Ảnh 48 px quá nhỏ cho 5 lần MaxPool của VGG16 (bản đồ đặc trưng còn 1×1 ở pool5) nên mô hình sẽ kém hoặc không tốt hơn baseline dù có trọng số ImageNet ("fail case" trong `demo_report.pdf` mục 5.1).
 - Thay đổi so với baseline: `resize = 48`, `channels = 3`, `transfer = {"name": "vgg16", "pretrained": true, "freeze_backbone": false}` (134,289,223 tham số).
