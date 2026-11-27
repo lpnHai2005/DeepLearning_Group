@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+1db47ee4,2026-11-27T21:51:30+07:00,VthongVthongVthong,TV4,T27,"docs(T27): lập biên bản QA tái lập toàn repo trên bản clone sạch (127/127 pytest, 10/10 lệnh README, notebook PASS) và danh sách lỗi QA-01..QA-03",1,BTL02/report/QA_T27_report.md
 2ebb9d43,2026-11-27T21:40:51+07:00,HiCyclone,TV2,T20,"test(T20): kiểm thử độc lập trực quan hóa bộ lọc và Grad-CAM trên E1-014_s0, Pass (KT-022, TV2)",1,BTL02/tracking/test_log.csv
 81d8c6a3,2026-11-27T21:33:54+07:00,VthongVthongVthong,TV4,T24,docs(T24): hoàn thiện NHAT_KY_THUC_NGHIEM.md đủ 87/87 run (bổ sung 4 run lỗi/ngắt/thăm dò) và mục tổng hợp sơ đồ,1,BTL02/report/NHAT_KY_THUC_NGHIEM.md
 2889011e,2026-11-27T21:33:54+07:00,VthongVthongVthong,TV4,T23,"docs(T23): TV4 review chéo mục 4.3–4.5 (E7, PrivateTest, phân tích lỗi) và đính chính 4 chi tiết kỹ thuật nhỏ",1,BTL02/report/chuong4_E3_E7.md
