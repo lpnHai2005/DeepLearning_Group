@@ -1,0 +1,55 @@
+{
+  "group": "E7",
+  "task_id": "T18",
+  "ghi_chu": [
+    "Nền chính là large_bn từ E1 (3 seed trên RTX 4060: 0.7060 ± 0.0023, macro-F1: 0.6922 ± 0.0027, Train-Val: +0.1952; seed 0 E1-014_s0 = 0.7086, F1 = 0.6953).",
+    "Chuỗi 4 biến thể large_bn_* tăng dần đúng 1 yếu tố mỗi bước (giữ nguyên dropout_conv=0.2, dropout_fc=0.5 của large): large_bn (mốc cùng GPU) -> +bs_64 (E3: +0.0109) -> +leaky_relu (E2: +0.0120) -> +weighted_random (E5: macro-F1 +0.0309). Biến thể baseline_best đối chứng xem phần tăng đến từ độ sâu hay từ tùy chọn huấn luyện (lưu ý: label_smoothing=0.1 giữ lại để đối chứng khả năng giảm overfit của E4 nhưng có thể làm giảm nhẹ macro-F1).",
+    "Bước 1 (Phương án A — sàng lọc seed 0 trên cùng GPU RTX 4060 của TV2, PublicTest): TV2 chạy 4 biến thể mới với --seeds 0 và so trực tiếp với mốc cùng máy E1-014_s0 (0.7086, không cần chạy lại large_bn). Đổi slot seed 0 <-> seed 2 giữa TV2 và TV3 vì tốc độ RTX 4060; mỗi thành viên (TV1, TV2, TV3) vẫn chạy đúng 1 seed trong bộ 3 seed cuối.",
+    "Luật chọn cấu hình thắng (tiền đăng ký trước khi chạy): (1) ứng viên thắng mốc large_bn cùng máy (E1-014_s0 = 0.7086, F1 = 0.6953) nếu val_acc > 0.7086 + 0.0075 (= 0.7161); (2) nếu |Δval_acc| <= 0.0075 thì xếp theo val_macro_f1 (ưu tiên cải thiện lớp thiểu số như WRS); (3) nếu vẫn tương đương thì giữ cấu hình đơn giản hơn (ít thay đổi nhất so với large_bn).",
+    "Bước 2 (chốt đủ 3 seed cho duy nhất 1 biến thể thắng <WIN>): KHÔNG chạy lại seed 0 đã có từ Bước 1; sau khi git pull experiments.csv mới nhất, TV1 chạy --seeds 1 và TV3 chạy --seeds 2 để tự dùng chung mã E7-00x_s0/_s1/_s2. Nếu không biến thể nào thắng large_bn theo luật, sử dụng bộ 3 seed large_bn (E1-014_s0/_s1/_s2 đã Verified) cho bước TTA & Ensemble.",
+    "Luật chốt chế độ suy luận cho T19 (tiền đăng ký theo PublicTest, trước khi chạm PrivateTest): chạy src/eval_e7.py trên 3 seed cuối để so 6 tổ hợp {single_mean, ensemble} x TTA {none, flip, ten_crop} trên PublicTest; chọn duy nhất 1 tổ hợp có val_acc cao nhất (hòa thì chọn val_macro_f1 cao hơn, rồi val_nll thấp hơn) để chạy --eval-test đúng 1 lần duy nhất ở T19."
+  ],
+  "base": {
+    "model": "large",
+    "model_kwargs": {"bn": true},
+    "epochs": 100,
+    "batch_size": 128,
+    "optimizer": "sgd",
+    "lr": 0.01,
+    "momentum": 0.9,
+    "nesterov": true,
+    "weight_decay": 0.0005,
+    "scheduler": "plateau",
+    "factor": 0.5,
+    "lr_patience": 5,
+    "early_stopping_patience": 15,
+    "label_smoothing": 0.0,
+    "augmentation": "flip_affine",
+    "sampler": "none",
+    "amp": true,
+    "num_workers": 0
+  },
+  "variants": {
+    "large_bn": {},
+    "large_bn_bs64": {
+      "batch_size": 64
+    },
+    "large_bn_bs64_leaky": {
+      "model_kwargs": {"bn": true, "activation": "leaky_relu"},
+      "batch_size": 64
+    },
+    "large_bn_bs64_leaky_wrs": {
+      "model_kwargs": {"bn": true, "activation": "leaky_relu"},
+      "batch_size": 64,
+      "sampler": "weighted_random"
+    },
+    "baseline_best": {
+      "model": "baseline",
+      "model_kwargs": {"activation": "leaky_relu", "dropout_fc": 0.25},
+      "batch_size": 64,
+      "weight_decay": 0.001,
+      "label_smoothing": 0.1
+    }
+  },
+  "seeds": [0, 1, 2]
+}
