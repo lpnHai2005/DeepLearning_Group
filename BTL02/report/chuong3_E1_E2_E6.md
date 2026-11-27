@@ -14,7 +14,7 @@
 >
 > Các bảng trong chương rút gọn từ các file trên, giữ nguyên giá trị. Nhận xét chi tiết từng run nằm ở `report/NHAT_KY_THUC_NGHIEM.md`. Khi ghép báo cáo, TV4 đánh lại số bảng/hình cho thống nhất (make_tables đặt tên "Bảng 4.x", chương này dùng "Bảng 3.x").
 >
-> Mọi độ chính xác là trên tập **PublicTest (validation)**. PrivateTest chỉ dùng một lần ở mô hình cuối (T19, Chương 4).
+> Mọi độ chính xác là trên tập **PublicTest (validation)**. PrivateTest chỉ dùng một lần ở mô hình cuối (T19, Chương 4): ensemble 3 seed `large_bn` + TTA lật ngang đạt 0.7364, macro-F1 0.7322 (`results/E7/TEST_DONE.json`).
 
 ## 3.1. Các thành phần của CNN dùng trong bài
 
@@ -141,7 +141,9 @@ Quy ước cho E1–E6: mỗi thí nghiệm đổi **một yếu tố** so với
 - `baseline_no_bn` đạt 0.6941 ± 0.0033 (+0.0125): với 6 Conv và ReLU, bỏ BN không làm mạng sập mà còn cao hơn. BN chỉ cần thiết khi mạng sâu (mục 3.6.1).
 - `baseline_gap` đạt 0.6839 ± 0.0013 (+0.0024, dưới std) chỉ với 1,280,327 tham số, bằng 22% baseline. Lớp FC sau Flatten chiếm 80% tham số (mục 3.2) nhưng không làm tăng độ chính xác.
 
-**Kết luận E1.** Ứng viên kiến trúc cho E7 là `large_bn`, đã đủ 3 seed. Nên kết hợp nó với điều chuẩn của E4 vì khoảng Train − Val lớn. Dự phòng: `baseline_no_bn` và `small`, cũng đủ 3 seed. Nếu cần mô hình nhỏ thì dùng head GAP. Baseline vẫn là mốc so sánh của E2–E6.
+**Kết luận E1.** `large_bn` là kiến trúc tốt nhất của E1, đã đủ 3 seed, và là ứng viên kiến trúc chính cho E7. Dự phòng: `baseline_no_bn` và `small`, cũng đủ 3 seed. Nếu cần mô hình nhỏ thì dùng head GAP. Baseline vẫn là mốc so sánh của E2–E6.
+
+**Kết quả ở E7.** `large_bn` được giữ làm mô hình cuối: không cấu hình ghép nào ở E7 vượt được nó (mục 3.9), nên mô hình cuối là chính 3 seed `E1-014_s0`–`_s2`. Khoảng Train − Val lớn (0.1952) chưa được xử lý, vì E7 không thử thêm điều chuẩn của E4 trên `large_bn`; đây là hướng cải thiện còn để ngỏ.
 
 ## 3.7. Thực nghiệm E2 – Hàm kích hoạt và vanishing gradient
 
@@ -189,7 +191,9 @@ Quy ước cho E1–E6: mỗi thí nghiệm đổi **một yếu tố** so với
 - `tanh` (0.6414) và `tanh_no_bn` (0.6523) kém ReLU 3–4 điểm.
 - `relu_no_bn` (0.6913) khớp kết quả `baseline_no_bn` của E1 (0.6941 ± 0.0033) đo trên máy khác, xác nhận chéo rằng ở 6 Conv với ReLU, bỏ BN không gây hại.
 
-**Kết luận E2.** Giữ họ ReLU cho E7. `leaky_relu` và `gelu` là ứng viên thay ReLU, nhưng cần thêm seed 1, 2 trước khi chọn. Loại `sigmoid`, `tanh`, `elu`. `E2-009_s0` cùng Hình 3.4 là bằng chứng vanishing gradient của Sigmoid so với ReLU mà đề bài yêu cầu.
+**Kết luận E2.** Giữ họ ReLU. `leaky_relu` và `gelu` nhỉnh hơn ReLU trên baseline nhưng mới 1 seed. Loại `sigmoid`, `tanh`, `elu`. `E2-009_s0` cùng Hình 3.4 là bằng chứng vanishing gradient của Sigmoid so với ReLU mà đề bài yêu cầu.
+
+**Kết quả ở E7.** `leaky_relu` được thử trực tiếp trên `large_bn` thay vì chạy thêm seed trên baseline: `large_bn_bs64_leaky` (`E7-002_s0`) đạt 0.6910, thấp hơn `large_bn_bs64` không đổi kích hoạt (0.6971) và thấp hơn `large_bn` (0.7086, cùng máy, cùng seed 0). Mức lợi của LeakyReLU trên baseline không chuyển sang được mạng sâu có BN, nên mô hình cuối giữ ReLU. `gelu` không được thử ở E7.
 
 ## 3.8. Thực nghiệm E6 – Transfer learning
 
@@ -220,15 +224,33 @@ Hậu tố `_ft`: pretrained ImageNet, fine-tune toàn bộ. `_scratch`: khởi 
 
 **Kết luận E6.** Không biến thể transfer nào vừa hơn baseline rõ ràng vừa rẻ. VGG16 hơn 0.012–0.016 nhưng nặng gấp 22.9 lần; ResNet18 fine-tune chỉ hơn 0.0059, dưới std. E7 giữ họ CNN của nhóm làm mô hình chính. Nếu cần đa dạng cho ensemble, `resnet18_96_ft` là ứng viên rẻ nhất, nhưng phải chạy đủ 3 seed trước khi chọn.
 
-## 3.9. Tóm tắt các quyết định chuyển sang E7
+**Kết quả ở E7.** Không dùng mô hình transfer nào. Ensemble cuối gồm 3 seed của cùng kiến trúc `large_bn` (20.4 M tham số mỗi mô hình), đạt 0.7250 trên PublicTest, cao hơn mọi biến thể E6 (tốt nhất 0.6977) dù mỗi mô hình nhẹ hơn VGG16 6.6 lần. `resnet18_96_ft` không được chạy thêm seed.
 
-| Thí nghiệm | Kết luận chính | Đưa vào E7 |
-|---|---|---|
-| E1 | BN là điều kiện để mạng sâu học được; `large_bn` 0.7060 ± 0.0023 cao nhất; tăng sâu tốt hơn tăng rộng; GAP giảm 78% tham số mà không mất độ chính xác | `large_bn` làm kiến trúc chính, kèm điều chuẩn E4; `baseline_no_bn`, `small` dự phòng |
-| E2 | Sigmoid không BN gây vanishing gradient (lớp đầu nhỏ hơn lớp ra khoảng 2.5 triệu lần); BN cứu gradient nhưng sigmoid vẫn thiếu khớp; họ ReLU tốt nhất | Giữ ReLU; thử `leaky_relu`/`gelu` nếu đủ 3 seed |
-| E6 | Transfer không hơn rõ ràng so với CNN nhỏ; VGG16 48 px tốn 100.7 M tham số vô ích; đóng băng backbone thiếu khớp | Không dùng làm mô hình chính; `resnet18_96_ft` chỉ là ứng viên ensemble |
+## 3.9. Tóm tắt và kết quả khi chuyển sang E7
 
-Lưu ý: kết quả E2–E6 đo trên baseline nên chưa chắc còn đúng khi đổi sang `large_bn`. E7 nên so cả "baseline + lựa chọn tốt nhất" lẫn "large_bn + lựa chọn tốt nhất", mỗi bên 3 seed, thay vì cộng dồn các mức cải thiện.
+**Bảng 3.9.** Kết luận của E1, E2, E6 và điều thực sự xảy ra ở E7 (chi tiết E7 ở Chương 4, mục 4.3–4.4).
+
+| Thí nghiệm | Kết luận chính | Đề xuất cho E7 | Kết quả ở E7 |
+|---|---|---|---|
+| E1 | BN là điều kiện để mạng sâu học được; `large_bn` 0.7060 ± 0.0023 cao nhất; tăng sâu tốt hơn tăng rộng; GAP giảm 78% tham số mà không mất độ chính xác | `large_bn` làm kiến trúc chính; `baseline_no_bn`, `small` dự phòng | **Giữ `large_bn`**: không cấu hình ghép nào vượt nó; mô hình cuối là 3 seed `E1-014_s0`–`_s2` |
+| E2 | Sigmoid không BN gây vanishing gradient (lớp đầu nhỏ hơn lớp ra khoảng 2.5 triệu lần); BN cứu gradient nhưng sigmoid vẫn thiếu khớp; họ ReLU tốt nhất | Giữ ReLU; thử `leaky_relu`/`gelu` | `leaky_relu` trên `large_bn` giảm còn 0.6910 → **giữ ReLU** |
+| E6 | Transfer không hơn rõ ràng so với CNN nhỏ; VGG16 48 px tốn 100.7 M tham số vô ích; đóng băng backbone thiếu khớp | Không dùng làm mô hình chính; `resnet18_96_ft` chỉ là ứng viên ensemble | **Không dùng transfer**; ensemble 3 seed `large_bn` thay cho ensemble khác kiến trúc |
+
+**Cách E7 kiểm chứng.** Vì kết quả E2–E6 đo trên baseline nên chưa chắc còn đúng trên `large_bn`, E7 không cộng dồn các mức cải thiện mà chạy lại từng tổ hợp. Bước 1 chạy seed 0 trên cùng một máy (RTX 4060) và so với `large_bn` cùng máy, cùng seed (`E1-014_s0`: 0.7086, macro-F1 0.6953), theo luật đặt trước trong `configs/E7_final.json`: thắng khi val_acc > 0.7086 + 0.0075 = 0.7161; nếu chênh không quá 0.0075 thì xét macro-F1.
+
+**Bảng 3.10.** Bước 1 của E7 (`tracking/experiments.csv`, 1 seed mỗi dòng).
+
+| Biến thể | Thay đổi so với `large_bn` | Val acc | Val macro-F1 | Kết luận |
+|---|---|---|---|---|
+| `large_bn` (`E1-014_s0`, mốc) | — | 0.7086 | 0.6953 | mốc |
+| `large_bn_bs64` (`E7-001_s0`) | batch 64 (E3) | 0.6971 | 0.6778 | thấp hơn 0.0114 |
+| `large_bn_bs64_leaky` (`E7-002_s0`) | + LeakyReLU (E2) | 0.6910 | 0.6725 | thấp hơn 0.0176 |
+| `large_bn_bs64_leaky_wrs` (`E7-003_s0`) | + WeightedRandomSampler (E5) | 0.6935 | 0.6874 | thấp hơn 0.0150 |
+| `baseline_best` (`E7-004_s0`) | baseline + LeakyReLU, dropout FC 0.25, batch 64, weight decay 1e-3, label smoothing 0.1 | 0.7013 | 0.6784 | trong ±0.0075 nhưng macro-F1 thấp hơn |
+
+Không biến thể nào thắng, nên theo luật, Bước 2 dùng luôn 3 seed `large_bn`. Các mức lợi đo trên baseline (batch 64 +0.0109, LeakyReLU +0.0120) không lặp lại trên `large_bn`; `baseline_best` gom các lựa chọn tốt nhất của E2–E4 cũng chỉ ngang `large_bn` một seed. Đây chỉ là sàng lọc 1 seed, nên các chênh lệch nhỏ hơn std chưa đủ để kết luận cấu hình nào kém hơn hẳn, nhưng đủ để không có lý do thay `large_bn`.
+
+**Mô hình cuối** (Chương 4): ensemble 3 seed `large_bn` + TTA lật ngang. Trên PublicTest, một mô hình đạt 0.7060 ± 0.0023, ensemble + lật đạt 0.7250 (macro-F1 0.7106; `results/E7/e7_val_summary.json`). Trên PrivateTest, chạy đúng một lần: 0.7364, macro-F1 0.7322 (`results/E7/TEST_DONE.json`).
 
 ## Phụ lục 3.A. Lệnh tái lập
 
@@ -243,4 +265,8 @@ python -m src.visual.architecture_diagram
 python src/visual/grad_norms.py --group E2 --epoch 1
 # Chạy lại một biến thể, ví dụ large_bn 3 seed
 python src/run_experiment.py --config configs/E1_arch.json --member TVx --only large_bn --seeds 0 1 2
+# Bước 1 của E7 (Bảng 3.10)
+python src/run_experiment.py --config configs/E7_final.json --member TVx --only large_bn_bs64 large_bn_bs64_leaky large_bn_bs64_leaky_wrs baseline_best --seeds 0
+# TTA và ensemble 3 seed trên PublicTest (Chương 4)
+python src/eval_e7.py --run-dirs results/E1/E1-014_s0 results/E1/E1-014_s1 results/E1/E1-014_s2 --tta none flip ten_crop
 ```
