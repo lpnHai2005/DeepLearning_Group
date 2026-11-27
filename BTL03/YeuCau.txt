@@ -1,0 +1,2 @@
++ Chuyển code từ keras sang pytorch
++ Đính kèm file báo cáo + code đã chuyển + file liên quan
