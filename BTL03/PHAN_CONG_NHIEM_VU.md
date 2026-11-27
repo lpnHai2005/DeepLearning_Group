@@ -65,7 +65,7 @@ Khi xong giai đoạn 1, TV2 đẩy 5 notebook lên repo (đã chạy, còn outp
 | TV3 – Võ Hoàng Bảo | `4. Training Utilities/3_Emotion_Reg_CNN`, `5. Others/2_obj_detection` | `3_Emotion_Reg_CNN` + `4. Training Utilities/2_Human_Gender_CNN` (augmentation thay `ImageDataGenerator` bằng `torchvision.transforms`); `1_MNIST_CNN` | |
 | TV4 – Huỳnh Viễn Thông | `5. Others/1_segnet` | `1_MNIST_CNN` (thêm `ConvTranspose2d` / `Upsample`, loss theo từng pixel) | Viết báo cáo, ghép phần của mọi người. Ghép luôn 5 phần của TV2 trong lúc chờ giai đoạn 2. |
 
-TV2 trong giai đoạn 2: viết `DuLieu.md`, hỗ trợ ai bị kẹt, Run All kiểm tra từng notebook, gom file và nộp.
+TV2 trong giai đoạn 2: hỗ trợ ai bị kẹt, Run All kiểm tra từng notebook, gom file và nộp.
 
 Lưu ý khi chuyển:
 
@@ -111,7 +111,7 @@ Ngày làm: (nhóm trưởng điền).
 | 8:00–8:30 | TV1, TV3, TV4 cài môi trường PyTorch, kéo repo, giải nén dữ liệu, đọc khuôn | Mở chạy được 5 notebook khuôn |
 | 8:30–12:00 | Chuyển code theo khuôn, chạy thử với 1–2 epoch | Mọi notebook chạy hết không lỗi |
 | 13:00–16:00 | Chạy đủ epoch, lưu notebook còn output. Viết phần báo cáo của mình. | **16:00**: đẩy notebook lên repo, gửi phần báo cáo cho TV4 |
-| 16:00–18:00 | TV4 ghép báo cáo. TV1 làm `requirements.txt` rồi đọc soát báo cáo cùng TV4. TV2 Run All kiểm tra từng notebook, viết `DuLieu.md`. | **18:00**: báo cáo hoàn chỉnh |
+| 16:00–18:00 | TV4 ghép báo cáo. TV1 làm `requirements.txt` rồi đọc soát báo cáo cùng TV4. TV2 Run All kiểm tra từng notebook. | **18:00**: báo cáo hoàn chỉnh |
 | 18:00–19:00 | TV2 rà lại, nén theo cấu trúc mục 7 và nộp | Bài đã nộp |
 
 Nếu một notebook đến 16:00 vẫn chưa chạy được, người làm báo ngay trong nhóm. TV2 hỗ trợ trực tiếp.
@@ -130,8 +130,7 @@ BTL03_Nhom/
 │   ├── 3. CNN + LSTM/...
 │   ├── 4. Training Utilities/...  # kèm ảnh checkpoint, TensorBoard của bản PyTorch
 │   └── 5. Others/...              # kèm test.jpg
-├── requirements.txt            # phiên bản python, torch, torchvision, numpy, scikit-learn, scikit-image, matplotlib, seaborn
-└── DuLieu.md                   # cách lấy dữ liệu (nội dung mục 3)
+└── requirements.txt            # phiên bản python, torch, torchvision, numpy, scikit-learn, scikit-image, matplotlib, seaborn
 ```
 
-Không nén kèm dữ liệu (`.npy`, `.csv`, hai file zip khoảng 127 MB) và checkpoint lớn. Chỉ ghi cách lấy trong `DuLieu.md`, trừ khi giảng viên yêu cầu nộp kèm.
+Không nén kèm dữ liệu (`.npy`, `.csv`, hai file zip khoảng 127 MB) và checkpoint lớn, trừ khi giảng viên yêu cầu nộp kèm.
