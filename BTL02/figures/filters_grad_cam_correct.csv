@@ -1,0 +1,8 @@
+sample_idx,true_idx,true_label,pred_idx,pred_label,confidence,cam_mean,cam_max,cam_peak_y,cam_peak_x,layer_name
+248,0,Angry,0,Angry,0.999999,0.209356,1.0,20,27,conv4_4
+560,1,Disgust,1,Disgust,0.999998,0.334509,1.0,27,28,conv4_4
+1535,2,Fear,2,Fear,0.999997,0.285647,1.0,28,20,conv4_4
+1623,3,Happy,3,Happy,1.0,0.235899,1.0,35,27,conv4_4
+3283,4,Sad,4,Sad,0.999763,0.326433,1.0,20,27,conv4_4
+2338,5,Surprise,5,Surprise,1.0,0.082765,1.0,11,11,conv4_4
+1953,6,Neutral,6,Neutral,0.999998,0.313963,1.0,20,28,conv4_4

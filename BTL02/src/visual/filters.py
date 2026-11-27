@@ -27,6 +27,13 @@ import torch.nn.functional as F
 EMOTIONS = ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral"]
 
 
+def _model_device(model: nn.Module) -> torch.device:
+    """Lấy thiết bị hiện tại của mô hình (CPU hoặc CUDA)."""
+    for param in model.parameters():
+        return param.device
+    return torch.device("cpu")
+
+
 def _get_target_layer(model: nn.Module, layer: Optional[Union[str, nn.Module]] = None) -> Tuple[nn.Module, str]:
     """Tìm module lớp conv mục tiêu và tên của nó."""
     if layer is None or layer == "last":
@@ -167,7 +174,8 @@ def feature_maps(
 
     if x.ndim == 3:
         x = x.unsqueeze(0)
-    x_in = x[:1].detach().clone()
+    device = _model_device(model)
+    x_in = x[:1].detach().to(device).clone()
 
     act_out = []
 
@@ -230,6 +238,7 @@ def activation_max(
     input_shape: Tuple[int, int, int] = (1, 48, 48),
     out_path: Optional[Union[str, Path]] = None,
     data_path: Optional[Union[str, Path]] = None,
+    seed: Optional[int] = 42,
 ) -> Tuple[plt.Figure, np.ndarray]:
     """3. Cực đại hóa kích hoạt (Activation Maximization).
 
@@ -261,11 +270,14 @@ def activation_max(
     else:
         raise ValueError("target_type phải là 'filter' hoặc 'class'.")
 
+    device = _model_device(model)
     optimized_imgs = []
 
     for target in target_indices:
-        # Khởi tạo ảnh ngẫu nhiên lá (leaf tensor) quanh giá trị trung bình 0.5
-        x = (torch.randn(1, *input_shape) * 0.05 + 0.5).clamp(0.0, 1.0).requires_grad_(True)
+        # Khởi tạo ảnh ngẫu nhiên lá (leaf tensor) quanh giá trị trung bình 0.5 trên đúng device của model
+        if seed is not None:
+            torch.manual_seed(seed + int(target))
+        x = (torch.randn(1, *input_shape, device=device) * 0.05 + 0.5).clamp(0.0, 1.0).detach().requires_grad_(True)
 
         act_holder = []
 
@@ -333,31 +345,20 @@ def activation_max(
     return fig, optimized_imgs_arr
 
 
-def grad_cam(
+def compute_grad_cam_map(
     model: nn.Module,
     x: torch.Tensor,
     target_class: Optional[int] = None,
     layer: Optional[Union[str, nn.Module]] = "last",
-    out_path: Optional[Union[str, Path]] = None,
-    data_path: Optional[Union[str, Path]] = None,
-) -> Tuple[plt.Figure, np.ndarray]:
-    """4. Grad-CAM (Gradient-weighted Class Activation Mapping).
-
-    Tính bản đồ nhiệt vùng chú ý tại lớp conv cuối cho ảnh đầu vào x đối với
-    lớp dự đoán (hoặc `target_class` được chỉ định).
-
-    Args:
-        model: Mô hình PyTorch.
-        x: Tensor ảnh (1, C, H, W) hoặc (C, H, W).
-        target_class: Lớp cần giải thích (0..6). Nếu None, tự động lấy lớp có logit cao nhất.
-        layer: Lớp conv để tính CAM (mặc định conv cuối).
-    """
+) -> Tuple[np.ndarray, int, float, str]:
+    """Tính bản đồ nhiệt Grad-CAM chuẩn hóa [0, 1] cùng (pred_class, pred_prob, layer_name)."""
     model.eval()
     conv_layer, layer_name = _get_target_layer(model, layer)
 
     if x.ndim == 3:
         x = x.unsqueeze(0)
-    x_in = x[:1].detach().clone().requires_grad_(True)
+    device = _model_device(model)
+    x_in = x[:1].detach().to(device).clone().requires_grad_(True)
 
     activations = []
     gradients = []
@@ -372,7 +373,9 @@ def grad_cam(
     h2 = conv_layer.register_full_backward_hook(bwd_hook)
 
     logits = model(x_in)
+    probs = torch.softmax(logits.detach(), dim=-1)[0]
     pred_class = int(logits.argmax(dim=-1).item())
+    pred_prob = float(probs[pred_class].item())
     c = pred_class if target_class is None else target_class
 
     score = logits[0, c]
@@ -401,9 +404,35 @@ def grad_cam(
     # Chuẩn hóa về [0, 1]
     cam_min, cam_max = cam_np.min(), cam_np.max()
     cam_norm = (cam_np - cam_min) / (cam_max - cam_min + 1e-8)
+    return cam_norm, pred_class, pred_prob, layer_name
+
+
+def grad_cam(
+    model: nn.Module,
+    x: torch.Tensor,
+    target_class: Optional[int] = None,
+    layer: Optional[Union[str, nn.Module]] = "last",
+    out_path: Optional[Union[str, Path]] = None,
+    data_path: Optional[Union[str, Path]] = None,
+) -> Tuple[plt.Figure, np.ndarray]:
+    """4. Grad-CAM (Gradient-weighted Class Activation Mapping).
+
+    Tính bản đồ nhiệt vùng chú ý tại lớp conv cuối cho ảnh đầu vào x đối với
+    lớp dự đoán (hoặc `target_class` được chỉ định).
+
+    Args:
+        model: Mô hình PyTorch.
+        x: Tensor ảnh (1, C, H, W) hoặc (C, H, W).
+        target_class: Lớp cần giải thích (0..6). Nếu None, tự động lấy lớp có logit cao nhất.
+        layer: Lớp conv để tính CAM (mặc định conv cuối).
+    """
+    cam_norm, pred_class, _pred_prob, layer_name = compute_grad_cam_map(
+        model, x, target_class=target_class, layer=layer
+    )
+    c = pred_class if target_class is None else target_class
 
     # Tạo ảnh overlay
-    raw_img = x_in.detach().cpu().squeeze().numpy()
+    raw_img = (x[:1] if x.ndim == 4 else x).detach().cpu().squeeze().numpy()
     fig, axes = plt.subplots(1, 3, figsize=(7.5, 2.6))
 
     axes[0].imshow(raw_img, cmap="gray")
@@ -429,3 +458,89 @@ def grad_cam(
         _save_array_data(cam_norm, data_path)
 
     return fig, cam_norm
+
+
+def grad_cam_grid(
+    model: nn.Module,
+    samples: list,
+    layer: Optional[Union[str, nn.Module]] = "last",
+    out_path: Optional[Union[str, Path]] = None,
+    data_path: Optional[Union[str, Path]] = None,
+    title: Optional[str] = None,
+) -> Tuple[plt.Figure, list]:
+    """Vẽ lưới Grad-CAM (hàng trên: ảnh gốc, hàng dưới: overlay) cho nhiều ca mẫu PublicTest."""
+    if not samples:
+        raise ValueError("Danh sách samples cho grad_cam_grid không được rỗng.")
+
+    n = len(samples)
+    fig, axes = plt.subplots(2, n, figsize=(max(n * 2.1, 4.5), 5.3), squeeze=False)
+    records = []
+    cam_maps = []
+    layer_name = ""
+
+    for col, item in enumerate(samples):
+        x = item["x"]
+        sample_idx = item.get("sample_idx", col)
+        true_idx = item.get("true_idx")
+        true_label = item.get("true_label")
+        if true_label is None and true_idx is not None and 0 <= int(true_idx) < len(EMOTIONS):
+            true_label = EMOTIONS[int(true_idx)]
+
+        cam_norm, pred_idx, pred_prob, layer_name = compute_grad_cam_map(
+            model, x, target_class=item.get("target_class"), layer=layer
+        )
+        pred_label = EMOTIONS[pred_idx] if pred_idx < len(EMOTIONS) else str(pred_idx)
+        raw_img = (x[:1] if x.ndim == 4 else x).detach().cpu().squeeze().numpy()
+
+        peak_flat = int(np.argmax(cam_norm))
+        peak_y, peak_x = divmod(peak_flat, cam_norm.shape[1])
+        is_correct = true_idx is not None and int(true_idx) == pred_idx
+
+        axes[0, col].imshow(raw_img, cmap="gray")
+        top_title = f"#{sample_idx}\nTrue: {true_label}" if true_label is not None else f"#{sample_idx}"
+        axes[0, col].set_title(top_title, fontsize=8.5)
+        axes[0, col].axis("off")
+
+        axes[1, col].imshow(raw_img, cmap="gray")
+        axes[1, col].imshow(cam_norm, cmap="jet", alpha=0.5)
+        pred_color = "#1b7a2f" if is_correct else ("#b71c1c" if true_idx is not None else "black")
+        axes[1, col].set_title(f"Pred: {pred_label}\n({pred_prob:.1%})", fontsize=8.5, color=pred_color)
+        axes[1, col].axis("off")
+
+        cam_maps.append(cam_norm)
+        records.append({
+            "sample_idx": int(sample_idx),
+            "true_idx": "" if true_idx is None else int(true_idx),
+            "true_label": "" if true_label is None else str(true_label),
+            "pred_idx": int(pred_idx),
+            "pred_label": pred_label,
+            "confidence": round(pred_prob, 6),
+            "cam_mean": round(float(cam_norm.mean()), 6),
+            "cam_max": round(float(cam_norm.max()), 6),
+            "cam_peak_y": int(peak_y),
+            "cam_peak_x": int(peak_x),
+            "layer_name": layer_name,
+        })
+
+    suptitle = title or f"Grad-CAM tại lớp {layer_name} ({n} mẫu PublicTest)"
+    fig.suptitle(suptitle, fontsize=11, y=0.97)
+    fig.subplots_adjust(left=0.02, right=0.98, top=0.83, bottom=0.03, wspace=0.12, hspace=0.40)
+
+    if out_path:
+        p = Path(out_path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        fig.savefig(p, dpi=150, bbox_inches="tight")
+
+    if data_path:
+        dp = Path(data_path)
+        dp.parent.mkdir(parents=True, exist_ok=True)
+        if dp.suffix == ".npz":
+            np.savez_compressed(dp, cams=np.array(cam_maps))
+        else:
+            fieldnames = list(records[0].keys())
+            with open(dp, "w", newline="", encoding="utf-8") as f:
+                w = csv.DictWriter(f, fieldnames=fieldnames)
+                w.writeheader()
+                w.writerows(records)
+
+    return fig, records

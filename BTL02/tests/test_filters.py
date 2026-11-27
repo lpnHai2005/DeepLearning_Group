@@ -15,6 +15,7 @@ from src.visual.filters import (
     activation_max,
     feature_maps,
     grad_cam,
+    grad_cam_grid,
     plot_weights,
 )
 
@@ -182,3 +183,26 @@ def test_visualize_filters_cli_with_run_dir_large_bn(tmp_path):
     assert res.returncode == 0, f"Lỗi chạy CLI --run-dir: {res.stderr}\nSTDOUT: {res.stdout}"
     assert (out_dir / "filters_weights_first.png").exists()
     assert (out_dir / "filters_weights_last.png").exists()
+
+
+def test_grad_cam_grid(tiny_model, tmp_path):
+    """Kiểm tra lưới Grad-CAM cho nhiều ca mẫu và xuất file CSV metadata."""
+    import csv
+
+    samples = [
+        {"x": torch.randn(1, 1, 48, 48), "sample_idx": 10, "true_idx": 0, "true_label": "Angry"},
+        {"x": torch.randn(1, 1, 48, 48), "sample_idx": 25, "true_idx": 3, "true_label": "Happy"},
+    ]
+    out_png = tmp_path / "grad_cam_grid.png"
+    out_csv = tmp_path / "grad_cam_grid.csv"
+    fig, records = grad_cam_grid(tiny_model, samples, layer="last", out_path=out_png, data_path=out_csv)
+
+    assert out_png.exists() and out_png.stat().st_size > 0
+    assert out_csv.exists() and out_csv.stat().st_size > 0
+    assert len(records) == 2
+    assert records[0]["sample_idx"] == 10
+    assert records[1]["true_label"] == "Happy"
+    with open(out_csv, "r", encoding="utf-8") as f:
+        rows = list(csv.DictReader(f))
+    assert len(rows) == 2
+    assert rows[0]["layer_name"] == tiny_model.last_conv_name
