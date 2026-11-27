@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+2d553810,2026-11-27T22:37:17+07:00,hoangbao2908,TV3,T21,"docs(T21): TV3 review chéo C2 mục E4, E5 trong chuong4_E4_E5.md khớp 100% nguồn số liệu và hình vẽ",1,BTL02/report/chuong4_E4_E5.md
 6a518f33,2026-11-27T22:23:44+07:00,TrungKien2005,TV1,T21,docs(T21): đồng bộ trạng thái Completed trong tracking,1,BTL02/tracking/tasks.csv
 e5b4c7cc,2026-11-27T22:23:09+07:00,TrungKien2005,TV1,T21,done(T21): hoàn tất Chương 2 dữ liệu và mục E4 E5,2,BTL02/report/chuong2_du_lieu.md; BTL02/report/chuong4_E4_E5.md
 306b358b,2026-11-27T22:18:25+07:00,HiCyclone,TV2,T22,"docs(T22): cập nhật kết luận E1, E2, E6 và mục 3.9 theo kết quả E7 và PrivateTest đã hoàn tất",1,BTL02/report/chuong3_E1_E2_E6.md
