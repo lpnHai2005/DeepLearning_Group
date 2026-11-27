@@ -1,4 +1,6 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+6d7aa53b,2026-11-27T11:26:26+07:00,hoangbao2908,TV3,T18,"feat(T18): viết src/eval_e7.py tổng hợp 3 seed, TTA, ensemble trên PublicTest và xuất ca Grad-CAM kèm unit test",2,BTL02/src/eval_e7.py; BTL02/tests/test_eval_e7.py
+f871ba3c,2026-11-27T11:26:26+07:00,hoangbao2908,TV3,T19,"feat(T19): thêm cờ --eval-test, cơ chế khóa TEST_DONE.json một lần duy nhất và unit test",2,BTL02/src/run_experiment.py; BTL02/tests/test_eval_test.py
 5a817c2d,2026-11-27T11:22:03+07:00,hoangbao2908,TV3,T14,docs(T14): làm tròn chuẩn F1 AdamW 0.5631 ở kết luận E3 và sửa lệnh tái sinh e3_comparison trong manifest,2,BTL02/report/NHAT_KY_THUC_NGHIEM.md; BTL02/tracking/figures_manifest.csv
 d14ef3ed,2026-11-27T10:47:07+07:00,TrungKien2005,TV1,T15,done(T15): tổng hợp kết quả E4 và kết luận quá khớp,2,BTL02/report/NHAT_KY_THUC_NGHIEM.md; BTL02/tracking/tasks.csv
 6e47da90,2026-11-27T09:34:30+07:00,TrungKien2005,TV1,T13,test(T13): kiểm thử độc lập sigmoid và chuẩn gradient,2,BTL02/tracking/tasks.csv; BTL02/tracking/test_log.csv
