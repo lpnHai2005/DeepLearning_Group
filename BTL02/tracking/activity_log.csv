@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+0ea692fe,2026-11-28T02:36:39+07:00,TrungKien2005,TV1,T01,"test(T01): kiểm thử độc lập khung theo dõi trên clone sạch, Sheets khớp CSV, ma trận 28/28, Pass (KT-029, TV1)",2,BTL02/tracking/tasks.csv; BTL02/tracking/test_log.csv
 6d0cf9b1,2026-11-28T02:18:21+07:00,TrungKien2005,TV1,T01,fix(T01): đồng bộ hostname và GPU TV1,1,BTL02/tracking/members.csv
 4903d5b6,2026-11-28T01:06:44+07:00,TrungKien2005,TV1,T26,"docs(T26): thêm 3 slide TV1 về dữ liệu, E4, E5 kèm bảng dò nguồn",4,BTL02/report/slides/Slide_BTL02_TV1.pdf; BTL02/report/slides/Slide_BTL02_TV1.pptx; BTL02/report/slides/TV1_slide_nguon.md; BTL02/report/slides/build_slides_tv1.py
 a6cf4bba,2026-11-28T00:08:03+07:00,TrungKien2005,TV1,T24,docs(T24): bổ sung nhận xét và quyết định run E1 của TV1,1,BTL02/report/NHAT_KY_THUC_NGHIEM.md
