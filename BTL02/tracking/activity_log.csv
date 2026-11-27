@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+ff026dad,2026-11-27T23:23:29+07:00,hoangbao2908,TV3,T23,"done(T23): khắc phục trọn vẹn 4 lỗi và 4 góp ý KT-027 trong Chương 4 (StepLR, 25.9s, luật E7, ten_crop), bàn giao TV2 kiểm lại",1,BTL02/report/chuong4_E3_E7.md
 f5eeb701,2026-11-27T23:14:07+07:00,HiCyclone,TV2,T23,"test(T23): kiểm thử độc lập Chương 4, Failed do 2 số không truy vết và mô tả sai luật E7 (KT-027, TV2)",1,BTL02/tracking/test_log.csv
 867df524,2026-11-27T23:01:38+07:00,hoangbao2908,TV3,T23,"done(T23): hoàn thiện Chương 4 (E3, E7, PrivateTest, phân tích lỗi) sau khi xử lý trọn vẹn review C1/C2, bàn giao TV2 kiểm thử",1,BTL02/report/chuong4_E3_E7.md
 a9ec8cd6,2026-11-27T22:52:40+07:00,TrungKien2005,TV1,T23,docs(T23): ghi nhận review chéo E3 của TV1,1,BTL02/report/chuong4_E3_E7.md
