@@ -1,4 +1,7 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+81d8c6a3,2026-11-27T21:33:54+07:00,VthongVthongVthong,TV4,T24,docs(T24): hoàn thiện NHAT_KY_THUC_NGHIEM.md đủ 87/87 run (bổ sung 4 run lỗi/ngắt/thăm dò) và mục tổng hợp sơ đồ,1,BTL02/report/NHAT_KY_THUC_NGHIEM.md
+2889011e,2026-11-27T21:33:54+07:00,VthongVthongVthong,TV4,T23,"docs(T23): TV4 review chéo mục 4.3–4.5 (E7, PrivateTest, phân tích lỗi) và đính chính 4 chi tiết kỹ thuật nhỏ",1,BTL02/report/chuong4_E3_E7.md
+16b3acbf,2026-11-27T21:33:54+07:00,VthongVthongVthong,TV4,T22,"docs(T22): TV4 review chéo mục 3.6–3.8 (E1, E2, E6) khớp 100% nguồn số liệu",1,BTL02/report/chuong3_E1_E2_E6.md
 e54d6232,2026-11-27T21:32:47+07:00,hoangbao2908,TV3,T20,docs(T20): TV3 xác nhận C2 danh sách ca đúng/sai Grad-CAM khớp results/E7/e7_gradcam_cases.csv,1,BTL02/report/NHAT_KY_THUC_NGHIEM.md
 9f0733f4,2026-11-27T21:31:54+07:00,hoangbao2908,TV3,T19,"done(T19): hoàn thành đánh giá PrivateTest đúng 1 lần (73.64%), đủ xác nhận C1/C2 và khóa TEST_DONE.json",1,BTL02/report/NHAT_KY_THUC_NGHIEM.md
 57eacf2d,2026-11-27T21:23:46+07:00,VthongVthongVthong,TV4,T19,docs(T19): TV4 xác nhận C2 kiểm khóa TEST_DONE.json và chạy lại --eval-test bị từ chối (exit code 1),1,BTL02/report/NHAT_KY_THUC_NGHIEM.md
