@@ -1,4 +1,6 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+6a518f33,2026-11-27T22:23:44+07:00,TrungKien2005,TV1,T21,docs(T21): đồng bộ trạng thái Completed trong tracking,1,BTL02/tracking/tasks.csv
+e5b4c7cc,2026-11-27T22:23:09+07:00,TrungKien2005,TV1,T21,done(T21): hoàn tất Chương 2 dữ liệu và mục E4 E5,2,BTL02/report/chuong2_du_lieu.md; BTL02/report/chuong4_E4_E5.md
 306b358b,2026-11-27T22:18:25+07:00,HiCyclone,TV2,T22,"docs(T22): cập nhật kết luận E1, E2, E6 và mục 3.9 theo kết quả E7 và PrivateTest đã hoàn tất",1,BTL02/report/chuong3_E1_E2_E6.md
 0b2a6e20,2026-11-27T22:05:19+07:00,TrungKien2005,TV1,(không có mã nhiệm vụ),Merge branch 'main' of https://github.com/lpnHai2005/DeepLearning_Group,0,
 7f51f6f2,2026-11-27T22:04:25+07:00,TrungKien2005,TV1,T19,"merge(T19): hợp nhất cập nhật main, giữ mã KT-024 duy nhất",0,
