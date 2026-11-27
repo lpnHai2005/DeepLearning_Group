@@ -20,7 +20,9 @@ Mỗi (variant, seed) là một run: results/<group>/<group>-NNN_s<seed>/ gồm 
 commit, sha256 dữ liệu), run.log, history.csv, metrics.json, best.pt (chỉ run hợp lệ), curves.png + curves.csv (đường
 cong Train/Val loss, acc vẽ từ history.csv bằng plots.py của T08, kèm 1 dòng tracking/figures_manifest.csv; run chưa
 xong epoch nào thì không có). Sau mỗi run, code tự nối 1 dòng vào tracking/experiments.csv (kể cả run lỗi/bị ngắt). Chạy lại sau lỗi luôn lấy exp_id mới, không ghi đè.
-Chưa có --eval-test: PrivateTest chạy đúng 1 lần ở nhiệm vụ T19 (TV3).
+Đánh giá PrivateTest đúng 1 lần duy nhất ở nhiệm vụ T19 (phần --eval-test phụ trách: TV3 – Võ Hoàng Bảo):
+    python src/run_experiment.py --eval-test --member TV3 --run-dirs results/E7/E7-001_s0 results/E7/E7-001_s1 results/E7/E7-001_s2 --tta flip
+Lệnh tự tạo results/E7/TEST_DONE.json và từ chối mọi lần chạy thứ hai nếu file khóa đã tồn tại.
 """
 import argparse
 import csv
@@ -37,13 +39,21 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))  # chạy được cả dạng `python src/run_experiment.py`
 
+import numpy as np  # noqa: E402
 import torch  # noqa: E402
 
+from src.engine.evaluate import EMOTIONS, metrics, predict, save_predictions  # noqa: E402  (T08, TV3)
 from src.engine.trainer import fit, record_failure, scan_orphans  # noqa: E402
 from src.models import build_model, build_transfer, n_params  # noqa: E402
 from src.utils.io import append_csv_row, rel, sha256_file, write_json  # noqa: E402
 from src.utils.seed import set_seed  # noqa: E402
-from src.visual.plots import plot_curves, register_figure  # noqa: E402  (T08, TV3)
+from src.visual.plots import (  # noqa: E402  (T08, TV3)
+    plot_confusion_matrix,
+    plot_curves,
+    plot_error_histogram,
+    plot_sample_grid,
+    register_figure,
+)
 
 
 def _now():
@@ -224,14 +234,357 @@ def run(config_path, member, only=None, root=ROOT, seeds=None):
     return results
 
 
+def _load_member_set(root):
+    with open(Path(root) / "tracking" / "members.csv", encoding="utf-8-sig", newline="") as f:
+        return {r["ma"] for r in csv.DictReader(f)}
+
+
+def _load_checkpoint_model(run_dir, device):
+    """Nạp kiến trúc và trọng số best.pt từ một run_dir hợp lệ."""
+    run_dir = Path(run_dir)
+    cfg_path = run_dir / "config.json"
+    ckpt_path = run_dir / "best.pt"
+    if not cfg_path.is_file():
+        raise SystemExit(f"Không tìm thấy config.json trong run_dir: {run_dir}")
+    if not ckpt_path.is_file():
+        raise SystemExit(f"Không tìm thấy best.pt trong run_dir: {run_dir}")
+    meta = _read_json(cfg_path)
+    cfg = meta.get("cfg", meta)
+    model = _build(cfg)
+    ckpt = torch.load(ckpt_path, map_location=device, weights_only=False)
+    state = ckpt.get("model", ckpt) if isinstance(ckpt, dict) else ckpt
+    model.load_state_dict(state)
+    model.to(device).eval()
+    return model, meta, cfg, ckpt_path
+
+
+def _collect_loader_images(loader):
+    """Gom ảnh đầu vào từ loader theo đúng thứ tự batch để vẽ lưới ca đúng/sai."""
+    xs = []
+    for x, _ in loader:
+        xs.append(x.detach().cpu().numpy())
+    if not xs:
+        raise ValueError("test_loader không có mẫu nào")
+    return np.concatenate(xs, axis=0)
+
+
+def eval_test(
+    run_dirs,
+    member,
+    tta="none",
+    config_path=None,
+    lock_file=None,
+    out_dir=None,
+    root=ROOT,
+    device=None,
+    benchmark_public=0.69,
+    benchmark_private=0.71,
+    register_figures=True,
+    cli_command=None,
+):
+    """Đánh giá PrivateTest ĐÚNG 1 LẦN DUY NHẤT cho mô hình cuối E7 (nhiệm vụ T19, TV3).
+
+    - Kiểm tra file khóa TEST_DONE.json ngay đầu hàm: nếu đã tồn tại thì từ chối chạy ngay.
+    - Hỗ trợ 1 mô hình hoặc ensemble nhiều seed (trung bình xác suất softmax) kèm TTA (none/flip/ten_crop).
+    - Ghi TEST_DONE.json nguyên tử, test_predictions.npz, test_per_class.csv, test_run.log,
+      các biểu đồ kèm CSV, đăng ký figures_manifest.csv và nối 1 dòng vào tracking/experiments.csv.
+    """
+    root = Path(root)
+    members = _load_member_set(root)
+    if member not in members:
+        raise SystemExit(f"--member phải là một trong {sorted(members)} (mã trong tracking/members.csv), nhận '{member}'")
+
+    lock_path = Path(lock_file) if lock_file else (root / "results" / "E7" / "TEST_DONE.json")
+    if not lock_path.is_absolute():
+        lock_path = root / lock_path
+    if lock_path.exists():
+        raise SystemExit(
+            f"TỪ CHỐI CHẠY --eval-test: PrivateTest đã được đánh giá và khóa tại '{rel(lock_path, root)}'. "
+            "Quy tắc BTL02 chỉ cho phép đánh giá PrivateTest đúng 1 lần duy nhất!"
+        )
+
+    if not run_dirs:
+        raise SystemExit("Cần truyền ít nhất 1 thư mục run qua --run-dirs khi dùng --eval-test.")
+
+    resolved_dirs = []
+    for d in run_dirs:
+        p = Path(d)
+        resolved_dirs.append(p if p.is_absolute() else (root / p))
+
+    dev = torch.device(device) if device is not None else torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    out_path = Path(out_dir) if out_dir else lock_path.parent
+    if not out_path.is_absolute():
+        out_path = root / out_path
+    out_path.mkdir(parents=True, exist_ok=True)
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+
+    started_at = _now()
+    t0 = time.perf_counter()
+
+    loaded_models = []
+    input_sig = None
+    for rd in resolved_dirs:
+        model, meta, cfg, ckpt_path = _load_checkpoint_model(rd, dev)
+        sig = (int(cfg.get("resize", 48)), int(cfg.get("channels", 1)))
+        if input_sig is None:
+            input_sig = sig
+        elif sig != input_sig:
+            raise SystemExit(f"Các checkpoint không đồng nhất kích thước/kênh đầu vào: {input_sig} vs {sig} ({rd})")
+        loaded_models.append((model, meta, cfg, ckpt_path, rd))
+
+    loader_cfg = dict(loaded_models[0][2])
+    if config_path:
+        cfg_p = Path(config_path)
+        if not cfg_p.is_absolute():
+            cfg_p = root / cfg_p
+        spec = _read_json(cfg_p)
+        if "base" in spec:
+            loader_cfg = {**spec["base"], **loader_cfg}
+    loader_cfg["device"] = str(dev)
+
+    from src.data.loader import make_test_loader  # nhiệm vụ T04 (TV1) — chỉ gọi trong --eval-test
+
+    test_loader = make_test_loader(loader_cfg)
+    images = _collect_loader_images(test_loader)
+
+    use_amp = bool(loader_cfg.get("amp", True)) and dev.type == "cuda"
+    y_true = None
+    probs_list = []
+    model_records = []
+    for model, meta, cfg, ckpt_path, rd in loaded_models:
+        yt, yp = predict(model, test_loader, tta=tta, device=dev, amp=use_amp)
+        if y_true is None:
+            y_true = yt
+        elif not np.array_equal(y_true, yt):
+            raise RuntimeError("Thứ tự nhãn PrivateTest giữa các lần duyệt loader không khớp!")
+        probs_list.append(yp)
+        single_m = metrics(yt, yp)
+        model_records.append(
+            {
+                "exp_id": meta.get("exp_id", rd.name),
+                "run_dir": rel(rd, root),
+                "weights_path": rel(ckpt_path, root),
+                "weights_sha256": sha256_file(ckpt_path),
+                "n_params": int(meta.get("n_params") or n_params(model)),
+                "seed": cfg.get("seed"),
+                "test_acc": single_m["acc"],
+                "test_macro_f1": single_m["macro_f1"],
+            }
+        )
+
+    y_prob = np.mean(probs_list, axis=0).astype(np.float32)
+    y_pred = y_prob.argmax(axis=1).astype(np.int64)
+    final_m = metrics(y_true, y_prob)
+
+    pred_path = save_predictions(out_path / "test_predictions.npz", y_true, y_prob)
+
+    per_class_path = out_path / "test_per_class.csv"
+    with open(per_class_path, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=["label", "precision", "recall", "f1", "support"], lineterminator="\n")
+        w.writeheader()
+        for label in EMOTIONS:
+            st = final_m["per_class"][label]
+            w.writerow(
+                {
+                    "label": label,
+                    "precision": round(st["precision"], 6),
+                    "recall": round(st["recall"], 6),
+                    "f1": round(st["f1"], 6),
+                    "support": st["support"],
+                }
+            )
+
+    exp_ids = [r["exp_id"] for r in model_records]
+    exp_ids_joined = ";".join(exp_ids)
+    cmd_str = cli_command or (
+        f"python src/run_experiment.py --eval-test --member {member} "
+        f"--run-dirs {' '.join(r['run_dir'] for r in model_records)} --tta {tta}"
+    )
+
+    fig_dir = root / "figures"
+    fig_dir.mkdir(parents=True, exist_ok=True)
+    cm_png, cm_csv = plot_confusion_matrix(
+        final_m["cm"],
+        fig_dir / "e7_test_confusion.png",
+        title=f"Ma trận nhầm lẫn PrivateTest — E7 ({len(model_records)} seed, TTA={tta}, acc={final_m['acc']*100:.2f}%)",
+    )
+    err_png, err_csv = plot_error_histogram(
+        y_true,
+        y_pred,
+        fig_dir / "e7_test_error_hist.png",
+        title=f"Recall và tỷ lệ sai theo lớp trên PrivateTest — E7 (TTA={tta})",
+    )
+    ok_png, ok_csv = plot_sample_grid(
+        images,
+        y_true,
+        y_pred,
+        fig_dir / "e7_test_correct_grid.png",
+        y_prob=y_prob,
+        correct=True,
+        max_samples=16,
+        title="PrivateTest — Mẫu dự đoán ĐÚNG điển hình (E7)",
+    )
+    bad_png, bad_csv = plot_sample_grid(
+        images,
+        y_true,
+        y_pred,
+        fig_dir / "e7_test_wrong_grid.png",
+        y_prob=y_prob,
+        correct=False,
+        max_samples=16,
+        title="PrivateTest — Mẫu dự đoán SAI điển hình (E7)",
+    )
+
+    if register_figures:
+        manifest_path = root / "tracking" / "figures_manifest.csv"
+        for fid, png_p, csv_p, usage in [
+            ("e7_test_confusion", cm_png, cm_csv, "Báo cáo Ch.4 & Slide E7"),
+            ("e7_test_error_hist", err_png, err_csv, "Báo cáo Ch.4 phân tích lỗi"),
+            ("e7_test_correct_grid", ok_png, ok_csv, "Báo cáo Ch.4 ca đúng"),
+            ("e7_test_wrong_grid", bad_png, bad_csv, "Báo cáo Ch.4 ca sai"),
+        ]:
+            register_figure(
+                manifest_path,
+                fid,
+                png_p,
+                csv_p,
+                "src/run_experiment.py",
+                cmd_str,
+                exp_ids=exp_ids_joined,
+                task_id="T19",
+                dung_o=usage,
+                root=root,
+            )
+
+    finished_at = _now()
+    duration_s = round(time.perf_counter() - t0, 3)
+    env = _environment(root)
+    log_path = out_path / "test_run.log"
+    log_lines = [
+        f"START | {started_at} | task=T19 | member={member} | host={env['hostname']} | gpu={env['gpu']}",
+        f"CMD   | {cmd_str}",
+        f"ENV   | commit={env['git_commit']} | dataset_sha256={env['dataset_sha256']} | tta={tta} | n_models={len(model_records)}",
+    ]
+    for r in model_records:
+        log_lines.append(
+            f"MODEL | {r['exp_id']} | sha256={r['weights_sha256'][:12]} | acc={r['test_acc']:.6f} | macro_f1={r['test_macro_f1']:.6f}"
+        )
+    log_lines.extend(
+        [
+            f"FINAL | n_samples={len(y_true)} | test_acc={final_m['acc']:.6f} | test_macro_f1={final_m['macro_f1']:.6f}",
+            f"BENCH | vs_public_69={final_m['acc'] - benchmark_public:+.6f} | vs_private_71={final_m['acc'] - benchmark_private:+.6f}",
+            f"END   | {finished_at} | duration_s={duration_s} | lock={rel(lock_path, root)}",
+        ]
+    )
+    log_path.write_text("\n".join(log_lines) + "\n", encoding="utf-8")
+
+    payload = {
+        "locked": True,
+        "task_id": "T19",
+        "split": "PrivateTest",
+        "evaluated_at": finished_at,
+        "started_at": started_at,
+        "duration_s": duration_s,
+        "member": member,
+        **env,
+        "command": cmd_str,
+        "tta": str(tta),
+        "n_models": len(model_records),
+        "n_samples": int(len(y_true)),
+        "test_acc": final_m["acc"],
+        "test_macro_f1": final_m["macro_f1"],
+        "benchmark_public": benchmark_public,
+        "benchmark_private": benchmark_private,
+        "diff_vs_public_69": round(final_m["acc"] - benchmark_public, 6),
+        "diff_vs_private_71": round(final_m["acc"] - benchmark_private, 6),
+        "per_class": final_m["per_class"],
+        "models": model_records,
+        "predictions_path": rel(pred_path, root),
+        "per_class_csv": rel(per_class_path, root),
+        "log_path": rel(log_path, root),
+        "figures": {
+            "confusion": rel(cm_png, root),
+            "error_hist": rel(err_png, root),
+            "correct_grid": rel(ok_png, root),
+            "wrong_grid": rel(bad_png, root),
+        },
+    }
+    tmp_lock = lock_path.with_suffix(".json.tmp")
+    write_json(tmp_lock, payload)
+    tmp_lock.replace(lock_path)
+
+    exp_csv = root / "tracking" / "experiments.csv"
+    if exp_csv.exists():
+        with open(exp_csv, encoding="utf-8", newline="") as f:
+            header = csv.DictReader(f).fieldnames
+        if header:
+            test_row = {
+                "exp_id": "E7-TEST",
+                "task_id": "T19",
+                "thanh_vien": member,
+                "bat_dau": started_at,
+                "ket_thuc": finished_at,
+                "tong_thoi_gian_s": duration_s,
+                "epoch_time_s_tb": "",
+                "may_chay": f"{env['hostname']} | {env['gpu']}",
+                "config_path": rel(config_path, root) if config_path and Path(config_path).exists() else (config_path or ""),
+                "hyperparams_json": json.dumps(
+                    {
+                        "variant": f"private_test_{tta}",
+                        "tta": str(tta),
+                        "n_models": len(model_records),
+                        "exp_ids": exp_ids,
+                    },
+                    ensure_ascii=False,
+                    sort_keys=True,
+                ),
+                "dataset_sha256": env["dataset_sha256"],
+                "seed": ",".join(str(r["seed"]) for r in model_records if r["seed"] is not None),
+                "git_commit": env["git_commit"],
+                "n_params": model_records[0]["n_params"],
+                "test_acc": final_m["acc"],
+                "trang_thai_ky_thuat": "Completed",
+                "weights_path": ";".join(r["weights_path"] for r in model_records),
+                "weights_sha256": ";".join(r["weights_sha256"] for r in model_records),
+                "weights_quyet_dinh": "KEEP",
+                "weights_ma_ly_do": "OK",
+                "run_dir": rel(out_path, root),
+                "log_path": rel(log_path, root),
+            }
+            append_csv_row(exp_csv, header, test_row)
+
+    print(
+        f"[T19 --eval-test] PrivateTest acc={final_m['acc']:.4f} ({final_m['acc']*100:.2f}%), "
+        f"macro-F1={final_m['macro_f1']:.4f} | Đã khóa tại {rel(lock_path, root)}"
+    )
+    return payload
+
+
 def main(argv=None):
     sys.stdout.reconfigure(encoding="utf-8")  # --help và log tiếng Việt không lỗi trên console Windows (cp1252)
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("--config", required=True, help="file JSON, ví dụ configs/E3_optim.json")
+    ap.add_argument("--config", default=None, help="file JSON, ví dụ configs/E3_optim.json (bắt buộc khi huấn luyện)")
     ap.add_argument("--member", required=True, help="mã người chạy (TV1..TV4), ghi vào config.json và experiments.csv")
     ap.add_argument("--only", nargs="*", help="chỉ chạy các variant có tên này")
     ap.add_argument("--seeds", nargs="+", type=int, help="chỉ chạy các seed này (ghi đè 'seeds' trong config)")
+    ap.add_argument("--eval-test", action="store_true", help="đánh giá PrivateTest ĐÚNG 1 LẦN DUY NHẤT (nhiệm vụ T19)")
+    ap.add_argument("--run-dirs", nargs="+", help="danh sách thư mục run chứa best.pt để đánh giá --eval-test")
+    ap.add_argument("--tta", default="none", choices=["none", "flip", "ten_crop"], help="chế độ TTA cho --eval-test")
+    ap.add_argument("--lock-file", default=None, help="đường dẫn file khóa (mặc định results/E7/TEST_DONE.json)")
     a = ap.parse_args(argv)
+    if a.eval_test:
+        cmd_str = "python src/run_experiment.py " + " ".join(argv if argv is not None else sys.argv[1:])
+        eval_test(
+            run_dirs=a.run_dirs,
+            member=a.member,
+            tta=a.tta,
+            config_path=a.config,
+            lock_file=a.lock_file,
+            cli_command=cmd_str,
+        )
+        return
+    if not a.config:
+        ap.error("--config là bắt buộc khi không truyền --eval-test")
     run(a.config, a.member, a.only, seeds=a.seeds)
 
 
