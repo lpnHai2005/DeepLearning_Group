@@ -8,10 +8,12 @@
 >
 > **Nhận xét cần chỉnh ở E3:** (1) Hàng `adamw_3e-4` ghi macro-F1 `0.5631`, trong khi `tracking/experiments.csv` có giá trị `0.5630497131569857`, `E3_summary.csv` hiển thị `0.5630` và `E3_report.md` cũng ghi `0.5630`. Chú thích nói `0.56305` làm tròn thành `0.5631` không khớp với số gốc và đầu ra sinh bảng; hãy thống nhất bảng/chú thích về `0.5630` (hoặc giữ thêm chữ số gốc). (2) Giải thích rằng AdamW làm co đặc trưng của lớp hiếm và batch nhỏ giúp thoát cực tiểu phẳng là cơ chế chưa được đo trực tiếp trong các run E3 một seed; nên ghi rõ là giả thuyết/diễn giải, không khẳng định như kết quả thực nghiệm.
 >
+> **Phản hồi xử lý review `C1`/`C2` (TV3 – Võ Hoàng Bảo, 2026-11-27):** Đã tiếp thu và chỉnh sửa trọn vẹn cả 2 góp ý của TV1 (`a9ec8cd`): (1) thống nhất `adamw_3e-4` macro-F1 về **`0.5630`** (khớp 15/15 hàng với `E3_summary.csv`, `E3_report.md` và số gốc `0.5630497131569857` trong `experiments.csv`), cập nhật lại chú thích tương ứng; (2) diễn đạt rõ các giải thích cơ chế của `AdamW` và `batch_size = 64` là **giả thuyết/diễn giải** (chưa đo trực tiếp trong khảo sát 1 seed). Toàn bộ 4 đính chính của TV4 (`2889011`) ở mục `4.3` đã được giữ nguyên; cả 3 nhiệm vụ phụ thuộc (`T14`, `T18`, `T19`) đều đã `Verified` (`KT-016`, `KT-021`, `KT-024`). Sẵn sàng chốt `done(T23)` bàn giao TV2 (`T`) kiểm thử độc lập.
+>
 > **Nguồn số liệu.** Mọi con số trong chương lấy trực tiếp từ file do code sinh ra, không gõ tay hay ước lượng:
 > - bảng tổng hợp `report/tables/{baseline,E3,E7}_summary.csv`, `report/tables/{E3,E7}_report.md` và `report/tables/E7_tta_ensemble.{csv,md}`, sinh bằng `python src/make_tables.py` và `python src/eval_e7.py`;
 > - `figures/e3_comparison.csv`, `figures/e7_val_tta_ensemble.csv`, `figures/e7_test_{confusion,error_hist,correct_grid,wrong_grid}.csv`, lệnh sinh hình ghi đầy đủ trong `tracking/figures_manifest.csv`;
-> - `results/baseline/baseline_summary.json` (`T11`), `results/E7/TEST_DONE.json`, `results/E7/test_per_class.csv`, `results/E7/e7_gradcam_cases.csv` và `tracking/test_log.csv` (`KT-003`, `KT-008`, `KT-016`, `KT-021`).
+> - `results/baseline/baseline_summary.json` (`T11`), `results/E7/TEST_DONE.json`, `results/E7/test_per_class.csv`, `results/E7/e7_gradcam_cases.csv` và `tracking/test_log.csv` (`KT-003`, `KT-008`, `KT-016`, `KT-021`, `KT-024`).
 >
 > Các bảng trong chương giữ nguyên giá trị từ `make_tables.py`, `eval_e7.py` và `run_experiment.py --eval-test`. Mọi độ chính xác trong mục `4.2` và `4.3` đánh giá trên **PublicTest (validation)**; **PrivateTest** chỉ đánh giá một lần duy nhất ở mục `4.4` (`T19`, có khóa cứng `results/E7/TEST_DONE.json`).
 
@@ -60,7 +62,7 @@
 | `adam_1e-3` | 1 | 0.6865 | 0.6592 | 0.8922 | +0.0472 | RTX 3050 (24.6s) | +0.0050 (< std baseline) |
 | `adam_3e-4` | 1 | 0.6879 | 0.6587 | 0.9013 | +0.0607 | RTX 3050 (28.7s) | +0.0064 (< std baseline) |
 | `adamw_1e-3` | 1 | 0.6723 | 0.5878 | 0.9626 | +0.0268 | RTX 3060 (35.9s) | -0.0092 (thấp hơn) |
-| `adamw_3e-4` | 1 | 0.6704 | 0.5631 | 0.9176 | +0.0065 | RTX 3060 (49.7s) | -0.0111 (thấp hơn) |
+| `adamw_3e-4` | 1 | 0.6704 | 0.5630 | 0.9176 | +0.0065 | RTX 3060 (49.7s) | -0.0111 (thấp hơn) |
 | `rmsprop_1e-3` | 1 | 0.6857 | 0.6620 | **0.8809** | +0.0373 | RTX 3060 (25.1s) | +0.0042 (< std baseline) |
 | `rmsprop_3e-4` | 1 | 0.6810 | 0.6332 | 0.9014 | +0.0292 | RTX 3060 (25.0s) | -0.0006 (< std baseline) |
 | `sched_constant` | 1 | 0.6760 | 0.6376 | 0.9138 | +0.0334 | RTX 3060 (24.7s) | -0.0056 (< std baseline) |
@@ -70,7 +72,7 @@
 | **`bs_64`** | 1 | **0.6924** | **0.6642** | 0.9058 | +0.0774 | RTX 3060 (25.5s) | **+0.0109 (cao hơn)** |
 | `bs_256` | 1 | 0.6726 | 0.6298 | 0.9169 | +0.0176 | RTX 3060 (24.6s) | -0.0089 (thấp hơn) |
 
-*(Ghi chú: Giá trị gốc của `adamw_3e-4` `val_macro_f1` trong `E3_summary.csv` là `0.56305`, làm tròn 4 chữ số thành `0.5631`; bảng markdown gốc của `make_tables.py` hiển thị `0.5630` theo quy tắc làm tròn chẵn/gần nhất của Python.)*
+*(Ghi chú: Toàn bộ 15/15 hàng khớp trực tiếp với `report/tables/E3_summary.csv` và `report/tables/E3_report.md`; giá trị gốc `val_macro_f1` của `adamw_3e-4` trong `tracking/experiments.csv` là `0.5630497131569857`, làm tròn 4 chữ số thành `0.5630`.)*
 
 **Hình 4.1.** So sánh Validation Accuracy của 15 cấu hình E3: `figures/e3_comparison.png` (dữ liệu `figures/e3_comparison.csv`).
 
@@ -78,7 +80,7 @@
 
 1. **Thuật toán tối ưu (Optimizer) × Learning rate:**
    - **Độ nhạy với learning rate của SGD Nesterov:** Tại `lr = 0.03` (`E3-012_s0`), bước cập nhật quá lớn ngay đầu huấn luyện khiến mạng mất ổn định và sụp hoàn toàn về dự đoán lớp đa số `Happy` (`val_acc = 0.2494`, macro-F1 `0.0570`, dừng sớm ở epoch 17). Giảm xuống `lr = 0.003` (`E3-013_s0`) giúp hội tụ an toàn nhưng bước học hơi nhỏ nên đạt `0.6743` (`-0.0072`). Điểm **`lr = 0.01`** của Baseline là tối ưu cho SGD trên mạng 6 Conv có BN (`0.6815 ± 0.0075`); bỏ Nesterov (`E3-011_s0`) đạt `0.6843` (`+0.0028 < std`, chưa phân biệt được ở 1 seed).
-   - **Bộ tối ưu thích ứng (`Adam`, `RMSprop`) so với `AdamW`:** `adam_3e-4` (`0.6879`, F1 `0.6587`, `best_epoch = 100`), `adam_1e-3` (`0.6865`, F1 `0.6592`, loss `0.8922`) và `rmsprop_1e-3` (`0.6857`, F1 `0.6620`, **`best_val_loss = 0.8809` thấp nhất toàn E3**) đều đạt nhỉnh hơn trung bình Baseline `0.0042–0.0064`, nhưng vẫn nằm trong ngưỡng `< std baseline` (chỉ có giá trị định hướng ở 1 seed). Ngược lại, **`AdamW`** giảm rõ rệt cả accuracy lẫn macro-F1 (`0.6723` / F1 `0.5878` ở `1e-3`; `0.6704` / F1 `0.5631` ở `3e-4`, vượt quá `1 × std` theo chiều giảm). Nguyên nhân là trong AdamW, `weight_decay = 5e-4` bị tách khỏi bước thích ứng và nhân trực tiếp theo tỉ lệ cố định trên trọng số (`lr · wd`), làm co trọng số quá mạnh đối với các lớp đặc trưng ít kích hoạt hoặc lớp phân loại thiểu số, gây mất khả năng phân biệt lớp hiếm.
+   - **Bộ tối ưu thích ứng (`Adam`, `RMSprop`) so với `AdamW`:** `adam_3e-4` (`0.6879`, F1 `0.6587`, `best_epoch = 100`), `adam_1e-3` (`0.6865`, F1 `0.6592`, loss `0.8922`) và `rmsprop_1e-3` (`0.6857`, F1 `0.6620`, **`best_val_loss = 0.8809` thấp nhất toàn E3**) đều đạt nhỉnh hơn trung bình Baseline `0.0042–0.0064`, nhưng vẫn nằm trong ngưỡng `< std baseline` (chỉ có giá trị định hướng ở 1 seed). Ngược lại, **`AdamW`** giảm rõ rệt cả accuracy lẫn macro-F1 (`0.6723` / F1 `0.5878` ở `1e-3`; `0.6704` / F1 `0.5630` ở `3e-4`, vượt quá `1 × std` theo chiều giảm). *Giả thuyết diễn giải* (chưa được đo trực tiếp trên chuẩn trọng số từng lớp trong các run 1 seed của E3): do `AdamW` tách `weight_decay = 5e-4` khỏi bước cập nhật thích ứng (`lr · wd`), mức suy giảm trọng số cố định này có thể quá mạnh đối với các bộ lọc hoặc trọng số lớp phân loại thiểu số, góp phần làm giảm mạnh `macro-F1`.
 
 2. **Lịch điều chỉnh learning rate (Scheduler):**
    - Với `SGD lr=0.01`, **`OneCycleLR`** (`0.6863`, F1 `0.6584`, loss `0.8997`, `best_epoch = 100`) nhỉnh nhẹ hơn `ReduceLROnPlateau` của Baseline (`0.6815`, trong ngưỡng `< std`).
@@ -87,7 +89,7 @@
 3. **Kích thước batch (Batch size — nhân tố tạo khác biệt rõ rệt nhất trong E3):**
    - Kết quả cho thấy quy luật đơn điệu rõ ràng: **`bs_64` (`0.6924`, F1 `0.6642`) > `bs_128` (`0.6815`, F1 `0.6408`) > `bs_256` (`0.6726`, F1 `0.6298`)**.
    - **`bs_64` (`E3-009_s0`) là biến thể duy nhất trong toàn bộ 15 cấu hình E3 vượt ngưỡng `+1 × std baseline`** (`+0.0109 > 0.0075`), đồng thời tăng `macro-F1` thêm `+2.34` điểm %. Kết quả kiểm toán độc lập `KT-016` do TV2 chạy lại `bs_64` trên RTX 4060 đạt `0.6902` (độ lệch tái lập chỉ `|Δ| = 0.0022 ≤ 0.0075`, cao hơn mốc baseline `0.6815` là `+0.0086`).
-   - Về cơ chế tối ưu hóa: batch size nhỏ hơn (`64` thay vì `128`) tạo số bước cập nhật mỗi epoch gấp đôi và tăng nhiễu ước lượng gradient mini-batch một cách có lợi, giúp SGD thoát các cực tiểu phẳng kém tổng quát hóa trên bộ dữ liệu FER-2013 có nhiễu nhãn cao; trái lại, batch lớn (`256`) làm gradient quá mượt và giảm khả năng tổng quát hóa (`-0.0089`).
+   - *Giả thuyết diễn giải cơ chế tối ưu hóa* (theo tài liệu tổng quát về SGD mini-batch, chưa đo trực tiếp độ cong mặt mất mát trong khảo sát 1 seed này): batch size nhỏ hơn (`64` thay vì `128`) tạo số bước cập nhật mỗi epoch gấp đôi và làm tăng phương sai ước lượng gradient mini-batch, từ đó có thể hỗ trợ SGD tránh các vùng cực tiểu kém tổng quát hóa trên bộ dữ liệu FER-2013 có nhiễu nhãn cao; ngược lại, batch lớn (`256`) làm giảm số bước cập nhật và có xu hướng tổng quát hóa kém hơn (`-0.0089`).
 
 **Quyết định chuyển sang E7 (`T18`).** Trong phạm vi khảo sát E3 trên kiến trúc Baseline, phương án mang lại cải thiện rõ rệt và đã tái lập tốt qua kiểm thử là giữ **`SGD Nesterov lr = 0.01`** kết hợp **`batch_size = 64`**. Tuy nhiên, như lưu ý ở `KT-016` và mục `3.9`, `bs_64` (`+0.0086` ở bản chạy lại) mới chạy 1 seed mỗi máy và các thí nghiệm E3 thực hiện trên mạng 6 Conv nên khi ghép vào `large_bn` ở E7 (`T18`) cần đánh giá đầy đủ 3 seed trước khi chốt cấu hình cuối.
 
