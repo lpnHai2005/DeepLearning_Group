@@ -53,5 +53,7 @@
 
 ## 4. Xác nhận Phối hợp (`C1`, `C2`) trước khi Chốt `done(T27)`
 
-- **Xác nhận `C1` — TV1 – Đoàn Trung Kiên**: *(chờ TV1 chạy clone sạch, venv mới theo `README.md` và `pytest` trên máy Python 3.12, đồng thời rà soát `QA-01`, `QA-02`)*
+- **Xác nhận `C1` — TV1 – Đoàn Trung Kiên (2026-11-27)**: đã chạy clone sạch `D:\DeepLearning_Group-1_T27_c17e555_20261127` tại commit `c17e555`, tạo venv mới bằng Python `3.12.9`, cài `torch 2.6.0+cu124`, `torchvision 0.21.0+cu124` và `requirements.txt`; máy nhận GPU `NVIDIA GeForce RTX 3050 Laptop GPU`, CUDA khả dụng. `pip check` không có dependency lỗi.
+  - `python -m pytest -q`: **127 passed, 1 skipped, 14 warnings**, exit `0`, trong `111.98s`. Test cần FER2013 gốc được skip vì clone không chứa `data/fer2013.csv`; 14 cảnh báo là Pyparsing deprecation từ Matplotlib, không có test fail.
+  - Do sandbox không cho tạo `.pytest_cache` ở thư mục clone, lượt chạy cuối chuyển `cache_dir` vào `%TEMP%`; đây là workaround quyền ghi của sandbox, không phải sửa mã dự án. Python `3.12` xử lý được yêu cầu phiên bản của `numpy==2.5.2`; phần xuất DOCX liên quan `python-docx` trong `QA-01` chưa được chạy trong lượt C1 này.
 - **Xác nhận `C2` — TV2 – Lê Phan Nguyên Hải**: *(chờ TV2 chạy lại `notebooks/BTL02_reproducible.ipynb` trên máy riêng và xác nhận không lỗi)*
