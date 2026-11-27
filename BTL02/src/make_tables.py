@@ -198,7 +198,7 @@ def _official_baseline_rows(rows, baseline_task="T11", baseline_config=None):
 
 
 def filter_report_rows(rows, baseline_task="T11", baseline_config=None, include_internal=False):
-    """Lọc dòng đưa vào bảng báo cáo: bỏ nhóm tạm `_...` và run baseline cấu hình cũ (60 epoch)."""
+    """Lọc dòng đưa vào bảng báo cáo validation: bỏ nhóm tạm `_...`, dòng đánh giá PrivateTest (`T19` / `E7-TEST`) và run baseline cấu hình cũ (60 epoch)."""
     official = _official_baseline_rows(rows, baseline_task=baseline_task, baseline_config=baseline_config)
     official_ids = {r.get("exp_id") for r in official}
 
@@ -207,8 +207,15 @@ def filter_report_rows(rows, baseline_task="T11", baseline_config=None, include_
         grp = _group_of(r)
         if not include_internal and grp.startswith("_"):
             continue
-        if official_ids and (grp.lower() in ("baseline", "b0") or r.get("task_id") == baseline_task):
-            if r.get("exp_id") not in official_ids:
+        exp_id = (r.get("exp_id") or "").strip()
+        tid = (r.get("task_id") or "").strip()
+        # Bỏ dòng đánh giá PrivateTest (T19 / E7-TEST) khỏi bảng tổng hợp validation E1–E7 (QA-03)
+        if tid == "T19" or exp_id.upper() == "E7-TEST" or (
+            _float_or_none(r.get("test_acc")) is not None and _float_or_none(r.get("val_acc")) is None
+        ):
+            continue
+        if official_ids and (grp.lower() in ("baseline", "b0") or tid == baseline_task):
+            if exp_id not in official_ids:
                 continue
         kept.append(r)
     return kept

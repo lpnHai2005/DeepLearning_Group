@@ -239,3 +239,47 @@ def test_gop_run_chay_lai_va_an_dong_chi_co_run_loi(tmp_path):
     all_rep = (tmp_path / "tables" / "summary_all_report.md").read_text(encoding="utf-8")
     assert "broken_only" not in all_rep
     assert "[E1-" not in all_rep
+
+
+def test_loc_bo_dong_private_test_t19_qa03(tmp_path):
+    """Dòng đánh giá PrivateTest (E7-TEST / T19) không được lọt thành dòng rỗng vào bảng validation E7_summary.csv (QA-03)."""
+    t19_row = _row(
+        "E7-TEST",
+        "T19",
+        "private_test_flip",
+        0,
+        None,
+        f1=None,
+        loss=None,
+        train_acc=None,
+        n_params=20410439,
+    )
+    t19_row["test_acc"] = "0.7364168292003344"
+
+    data = [
+        _row("B0-001_s0", "T11", "baseline", 0, 0.6815, 0.6408, 0.9109),
+        _row("E7-001_s0", "T18", "large_bn_bs64", 0, 0.6971, 0.6778, 0.9025, n_params=20410439),
+        _row("E7-004_s0", "T18", "baseline_best", 0, 0.7013, 0.6784, 0.8693, n_params=5867847),
+        t19_row,
+    ]
+    exp_csv = tmp_path / "experiments.csv"
+    with open(exp_csv, "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=REAL_HEADER)
+        w.writeheader()
+        w.writerows(data)
+
+    filtered = filter_report_rows(data)
+    assert "E7-TEST" not in {r["exp_id"] for r in filtered}
+
+    export_tables(exp_csv, tmp_path / "tables", root=tmp_path)
+    e7_df = pd.read_csv(tmp_path / "tables" / "E7_summary.csv")
+    assert list(e7_df["variant"]) == ["baseline_best", "large_bn_bs64"] or set(e7_df["variant"]) == {"large_bn_bs64", "baseline_best"}
+    assert "private_test_flip" not in set(e7_df["variant"])
+    assert "T19" not in set(e7_df["task_id"])
+
+    all_df = pd.read_csv(tmp_path / "tables" / "summary_all.csv")
+    assert "private_test_flip" not in set(all_df["variant"])
+    assert "T19" not in set(all_df["task_id"])
+
+    e7_rep = (tmp_path / "tables" / "E7_report.md").read_text(encoding="utf-8")
+    assert "private_test_flip" not in e7_rep
