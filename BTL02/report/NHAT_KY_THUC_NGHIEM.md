@@ -604,13 +604,29 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E2
   3. **Batch size (ảnh hưởng mạnh nhất toàn E3)**: Quy luật đơn điệu rõ rệt `bs=64` (**`0.6924`**, F1 **`0.6642`**, **`+0.0109 > std baseline 0.0075`**) > `bs=128` (`0.6815`) > `bs=256` (`0.6726`, `-0.0089`). Batch nhỏ tăng nhiễu gradient giúp tổng quát hóa tốt hơn trên tập FER-2013 nhiều nhãn nhiễu.
 - **Quyết định chọn cho `E7`**: Biến thể thắng rõ rệt nhất của E3 theo validation là **`SGD Nesterov lr=0.01 + ReduceLROnPlateau + batch_size=64`** (`val_acc = 0.6924`, vượt duy nhất ngưỡng `+std baseline` trong cả 15 cấu hình). Đề xuất đưa `batch_size = 64` vào cấu hình ứng viên `E7` (có thể phối hợp thử thêm `OneCycleLR` hoặc đối chứng `Adam 3e-4` ở bước tổng hợp E7). Chốt `done(T14)` chuyển TV2 (`T`) kiểm thử độc lập.
 
-### [E4-001_s0] Khảo sát không dùng Data Augmentation — TV3 – <chưa thực hiện>
-- Giả thuyết: Huấn luyện mô hình không có Data Augmentation sẽ dẫn đến overfitting nghiêm trọng; chênh lệch giữa Train Acc và Val Acc sẽ rất lớn (> 20%).
-- Thay đổi so với baseline: `augmentation = "none"`.
-- Lệnh: `python src/run_experiment.py --config configs/E4_aug_reg.json --member TV3 --only no_aug`
+### [E4-001_s0] Khảo sát tắt Weight Decay (`weight_decay_0`, Seed 0 — C2) — TV4 – Huỳnh Viễn Thông – 2026-11-26
+- Giả thuyết: Tắt hẳn điều chuẩn L2 (`weight_decay = 0.0`, thay vì `5e-4` của Baseline) trong khi vẫn giữ `flip_affine` và Dropout (`0.25/0.5`) sẽ làm mô hình dễ quá khớp hơn nhẹ hoặc ít thay đổi nếu Augmentation và Dropout đã gánh phần lớn vai trò điều chuẩn.
+- Thay đổi so với baseline: `weight_decay = 0.0`.
+- Lệnh: `python src/run_experiment.py --config configs/E4_aug_reg.json --member TV4 --only weight_decay_0`
 - Kết quả: status=Completed, best_val_loss=0.9103259716103023, val_acc=0.6818055168570633, val_macro_f1=0.6380659375439424, best_epoch=100, time_s=2507.098, run_dir=results/E4/E4-001_s0
-- Nhận xét: (chưa thực hiện)
-- Quyết định: (chưa thực hiện)
+- Nhận xét: Hoàn tất 100 epochs trên RTX 3060 (41.8 phút, đỉnh tại epoch 100). Đạt `val_acc = 68.18%` (`+0.0003` so với trung bình baseline `68.15%`, trong ngưỡng `< std = 0.0075`), `val_macro_f1 = 63.81%`, `best_val_loss = 0.9103`. Theo bảng tổng hợp khoảng cách quá khớp `figures/e4_overfit_summary.csv`, `acc_gap@best = +2.97%` và `final_loss_gap = +0.1565` (thấp hơn nhẹ baseline `+4.72% / +0.1759`), cho thấy trên kiến trúc baseline đã có `flip_affine` + Dropout, việc bỏ L2 weight decay không gây bùng phát quá khớp trong 100 epochs.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Làm mốc không weight decay cho nhóm Regularization của E4.
+
+### [E4-002_s0] Khảo sát tăng Weight Decay lên 1e-3 (`weight_decay_1e-3`, Seed 0 — C2) — TV4 – Huỳnh Viễn Thông – 2026-11-26
+- Giả thuyết: Tăng gấp đôi hệ số điều chuẩn L2 (`weight_decay = 0.001` so với `0.0005` của Baseline) giúp phạt trọng số lớn mạnh hơn, có thể cải thiện nhẹ khả năng tổng quát hóa trên PublicTest.
+- Thay đổi so với baseline: `weight_decay = 0.001`.
+- Lệnh: `python src/run_experiment.py --config configs/E4_aug_reg.json --member TV4 --only weight_decay_1e-3`
+- Kết quả: status=Completed, best_val_loss=0.899992476468898, val_acc=0.6840345500139314, val_macro_f1=0.6510023115710255, best_epoch=95, time_s=2472.968, run_dir=results/E4/E4-002_s0
+- Nhận xét: Hoàn tất 100 epochs trên RTX 3060 (41.2 phút, đỉnh ở epoch 95). Đạt **`val_acc = 68.40%`** (`+0.0025` so với baseline, trong `< std = 0.0075`), **`val_macro_f1 = 65.10%`** (`+1.02%` so với baseline `64.08%`, cao nhất trong 3 biến thể regularization phần TV4) và hạ `best_val_loss` xuống **`0.9000`**. Theo `figures/e4_overfit_summary.csv`, khoảng cách quá khớp ở mức vừa phải (`acc_gap@best = +5.24%`, `final_acc_gap = +6.00%`, `final_loss_gap = +0.2142`).
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Ứng viên regularization cân bằng tốt cả `val_acc`, `macro-F1` và `val_loss`.
+
+### [E4-003_s0] Khảo sát Label Smoothing 0.1 (`label_smoothing_0_1`, Seed 0 — C2) — TV4 – Huỳnh Viễn Thông – 2026-11-26
+- Giả thuyết: FER-2013 có tỷ lệ nhiễu nhãn cao; áp dụng `label_smoothing = 0.1` sẽ ngăn mô hình đẩy logit quá tự tin vào nhãn nhiễu, qua đó thu hẹp khoảng cách quá khớp `Train − Val` và cải thiện hiệu chỉnh xác suất (`val_loss`).
+- Thay đổi so với baseline: `label_smoothing = 0.1`.
+- Lệnh: `python src/run_experiment.py --config configs/E4_aug_reg.json --member TV4 --only label_smoothing_0_1`
+- Kết quả: status=Completed, best_val_loss=0.8896598656485093, val_acc=0.6829200334354973, val_macro_f1=0.627969412229088, best_epoch=94, time_s=2460.578, run_dir=results/E4/E4-003_s0
+- Nhận xét: Hoàn tất 100 epochs trên RTX 3060 (41.0 phút, đỉnh ở epoch 94). Xác nhận rõ giả thuyết về hiệu chỉnh xác suất: **`best_val_loss = 0.8897`** (thấp nhất toàn bộ 10 biến thể E4 và thấp hơn rõ rệt Baseline `0.9109`), đồng thời kéo `acc_gap@best` giảm từ `+4.72%` (Baseline) xuống **`+3.32%`** (`final_loss_gap = -0.1601` do label smoothing đặt cận dưới cho train loss trong khi val loss đánh giá bằng CE chuẩn, xem `figures/e4_overfit.png/.csv`). Tuy nhiên `val_acc = 68.29%` chỉ nhỉnh nhẹ trong dung sai (`+0.0014`) và `val_macro_f1 = 62.80%` giảm nhẹ `-1.28%` so với Baseline.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Đã vẽ trọn bộ biểu đồ đường cong Train/Val & Overfit đủ 10/10 biến thể tại `figures/e4_overfit.png` (kèm `figures/e4_overfit.csv` và `figures/e4_overfit_summary.csv` bằng `src/visual/e4_overfit.py`) để bàn giao TV1 (`R` của T15) tổng hợp kết luận E4.
 
 ### [E4-004_s0] Khảo sát không dùng Data Augmentation (`aug_none`, Seed 0 — C1) — TV3 – Võ Hoàng Bảo – 2026-11-26
 - Giả thuyết: Tắt toàn bộ Data Augmentation sẽ khiến mô hình ghi nhớ tập huấn luyện rất nhanh, gây quá khớp nghiêm trọng (`Train − Val > 20%`) và kéo tụt `val_acc` so với Baseline (`0.6815 ± 0.0075`).
@@ -648,7 +664,7 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E2
 - Giả thuyết: Tắt cả `dropout_conv` và `dropout_fc` (`0.0 / 0.0`) dù vẫn giữ `flip_affine` augmentation sẽ làm mô hình hội tụ nhanh hơn nhưng gia tăng rõ rệt khoảng cách quá khớp `Train − Val` và đẩy `val_loss` tăng sớm hơn so với Baseline (`dropout_conv = 0.25, dropout_fc = 0.5`).
 - Thay đổi so với baseline: `model_kwargs = {"dropout_conv": 0.0, "dropout_fc": 0.0}`.
 - Lệnh: `python src/run_experiment.py --config configs/E4_aug_reg.json --member TV3 --only dropout_0 dropout_0_25 dropout_0_5`
-- Kết quả: status=Completed, best_val_loss=0.9481581089788241, val_acc=0.689607132906102, val_macro_f1=0.6745816000367967, best_epoch=52, time_s=1314.766, run_dir=results/E4/E4-008_s0
+- Kết quả: status=Completed, best_val_loss=0.9481581089788241, val_acc=0.689607132906102, val_macro_f1=0.6745816000367967, best_epoch=52, time_s=1350.048, run_dir=results/E4/E4-008_s0
 - Nhận xét: Kết quả rất thú vị về đánh đổi độ chính xác và hiệu chỉnh xác suất (calibration)! Không có Dropout, mô hình học rất nhanh và đạt đỉnh sớm tại `best_epoch = 52`, dừng sớm ở epoch `67/100` (21.9 phút). Đạt **`val_acc = 68.96%`** (`+0.0081` so với mốc baseline `0.6815`, hơi nhỉnh ngưỡng `std = 0.0075` nhưng mới 1 seed) và **`val_macro_f1 = 67.46%`** (**cao nhất trong cả 10 biến thể E4**, `+0.0204` so với `aug_flip_affine`). Tuy nhiên đúng như giả thuyết về quá khớp: `train_acc_cuoi` vọt lên `84.98%` (`Train − Val = +0.1602`, cao gấp 3.2× `aug_flip_affine` `+0.0500`) và **`best_val_loss = 0.9482`** xấu hơn hẳn `aug_flip_affine` (`0.9033`) và `dropout_0_25` (`0.8991`), cho thấy dự đoán bắt đầu quá tự tin (overconfident) khi thiếu Dropout.
 - Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Đánh dấu là ứng viên đáng chú ý nhưng cần kiểm tra thận trọng cùng `dropout_0_25` (vì quá khớp mạnh hơn và mới 1 seed).
 
@@ -656,7 +672,7 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E2
 - Giả thuyết: Giảm `dropout_fc` từ `0.5` (Baseline) xuống `0.25` (giữ `dropout_conv = 0.25`) có thể giải phóng thêm sức biểu diễn ở tầng phân loại FC khi đã có `flip_affine` hỗ trợ chống quá khớp, từ đó cải thiện đồng thời `val_acc`, `macro-F1` và giữ ổn định `val_loss`.
 - Thay đổi so với baseline: `model_kwargs = {"dropout_conv": 0.25, "dropout_fc": 0.25}`.
 - Lệnh: `python src/run_experiment.py --config configs/E4_aug_reg.json --member TV3 --only dropout_0 dropout_0_25 dropout_0_5`
-- Kết quả: status=Completed, best_val_loss=0.899058769525808, val_acc=0.6887712454722764, val_macro_f1=0.6642002723751766, best_epoch=93, time_s=1898.199, run_dir=results/E4/E4-009_s0
+- Kết quả: status=Completed, best_val_loss=0.899058769525808, val_acc=0.6887712454722764, val_macro_f1=0.6642002723751766, best_epoch=93, time_s=1909.206, run_dir=results/E4/E4-009_s0
 - Nhận xét: Hoàn tất 100 epochs (31.6 phút, `best_epoch = 93`). Xác nhận trọn vẹn giả thuyết! **`dropout_0_25`** đạt điểm cân bằng xuất sắc nhất trong nhóm Dropout: `val_acc = 68.88%` (`+0.0072`, sát ngưỡng `std baseline = 0.0075` và cao hơn đối chứng `aug_flip_affine` `68.63%` trên cùng máy `Hbao` seed 0), `val_macro_f1 = 66.42%` (`+0.0100` so với `aug_flip_affine`), đồng thời hạ **`best_val_loss` xuống `0.8991`** (thấp nhất trong toàn bộ 7 run phần TV3 và thấp hơn Baseline `0.9109`), trong khi khoảng cách quá khớp vẫn rất chặt (**`Train − Val = +0.0598`**, `train_acc_cuoi = 74.86%`).
 - Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB). Khuyến nghị ưu tiên **`dropout_conv = 0.25, dropout_fc = 0.25`** (hơn là `dropout_fc = 0.5` của Baseline hoặc tắt hẳn `0.0`) khi đề xuất cho TV1 (`R` của T15) tổng hợp và cân nhắc đưa vào `E7`.
 
@@ -664,17 +680,17 @@ Bảng số liệu sinh bằng `python src/make_tables.py` → `report/tables/E2
 - Giả thuyết: Tăng `dropout_conv` lên `0.5` (cùng `dropout_fc = 0.5`) trên ảnh nhỏ `48×48` kết hợp `flip_affine` sẽ điều chuẩn quá tay, làm mất quá nhiều thông tin đặc trưng không gian và dẫn tới hiện tượng **underfitting** (giảm mạnh `val_acc` và `macro-F1`).
 - Thay đổi so với baseline: `model_kwargs = {"dropout_conv": 0.5, "dropout_fc": 0.5}`.
 - Lệnh: `python src/run_experiment.py --config configs/E4_aug_reg.json --member TV3 --only dropout_0 dropout_0_25 dropout_0_5`
-- Kết quả: status=Completed, best_val_loss=0.9196882782024938, val_acc=0.6662022847589858, val_macro_f1=0.6165225055837354, best_epoch=98, time_s=1899.499, run_dir=results/E4/E4-010_s0
+- Kết quả: status=Completed, best_val_loss=0.9196882782024938, val_acc=0.6662022847589858, val_macro_f1=0.6165225055837354, best_epoch=98, time_s=1910.222, run_dir=results/E4/E4-010_s0
 - Nhận xét: Hoàn tất 100 epochs (31.7 phút, `best_epoch = 98`). Xác nhận rõ rệt hiện tượng **underfitting**! `train_acc_cuoi = 65.25%` thậm chí **thấp hơn `val_acc = 66.62%`** (`Train − Val = -0.0137`), `val_acc` tụt mạnh `-0.0153` so với Baseline (vượt quá `2 × std baseline`) và `val_macro_f1` giảm sâu xuống **`61.65%`** (thấp nhất toàn bộ E4). Việc loại bỏ 50% neuron ngay tại các tầng tích chập làm vỡ cấu trúc biểu cảm vi mô trên khuôn mặt `48×48`, đặc biệt gây hại cho các lớp cảm xúc thiểu số.
 - Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB) làm bằng chứng phản chứng về giới hạn trên của Dropout. TV3 (`C1`) hoàn tất đủ **7/7 biến thể** được giao trong `T15` (bảng `E4_report.md` đã đủ **10/10 biến thể**); bàn giao TV4 (`C2`) vẽ lại hình `e4_overfit.png` đủ 10 biến thể và TV1 (`R`) tổng hợp kết luận + chốt `done(T15)`.
 
-### [E5-001_s0] Khảo sát mất cân bằng lớp bằng WeightedRandomSampler — TV4 – <chưa thực hiện>
-- Giả thuyết: Lớp Disgust chỉ có 436 ảnh trong khi Happy có hơn 7,000 ảnh. Dùng WeightedRandomSampler sẽ tăng đáng kể Recall của lớp Disgust và Fear mà không làm suy giảm quá nhiều tổng Accuracy.
-- Thay đổi so với baseline: Kỹ thuật lấy mẫu có trọng số cân bằng lớp.
-- Lệnh: `python src/run_experiment.py --config configs/E5_imbalance.json --member TV4 --only weighted_sampler`
+### [E5-001_s0] Khảo sát mất cân bằng lớp bằng WeightedRandomSampler (`weighted_random_sampler`, Seed 0 — C2) — TV4 – Huỳnh Viễn Thông – 2026-11-26
+- Giả thuyết: Lớp `Disgust` chỉ có 436 ảnh trong Training trong khi `Happy` có 7,215 ảnh (~16.5×). Dùng `WeightedRandomSampler` (trọng số nghịch đảo tần suất lớp trên riêng tập Training) để cân bằng tần suất xuất hiện các lớp trong mỗi epoch sẽ tăng mạnh Recall của `Disgust` và `Fear` mà không làm sụt giảm tổng Accuracy như `class_weight`.
+- Thay đổi so với baseline: `sampler = "weighted_random"` (`class_weights = null`).
+- Lệnh: `python src/run_experiment.py --config configs/E5_imbalance.json --member TV4 --only weighted_random_sampler`
 - Kết quả: status=Completed, best_val_loss=0.9361300506974436, val_acc=0.6823627751462803, val_macro_f1=0.6716885337089461, best_epoch=100, time_s=2471.275, run_dir=results/E5/E5-001_s0
-- Nhận xét: (chưa thực hiện)
-- Quyết định: (chưa thực hiện)
+- Nhận xét: Hoàn tất 100 epochs trên RTX 3060 (41.2 phút, đỉnh tại epoch 100). Xác nhận xuất sắc giả thuyết! Đạt **`val_acc = 68.24%`** (vượt nhẹ mốc CE chuẩn `E5-003_s0` `68.15%`, không bị đánh đổi accuracy như `class_weight` `66.12%`) và bứt phá **`val_macro_f1 = 67.17%`** (**`+3.01%`** so với CE chuẩn `64.16%`, **`+3.09%`** so với trung bình baseline `64.08%`). Đánh giá độc lập từng lớp trên `PublicTest` bằng `src/visual/e5_recall.py` (lưu `results/E5/E5-001_s0/val_predictions.npz`, `per_class_recall.csv` và `figures/e5_wrs_recall.png/.csv`, khớp `metrics.json` sai số `0.00e+00`): Angry `65.31%` (prec `58.99%`), **Disgust `67.86%` (`38/56`, +30.36% so với CE `37.50%`, prec `74.51%`, F1 `71.03%`)**, **Fear `44.96%` (`223/496`, +2.86% so với CE `42.10%` và vượt hẳn `class_weight` `35.5%`)**, Happy `85.14%` (prec `87.29%`), Sad `55.90%`, Surprise `85.54%`, Neutral `66.06%`.
+- Quyết định: Giữ weights (`KEEP`, `best.pt` 22.40 MB) kèm file dự đoán `val_predictions.npz` phục vụ Tester (`TV3`) tái tính recall độc lập. Là phương pháp xử lý mất cân bằng tốt nhất trong E5 (vừa giữ nguyên Accuracy vừa tăng mạnh Macro-F1 và Recall cho cả `Disgust` lẫn `Fear`); bàn giao TV1 (`R` của T16) tổng hợp kết luận E5.
 
 ### [E5-003_s0] CE thường, mốc đối chứng của E5 (`ce`, Seed 0 — C1) — TV2 – Lê Phan Nguyên Hải – 2026-11-27
 - Giả thuyết: Biến thể `ce` có cấu hình trùng baseline (`sampler = "none"`, `class_weights = null`), nên phải cho lại đúng kết quả `baseline-002_s0` khi cùng seed 0 và cùng máy; đây là mốc để đọc recall từng lớp của `class_weight` và `weighted_random_sampler`.
