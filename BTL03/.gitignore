@@ -1,0 +1,20 @@
+# Dữ liệu: chia qua thư mục chung, không đưa lên git (xem PHAN_CONG_NHIEM_VU.md mục 3)
+*.zip
+*.npy
+*.csv
+data/
+MNIST/
+
+# Checkpoint, log huấn luyện
+*.pt
+*.pth
+*.h5
+*.hdf5
+logs/
+runs/
+
+# Rác môi trường / editor
+.ipynb_checkpoints/
+__pycache__/
+.vscode/
+a.cpp
