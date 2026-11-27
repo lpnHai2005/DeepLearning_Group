@@ -2,6 +2,8 @@
 
 > Người viết: TV2 – Lê Phan Nguyên Hải (nhiệm vụ T22). Review chéo: TV3 (mục 3.1–3.5), TV4 (mục 3.6–3.8). Kiểm thử: TV1.
 >
+> **Xác nhận review chéo mục 3.1–3.5 (TV3 – Võ Hoàng Bảo, 2026-11-27):** Đã đối chiếu toàn bộ số liệu và mô tả mã nguồn trong mục 3.1–3.5 về đúng file sinh từ code — `figures/arch_cnn_baseline.csv` (64×24×24 / 128×12×12 / 256×6×6; `cls1_Linear` = `4,719,104` / `5,867,847` = `80.42%`), `figures/arch_cnn_comparison.csv` & `results/model_summary.csv` (`small` FC1 = `37,749,760` / `38,901,191` = `97.04%`), `report/tables/E6_summary.csv` (ResNet18 `11,180,103`, VGG16 `134,289,223`), `report/tables/baseline_summary.csv` & `results/baseline/baseline_summary.json` (`0.6815 ± 0.0075`, macro-F1 `0.6408 ± 0.0195`, best_val_loss `0.9109`, Train−Val `0.0397`), `src/models/cnn.py` (`bias=not bn`), `src/engine/trainer.py` (`ReduceLROnPlateau(mode="max", factor=0.5, patience=5)`, early stopping patience 15 theo `val_acc`), `tracking/experiments.csv` (`E5-003_s0` trùng sha256 `021c02e6…` với `baseline-002_s0`) và `tracking/test_log.csv` (`KT-016` lệch `0.0022`, `KT-019` lệch `0.0053`). Tất cả khớp 100% nguồn, văn phong rõ ràng, đạt yêu cầu chuẩn bị ghép báo cáo.
+>
 > **Nguồn số liệu.** Mọi con số trong chương lấy từ file do code sinh ra, không gõ tay hay ước lượng:
 > - bảng tổng hợp `report/tables/{baseline,E1,E2,E6}_summary.csv`, sinh bằng `python src/make_tables.py` từ `tracking/experiments.csv`;
 > - `report/tables/E6_analysis.md`, sinh bằng `python src/e6_analysis.py`;
