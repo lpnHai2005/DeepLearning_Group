@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+612299cd,2026-11-27T22:03:00+07:00,hoangbao2908,TV3,T27,fix(T27): lọc bỏ dòng E7-TEST (T19) khỏi bảng validation trong make_tables.py và thêm unit test (đóng QA-03),3,BTL02/report/QA_T27_report.md; BTL02/src/make_tables.py; BTL02/tests/test_make_tables.py
 6baf266f,2026-11-27T21:55:32+07:00,hoangbao2908,TV3,T24,"test(T24): kiểm thử độc lập nhật ký thực nghiệm (87/87 run, 21 run đối chiếu history.csv) và 3 sơ đồ kiến trúc/pipeline đạt Pass và Verified (KT-023, TV3)",1,BTL02/tracking/test_log.csv
 1db47ee4,2026-11-27T21:51:30+07:00,VthongVthongVthong,TV4,T27,"docs(T27): lập biên bản QA tái lập toàn repo trên bản clone sạch (127/127 pytest, 10/10 lệnh README, notebook PASS) và danh sách lỗi QA-01..QA-03",1,BTL02/report/QA_T27_report.md
 2ebb9d43,2026-11-27T21:40:51+07:00,HiCyclone,TV2,T20,"test(T20): kiểm thử độc lập trực quan hóa bộ lọc và Grad-CAM trên E1-014_s0, Pass (KT-022, TV2)",1,BTL02/tracking/test_log.csv
