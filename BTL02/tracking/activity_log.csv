@@ -1,4 +1,6 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+29687d5a,2026-11-27T11:41:15+07:00,TrungKien2005,TV1,(không có mã nhiệm vụ),Merge branch 'main' of https://github.com/lpnHai2005/DeepLearning_Group,0,
+5723e0b3,2026-11-27T11:39:07+07:00,TrungKien2005,TV1,T16,done(T16): tổng hợp E5 và kết luận recall,2,BTL02/report/NHAT_KY_THUC_NGHIEM.md; BTL02/tracking/tasks.csv
 07af6e43,2026-11-27T11:29:22+07:00,VthongVthongVthong,TV4,T20,"feat(T20): hỗ trợ đọc model_kwargs từ config.json (--run-dir), ảnh PublicTest và đăng ký manifest trong visualize_filters.py",2,BTL02/src/visualize_filters.py; BTL02/tests/test_filters.py
 6d7aa53b,2026-11-27T11:26:26+07:00,hoangbao2908,TV3,T18,"feat(T18): viết src/eval_e7.py tổng hợp 3 seed, TTA, ensemble trên PublicTest và xuất ca Grad-CAM kèm unit test",2,BTL02/src/eval_e7.py; BTL02/tests/test_eval_e7.py
 f871ba3c,2026-11-27T11:26:26+07:00,hoangbao2908,TV3,T19,"feat(T19): thêm cờ --eval-test, cơ chế khóa TEST_DONE.json một lần duy nhất và unit test",2,BTL02/src/run_experiment.py; BTL02/tests/test_eval_test.py
