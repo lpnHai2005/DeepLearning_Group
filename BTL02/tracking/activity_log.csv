@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+a9ec8cd6,2026-11-27T22:52:40+07:00,TrungKien2005,TV1,T23,docs(T23): ghi nhận review chéo E3 của TV1,1,BTL02/report/chuong4_E3_E7.md
 fe3793de,2026-11-27T22:49:18+07:00,VthongVthongVthong,TV4,T21,"test(T21): kiểm thử độc lập Chương 2 và mục E4, E5 trên bản clone sạch đạt 108/108 truy vết Pass và Verified (KT-026, TV4)",2,BTL02/tracking/tasks.csv; BTL02/tracking/test_log.csv
 2aa09251,2026-11-27T22:39:45+07:00,TrungKien2005,TV1,(không có mã nhiệm vụ),Merge branch 'main' of https://github.com/lpnHai2005/DeepLearning_Group,0,
 cb9c80ee,2026-11-27T22:38:06+07:00,TrungKien2005,TV1,T22,"docs(T22): kiểm thử độc lập Chương 3, ghi KT-025 Pass",2,BTL02/tracking/tasks.csv; BTL02/tracking/test_log.csv
