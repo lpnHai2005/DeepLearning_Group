@@ -1,0 +1,9 @@
+START | 2026-11-27T21:07:28+07:00 | task=T19 | member=TV3 | host=Hbao | gpu=NVIDIA GeForce RTX 3050 Laptop GPU
+CMD   | python src/run_experiment.py --eval-test --member TV3 --config configs/E7_final.json --run-dirs results/E1/E1-014_s0 results/E1/E1-014_s1 results/E1/E1-014_s2 --tta flip
+ENV   | commit=08be17a0 | dataset_sha256=3b8d9617d1017f34733c8f2474d7784c563ce86c40a86ac12c2d37cc968f871b | tta=flip | n_models=3
+MODEL | E1-014_s0 | sha256=8c79c23b35dd | acc=0.724714 | macro_f1=0.721479
+MODEL | E1-014_s1 | sha256=48f04f121fc4 | acc=0.719699 | macro_f1=0.717369
+MODEL | E1-014_s2 | sha256=5e20695d5006 | acc=0.722207 | macro_f1=0.710295
+FINAL | n_samples=3589 | test_acc=0.736417 | test_macro_f1=0.732162
+BENCH | vs_public_69=+0.046417 | vs_private_71=+0.026417
+END   | 2026-11-27T21:07:49+07:00 | duration_s=21.8 | lock=results/E7/TEST_DONE.json

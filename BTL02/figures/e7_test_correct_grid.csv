@@ -1,0 +1,17 @@
+sample_idx,true_idx,true_label,pred_idx,pred_label,correct,confidence
+0,0,Angry,0,Angry,1,0.982626
+3,4,Sad,4,Sad,1,0.548512
+5,0,Angry,0,Angry,1,0.996245
+7,3,Happy,3,Happy,1,0.995396
+9,3,Happy,3,Happy,1,0.912192
+11,3,Happy,3,Happy,1,0.998542
+13,4,Sad,4,Sad,1,0.329798
+15,6,Neutral,6,Neutral,1,0.432363
+16,2,Fear,2,Fear,1,0.822534
+17,5,Surprise,5,Surprise,1,0.989712
+18,4,Sad,4,Sad,1,0.969348
+19,2,Fear,2,Fear,1,0.566172
+20,3,Happy,3,Happy,1,0.994423
+21,6,Neutral,6,Neutral,1,0.582892
+22,0,Angry,0,Angry,1,0.9628
+23,6,Neutral,6,Neutral,1,0.605767

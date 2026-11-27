@@ -1,0 +1,112 @@
+{
+  "locked": true,
+  "task_id": "T19",
+  "split": "PrivateTest",
+  "evaluated_at": "2026-11-27T21:07:49+07:00",
+  "started_at": "2026-11-27T21:07:28+07:00",
+  "duration_s": 21.8,
+  "member": "TV3",
+  "hostname": "Hbao",
+  "os_user": "ADMIN",
+  "git_user": "hoangbao2908",
+  "gpu": "NVIDIA GeForce RTX 3050 Laptop GPU",
+  "torch": "2.6.0+cu124",
+  "cuda": "12.4",
+  "git_commit": "08be17a0",
+  "dataset_sha256": "3b8d9617d1017f34733c8f2474d7784c563ce86c40a86ac12c2d37cc968f871b",
+  "command": "python src/run_experiment.py --eval-test --member TV3 --config configs/E7_final.json --run-dirs results/E1/E1-014_s0 results/E1/E1-014_s1 results/E1/E1-014_s2 --tta flip",
+  "tta": "flip",
+  "n_models": 3,
+  "n_samples": 3589,
+  "test_acc": 0.7364168292003344,
+  "test_macro_f1": 0.7321618422246675,
+  "benchmark_public": 0.69,
+  "benchmark_private": 0.71,
+  "diff_vs_public_69": 0.046417,
+  "diff_vs_private_71": 0.026417,
+  "per_class": {
+    "Angry": {
+      "precision": 0.6735537190082644,
+      "recall": 0.6639511201629328,
+      "f1": 0.6687179487179487,
+      "support": 491
+    },
+    "Disgust": {
+      "precision": 0.8723404255319149,
+      "recall": 0.7454545454545455,
+      "f1": 0.803921568627451,
+      "support": 55
+    },
+    "Fear": {
+      "precision": 0.6538461538461539,
+      "recall": 0.5151515151515151,
+      "f1": 0.576271186440678,
+      "support": 528
+    },
+    "Happy": {
+      "precision": 0.9031531531531531,
+      "recall": 0.9124004550625711,
+      "f1": 0.9077532541029995,
+      "support": 879
+    },
+    "Sad": {
+      "precision": 0.5868544600938967,
+      "recall": 0.6313131313131313,
+      "f1": 0.6082725060827251,
+      "support": 594
+    },
+    "Surprise": {
+      "precision": 0.8294392523364486,
+      "recall": 0.8533653846153846,
+      "f1": 0.8412322274881516,
+      "support": 416
+    },
+    "Neutral": {
+      "precision": 0.6870451237263464,
+      "recall": 0.7539936102236422,
+      "f1": 0.718964204112719,
+      "support": 626
+    }
+  },
+  "models": [
+    {
+      "exp_id": "E1-014_s0",
+      "run_dir": "results/E1/E1-014_s0",
+      "weights_path": "results/E1/E1-014_s0/best.pt",
+      "weights_sha256": "8c79c23b35dd8e109ea57998844ae295279744a63964b233c0cee5e51933fbcf",
+      "n_params": 20410439,
+      "seed": 0,
+      "test_acc": 0.7247144051267762,
+      "test_macro_f1": 0.7214789441167401
+    },
+    {
+      "exp_id": "E1-014_s1",
+      "run_dir": "results/E1/E1-014_s1",
+      "weights_path": "results/E1/E1-014_s1/best.pt",
+      "weights_sha256": "48f04f121fc4000de04fb0d64efa53f336220ca65567b7b1078a62b9ae2d1a00",
+      "n_params": 20410439,
+      "seed": 1,
+      "test_acc": 0.7196990805238228,
+      "test_macro_f1": 0.7173694069468182
+    },
+    {
+      "exp_id": "E1-014_s2",
+      "run_dir": "results/E1/E1-014_s2",
+      "weights_path": "results/E1/E1-014_s2/best.pt",
+      "weights_sha256": "5e20695d5006b177b7198e2efec195c6380c7c5d6efc6b7a641bd3bf5e03c2fd",
+      "n_params": 20410439,
+      "seed": 2,
+      "test_acc": 0.7222067428252995,
+      "test_macro_f1": 0.7102954212743898
+    }
+  ],
+  "predictions_path": "results/E7/test_predictions.npz",
+  "per_class_csv": "results/E7/test_per_class.csv",
+  "log_path": "results/E7/test_run.log",
+  "figures": {
+    "confusion": "figures/e7_test_confusion.png",
+    "error_hist": "figures/e7_test_error_hist.png",
+    "correct_grid": "figures/e7_test_correct_grid.png",
+    "wrong_grid": "figures/e7_test_wrong_grid.png"
+  }
+}
