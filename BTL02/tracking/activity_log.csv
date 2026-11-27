@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+4903d5b6,2026-11-28T01:06:44+07:00,TrungKien2005,TV1,T26,"docs(T26): thêm 3 slide TV1 về dữ liệu, E4, E5 kèm bảng dò nguồn",4,BTL02/report/slides/Slide_BTL02_TV1.pdf; BTL02/report/slides/Slide_BTL02_TV1.pptx; BTL02/report/slides/TV1_slide_nguon.md; BTL02/report/slides/build_slides_tv1.py
 a6cf4bba,2026-11-28T00:08:03+07:00,TrungKien2005,TV1,T24,docs(T24): bổ sung nhận xét và quyết định run E1 của TV1,1,BTL02/report/NHAT_KY_THUC_NGHIEM.md
 8d1e2ace,2026-11-27T23:50:21+07:00,TrungKien2005,TV1,T27,docs(T27): ghi nhận kết quả clone sạch của TV1,1,BTL02/report/QA_T27_report.md
 4c623d31,2026-11-27T23:29:53+07:00,HiCyclone,TV2,T23,"test(T23): kiểm lại Chương 4 sau khi TV3 sửa KT-027, 35/35 số liệu khớp nguồn, Pass (KT-028, TV2)",1,BTL02/tracking/test_log.csv
