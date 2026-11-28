@@ -64,6 +64,18 @@ TV2 đã khởi tạo các script tracking. Theo ma trận hiện tại, TV4 là
 
 Ma trận R/C/T đầy đủ và nội dung C cụ thể nằm trong mục 5 của [`PHAN_CONG_NHIEM_VU.md`](PHAN_CONG_NHIEM_VU.md) và `tracking/tasks.csv`.
 
+## Thành viên và tỷ lệ đóng góp
+
+Cả nhóm thống nhất mỗi thành viên đóng góp 25.0%, tổng 100.0%. Căn cứ: mỗi người hoàn tất mọi nhiệm vụ R được giao, làm 7 lượt kiểm thử độc lập T và 13 đến 15 lượt phối hợp C. Các chỉ số chi tiết (commit có mã, số lần kiểm thử, run chính thức) nằm ở Bảng 1.2 của báo cáo, sinh bằng `src/t25_report_stats.py` từ `tracking/` và lưu tại `report/tables/T25_contribution.csv`.
+
+| Mã | Họ và tên | Nhiệm vụ R | Đóng góp (%) |
+|---|---|---|---:|
+| TV1 | Đoàn Trung Kiên | T02–T05, T15, T16, T21: khung repo, dữ liệu, loader, EDA, E4, E5, Ch.2 | 25.0 |
+| TV2 | Lê Phan Nguyên Hải (nhóm trưởng) | T06, T07, T11–T13, T17, T22, T28: model, trainer, baseline, E1, E2, E6, Ch.3, đóng gói nộp bài | 25.0 |
+| TV3 | Võ Hoàng Bảo | T08–T10, T14, T18, T19, T23: evaluate, bảng, notebook, E3, E7, PrivateTest, Ch.4 | 25.0 |
+| TV4 | Huỳnh Viễn Thông | T01, T20, T24–T27: kế hoạch và theo dõi, bộ lọc conv cuối, nhật ký thực nghiệm, báo cáo, slide, QA | 25.0 |
+| **Tổng** | | 28 nhiệm vụ | **100.0** |
+
 ## Quy ước bắt buộc
 
 - Thông điệp commit viết tiếng Việt và có mã nhiệm vụ trong ngoặc, ví dụ `feat(T04): thêm loader FER2013`, `fix(T07): sửa lỗi ghi history.csv`, `docs(T02): cập nhật README`. Thiếu mã nhiệm vụ được ghi là “không có mã nhiệm vụ” và tính là thiếu.

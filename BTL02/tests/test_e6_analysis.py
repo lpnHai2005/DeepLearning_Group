@@ -1,4 +1,7 @@
-"""Kiểm số liệu bản đồ đặc trưng VGG16 mà src/e6_analysis.py đưa vào bảng E6.3 (T17)."""
+"""Kiểm số liệu bản đồ đặc trưng VGG16 mà src/e6_analysis.py đưa vào bảng E6.3 (T17).
+
+Phụ trách: TV2 – Lê Phan Nguyên Hải. Nhiệm vụ T17.
+"""
 from src.e6_analysis import vgg_feature_maps
 
 
