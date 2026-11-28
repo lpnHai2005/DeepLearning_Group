@@ -71,15 +71,15 @@
   - **`WeightedRandomSampler`**: giữ Acc (`68.24%`, `+0.08%`), tăng Macro-F1 **`+3.01`** điểm % (`67.17%`), kéo đồng thời Disgust lên `67.86%` (`38/56`) và Fear lên `44.96%` (`223/496`).
 
 ### Slide 10 — Thực nghiệm E6: Transfer Learning & Fail Case VGG16 48px *(TV2, ~60s)*
-- Giải thích cấu trúc thất bại hiệu năng của `VGG16` ở `48×48`: 5 tầng MaxPool thu gọn bản đồ đặc trưng về `1×1×512`, nhưng `AdaptiveAvgPool2d(7,7)` sao chép ra 49 bản giống hệt nhau → riêng `FC1` chiếm `102.8M / 134.3M` tham số (nặng `22.9×` baseline, tốn `60–71s/epoch`) mà vẫn thua `large_bn`.
+- Giải thích cấu trúc thất bại hiệu năng của `VGG16` ở `48×48`: 5 tầng MaxPool thu gọn bản đồ đặc trưng về `1×1×512`, nhưng `AdaptiveAvgPool2d(7,7)` sao chép ra 49 bản giống hệt nhau → trong `102.8M` tham số của `FC1` (`134.3M` toàn mạng, nặng `22.9×` baseline) có khoảng `100.7M` tham số dư thừa, tốn `60–71s/epoch` mà vẫn thua `large_bn`.
 - Với `ResNet18`: trọng số ImageNet giúp nhảy vọt `56.12%` ngay epoch 1 (vs `28.62%` từ đầu), nhưng đóng băng backbone tụt còn `45.70%` do khoảng cách miền ảnh màu tự nhiên vs ảnh mặt xám 48 px.
 
 ### Slide 11 — Thực nghiệm E7: Sàng lọc, TTA & Ensemble trên PublicTest *(TV3, ~60s)*
 - Bước 1: thử ghép `bs_64`, `leaky_relu`, `WRS` vào `large_bn` (`E7-001..003`) và `baseline_best` (`E7-004`): cả 4 đều dưới mốc `E1-014_s0` (`70.86%`) → chứng minh không thể cộng dồn mù siêu tham số giữa các kiến trúc; giữ `large_bn` 3 seed theo luật tiền đăng ký.
-- Bước 2: Ensemble 3 seed tăng `70.60% → 72.36%` (NLL `1.2175 → 0.9780`), thêm **TTA lật ngang** lên **`72.50%`** (`2,602/3,589`, NLL **`0.9402`**). Ngược lại `ten_crop` giảm còn `69.91%` do cắt biên ảnh 48 px.
+- Bước 2: Ensemble 3 seed tăng `70.60% → 72.36%` (NLL `1.2175 → 0.9780`), thêm **TTA lật ngang** lên **`72.50%`** (`2,602/3,589`, NLL **`0.9402`**). Ngược lại `ten_crop` giảm còn `69.91%` *(giả thuyết: do cắt mất biên ở ảnh 48 px; chưa kiểm chứng thực nghiệm)*.
 
 ### Slide 12 — Kết quả PrivateTest duy nhất 1 lần *(TV3, ~60s)*
-- Công bố kết quả khóa 1 lần `results/E7/TEST_DONE.json`: **`73.64%`** (`2,643/3,589`, Macro-F1 **`73.22%`**) — vượt mốc `69%` là `+4.64%`, vượt mốc `71%` là **`+2.64%`**, vượt báo cáo mẫu Keras (`64–67%`) tới `6.6–9.6%`.
+- Công bố kết quả khóa 1 lần `results/E7/TEST_DONE.json`: **`73.64%`** (`2,643/3,589`, Macro-F1 **`73.22%`**). So với hai mốc cuộc thi: **`PublicTest 72.50%`** (`+3.50` điểm % so với mốc `69%`) và **`PrivateTest 73.64%`** (`+2.64` điểm % so với mốc `71%`), đồng thời vượt báo cáo mẫu Keras (`64–67%`).
 - Nêu quy trình chứng kiến 3 bên (TV3 chạy 21.8s, TV2 chứng kiến, TV4 kiểm chạy lại `--eval-test` bị chặn ngay với `exit = 1`).
 - Điểm bất ngờ: lớp hiếm nhất **`Disgust` đạt F1 `80.39%`** (đứng thứ 3/7 chỉ sau `Happy 90.78%` và `Surprise 84.12%`).
 
@@ -116,7 +116,7 @@
    - **Đáp**: Nhóm đã kiểm nghiệm thực tế ở Bước 1 của E7 (`report/tables/E7_summary.csv`): khi ghép lần lượt vào `large_bn`, cả `E7-001` (`+bs64`: `69.71%`), `E7-002` (`+bs64+leaky`: `69.10%`) và `E7-003` (`+bs64+leaky+WRS`: `69.35%`) đều thấp hơn mốc `E1-014_s0` (`70.86%`). Hơn nữa các biến thể E2–E5 chỉ chạy 1 seed trên kiến trúc 6 Conv, không bảo đảm chuyển giao sang 16 Conv. Nhóm tuân thủ đúng luật tiền đăng ký trong `configs/E7_final.json`.
 
 5. **Hỏi: Tại sao TTA `ten_crop` lại làm giảm accuracy từ `72.36%` xuống `69.91%`, trong khi `flip` tăng lên `72.50%`?**  
-   - **Đáp**: Ảnh FER2013 chỉ `48×48` và khuôn mặt đã nằm sát khung hình. Cắt 4 góc ở `ten_crop` (ví dụ `42×42` phóng lại) dễ cắt mất phần lông mày, trán hoặc cằm — đúng các vùng quyết định mà Grad-CAM ở Chương 6 đã chỉ ra. Ngược lại, cảm xúc khuôn mặt đối xứng trái–phải nên lật ngang (`flip`) bảo toàn trọn vẹn thông tin, vừa tăng accuracy lên `72.50%` vừa giảm NLL từ `0.9780` xuống `0.9402`.
+   - **Đáp**: Ảnh FER2013 chỉ `48×48` và khuôn mặt đã nằm sát khung hình. Giả thuyết của nhóm là cắt 4 góc ở `ten_crop` dễ cắt mất phần lông mày, trán hoặc cằm — đúng các vùng quyết định mà Grad-CAM ở Chương 6 đã chỉ ra (nhóm chưa kiểm chứng thực nghiệm nguyên nhân này). Ngược lại, cảm xúc khuôn mặt đối xứng trái–phải nên lật ngang (`flip`) bảo toàn trọn vẹn thông tin, vừa tăng accuracy lên `72.50%` vừa giảm NLL từ `0.9780` xuống `0.9402`.
 
 6. **Hỏi: Làm sao giảng viên tin được nhóm chỉ chạy `PrivateTest` đúng 1 lần chứ không chạy thử nhiều lần rồi chọn kết quả đẹp nhất?**  
    - **Đáp**: Có 4 tầng bằng chứng độc lập: (1) `make_loaders` chỉ trả `Training` và `PublicTest`, tách hẳn `make_test_loader` chỉ gọi qua `--eval-test`; (2) `eval_test` kiểm tra ngay `results/E7/TEST_DONE.json` — nếu tồn tại lập tức từ chối chạy (`exit = 1`); (3) lịch sử Git cho thấy `TEST_DONE.json` chỉ xuất hiện duy nhất ở commit `bb6d96a` (do TV3 chạy, TV2 chứng kiến ghi nhật ký, TV4 chạy thử lần 2 xác nhận bị chặn ở commit `57eacf2`); (4) TV1 kiểm thử độc lập `KT-024` trên bản clone sạch xác nhận `test_predictions.npz` khớp `73.64%`.
@@ -152,7 +152,7 @@ Chạy lại lệnh `--eval-test` ngay trước lớp để chứng minh hệ th
 ```powershell
 python src/run_experiment.py --eval-test --member TV4 --config configs/E7_final.json --run-dirs results/E1/E1-014_s0 results/E1/E1-014_s1 results/E1/E1-014_s2 --tta flip
 ```
-- **Kỳ vọng hiển thị**: Hệ thống in thông báo từ chối (`TEST_DONE.json` đã khóa `locked=true`, `test_acc=0.7364`, `exit code = 1`), không sửa 1 byte nào của 4 file bằng chứng.
+- **Kỳ vọng hiển thị**: Hệ thống in ngay thông báo từ chối chạy `--eval-test` do file khóa `results/E7/TEST_DONE.json` đã tồn tại (`exit code = 1`), không sửa 1 byte nào của 4 file bằng chứng. *(Để trình chiếu con số `test_acc = 0.7364`, mở trực tiếp `results/E7/TEST_DONE.json`.)*
 
 ### Bước 2 — Kiểm chứng chất lượng mã nguồn bằng `pytest` (30 giây)
 Chạy nhanh nhóm test cốt lõi (kiểm tra khóa `PrivateTest`, metric đánh giá và trực quan hóa bộ lọc):
@@ -173,4 +173,5 @@ python src/visualize_filters.py --run-dir results/E1/E1-014_s0 --data-csv data/f
 python src/t25_report_stats.py
 python src/make_tables.py
 ```
-- **Kỳ vọng hiển thị**: Tái sinh ngay `report/tables/T25_*.csv` và `report/tables/E1..E7_summary.csv` khớp 100% với số liệu trên slide và báo cáo Word; mở nhanh `notebooks/executed/` và tab Google Sheets (`Phan_cong`, `Thuc_nghiem`, `Kiem_thu`) để chứng minh toàn bộ lịch sử truy vết đồng bộ trực tiếp từ GitHub.
+- **Kỳ vọng hiển thị**: Tái sinh ngay `report/tables/T25_*.csv` và `report/tables/E1..E7_summary.csv` khớp với số liệu trên slide và báo cáo Word; mở nhanh `notebooks/executed/` và tab Google Sheets (`Phan_cong`, `Thuc_nghiem`, `Kiem_thu`) để chứng minh toàn bộ lịch sử truy vết đồng bộ trực tiếp từ GitHub.
+- **Dọn dẹp sau demo**: Vì chạy `src/t25_report_stats.py` có thể cập nhật cột số commit/số lần kiểm thử mới nhất trong `report/tables/T25_contribution.csv` và `report/chuong1_gioi_thieu.md`, sau khi kết thúc buổi demo nhớ chạy `git checkout -- .` và xóa `results/_demo_t26` để đưa bản clone về trạng thái sạch.
