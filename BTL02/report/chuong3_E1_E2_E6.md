@@ -109,7 +109,7 @@ Quy ước cho E1–E6: mỗi thí nghiệm đổi **một yếu tố** so với
 
 `large_adam1e-4` (`E1-011_s0`) bị dừng tay ở epoch 4 vì đứng yên ở 0.2494 (Aborted), nên không có số.
 
-**3.6.1. Mạng sâu không BN sập vì khởi tạo, không phải vì optimizer.** Với SGD lr 0.01 và khởi tạo mặc định của PyTorch, `medium_01` (11 Conv) và `large` (16 Conv) không học được: loss đứng ở 1.81 từ epoch 1 và mạng đoán toàn lớp Happy, ra đúng tỉ lệ lớp Happy trong val là 0.2494. Bảng 3.5 tách nguyên nhân bằng cách mỗi dòng đổi một yếu tố:
+**3.6.1. Mạng sâu không BN sập vì khởi tạo, không phải vì optimizer.** Với SGD lr 0.01 và khởi tạo mặc định của PyTorch, `medium_01` (11 Conv) và `large` (16 Conv) không học được: train_loss ở epoch 1 là 1.83–1.84 rồi đứng ở 1.81 từ epoch 2, mạng đoán toàn lớp Happy, ra đúng tỉ lệ lớp Happy trong val là 0.2494. Bảng 3.5 tách nguyên nhân bằng cách mỗi dòng đổi một yếu tố:
 
 **Bảng 3.5.** Tách nguyên nhân (1 seed mỗi dòng, trừ `large_bn`).
 
@@ -176,7 +176,7 @@ Quy ước cho E1–E6: mỗi thí nghiệm đổi **một yếu tố** so với
 | `sigmoid_no_bn` | **3.2e-7** | **4.0e-7** | giảm còn 1.0e-7 ở epoch 16, không hồi phục |
 
 - `sigmoid_no_bn` **không học được**. Gradient giảm đều từ lớp ra về lớp vào: `fc2` 8.1e-1, `fc1` 6.5e-1, `conv3_2` 4.6e-2, `conv3_1` 4.9e-3, `conv2_2` 6.9e-4, `conv2_1` 7.9e-5, `conv1_2` 1.1e-5, `conv1_1` 3.2e-7. Mỗi lớp Conv nhân gradient thêm khoảng 0.1 lần, khớp với việc đạo hàm sigmoid không vượt 0.25. Lớp đầu nhận gradient nhỏ hơn lớp ra khoảng 2.5 triệu lần, nên các lớp Conv gần như đứng yên.
-- Hệ quả đo được: train_loss đứng ở 1.81 suốt 16 epoch, bằng entropy của phân bố lớp trong Training (1.8096). Tức mạng chỉ học được tần suất các lớp qua bias của lớp cuối, không học gì từ ảnh. Mạng đoán toàn lớp Happy, val_acc 0.2494 (`E2-009_s0`).
+- Hệ quả đo được: train_loss khởi đầu 1.83 ở epoch 1 rồi đứng ở 1.81 từ epoch 2 đến hết epoch 16, bằng entropy của phân bố lớp trong Training (1.8096). Tức mạng chỉ học được tần suất các lớp qua bias của lớp cuối, không học gì từ ảnh. Mạng đoán toàn lớp Happy, val_acc 0.2494 (`E2-009_s0`).
 - Đây là **đặc tính của Sigmoid**, không phải do bỏ BN hay do hàm bão hòa nói chung. `tanh_no_bn`, cũng bão hòa, có tỉ lệ lớp đầu/lớp ra 0.035, ngang `relu_no_bn` (0.042) và lớn hơn `sigmoid_no_bn` khoảng 100,000 lần. Lý do: đạo hàm tanh tại 0 bằng 1 và đầu ra đối xứng quanh 0, còn sigmoid chỉ 0.25 và đầu ra luôn dương.
 
 **3.7.2. BN sửa được gradient nhưng không sửa được độ chính xác của Sigmoid.** Có BN, gradient lớp đầu của sigmoid ở epoch 1 vẫn nhỏ hơn ReLU khoảng 33 lần (1.8e-3 so với 5.9e-2). Nhưng tới epoch 10 nó hồi phục ngang ReLU, vì BN giữ đầu vào mỗi lớp quanh 0, vùng đạo hàm sigmoid lớn nhất. Dù vậy val_acc chỉ đạt 0.4765 ± 0.0220 (4 run), `train_acc_cuoi` 0.41–0.44, tức thiếu khớp nặng. Ở bản có BN, nút thắt không còn là vanishing gradient mà là sigmoid học rất chậm với SGD lr 0.01, khiến plateau cắt lr 3–8 lần và early stopping dừng ở epoch 44–84.
@@ -186,7 +186,7 @@ Quy ước cho E1–E6: mỗi thí nghiệm đổi **một yếu tố** so với
 **3.7.4. Các hàm còn lại.**
 - `leaky_relu` (0.6935) và `gelu` (0.6918, best_val_loss thấp nhất E2 là 0.8807) vượt std baseline, nhưng mới 1 seed và chỉ nhỉnh hơn ngưỡng.
 - `elu` (0.6553) thiếu khớp (`train_acc_cuoi` thấp hơn val), dù gradient không có vấn đề.
-- `tanh` (0.6414) và `tanh_no_bn` (0.6523) kém ReLU 3–4 điểm.
+- `tanh` (0.6414) và `tanh_no_bn` (0.6523) kém ReLU khoảng 3.9–4.5 điểm (4.49 điểm giữa `tanh` và `relu`, 3.90 điểm giữa `tanh_no_bn` và `relu_no_bn`).
 - `relu_no_bn` (0.6913) khớp kết quả `baseline_no_bn` của E1 (0.6941 ± 0.0033) đo trên máy khác, xác nhận chéo rằng ở 6 Conv với ReLU, bỏ BN không gây hại.
 
 **Kết luận E2.** Giữ họ ReLU. `leaky_relu` và `gelu` nhỉnh hơn ReLU trên baseline nhưng mới 1 seed. Loại `sigmoid`, `tanh`, `elu`. `E2-009_s0` cùng Hình 3.4 là bằng chứng vanishing gradient của Sigmoid so với ReLU mà đề bài yêu cầu.

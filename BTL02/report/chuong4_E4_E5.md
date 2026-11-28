@@ -35,7 +35,7 @@ Mốc baseline ba seed đạt val accuracy `0,6815 ± 0,0075` và macro-F1 `0,64
 
 ![Đường cong Train/Validation và khoảng cách accuracy E4](../figures/e4_overfit.png)
 
-**Hình E4-1.** Đường cong được tạo từ `history.csv` của baseline và 10 run E4. CSV chứa toàn bộ điểm từng epoch nằm tại `figures/e4_overfit.csv`; bảng tóm tắt epoch tốt nhất và epoch cuối tại `figures/e4_overfit_summary.csv`. Script tạo hình là `src/visual/e4_overfit.py`. Hình nằm ở /figures/e4_overfit.png
+**Hình E4-1.** Đường cong được tạo từ `history.csv` của baseline và 10 run E4. CSV chứa toàn bộ điểm từng epoch nằm tại `figures/e4_overfit.csv`; bảng tóm tắt epoch tốt nhất và epoch cuối tại `figures/e4_overfit_summary.csv`. Script tạo hình là `src/visual/e4_overfit.py`.
 
 ### Kết luận E4
 

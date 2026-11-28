@@ -4,7 +4,7 @@
 
 Nhận dạng cảm xúc khuôn mặt (Facial Expression Recognition, FER) là bài toán phân loại ảnh: cho một ảnh khuôn mặt, mô hình trả về một trong bảy cảm xúc cơ bản. Đề bài yêu cầu dùng bộ dữ liệu FER2013 của cuộc thi Kaggle "Challenges in Representation Learning: Facial Expression Recognition Challenge" (Goodfellow et al., 2013). Mỗi ảnh là ảnh xám 48 × 48 pixel, nhãn thuộc bảy lớp theo đúng thứ tự của bộ dữ liệu: 0 Angry, 1 Disgust, 2 Fear, 3 Happy, 4 Sad, 5 Surprise, 6 Neutral. Đầu vào của mô hình là ảnh 48 × 48, đầu ra là vector bảy chiều biểu diễn xác suất của bảy cảm xúc.
 
-Đây là bài toán khó vì ba lý do. Thứ nhất, ảnh có độ phân giải rất thấp, nhiều ảnh nghiêng, bị che hoặc thiếu sáng. Thứ hai, nhãn có nhiễu: theo nhóm tác giả bộ dữ liệu, độ chính xác của con người trên FER2013 chỉ khoảng 65 ± 5%. Thứ ba, các lớp mất cân bằng mạnh, lớp Happy nhiều hơn lớp Disgust khoảng 16.5 lần (Chương 2).
+Đây là bài toán khó vì ba lý do. Thứ nhất, ảnh có độ phân giải rất thấp, nhiều ảnh nghiêng, bị che hoặc thiếu sáng. Thứ hai, nhãn có nhiễu: theo nhóm tác giả bộ dữ liệu, độ chính xác của con người trên FER2013 chỉ khoảng 65 ± 5%. Thứ ba, các lớp mất cân bằng mạnh, lớp Happy nhiều hơn lớp Disgust 16.55 lần (Chương 2).
 
 ## 1.2. Mục tiêu và mốc so sánh
 
@@ -55,9 +55,9 @@ Bảng 1.2 tổng hợp các chỉ số thực làm được sinh tự động b
 |---|---|---:|---:|---:|---:|---:|---:|---:|
 | TV1 | Đoàn Trung Kiên | 7/7 | 47 | 9 | 17 | 14 | 7 | 25.0 |
 | TV2 | Lê Phan Nguyên Hải | 8/8 | 60 | 7 | 32 | 13 | 7 | 25.0 |
-| TV3 | Võ Hoàng Bảo | 7/7 | 52 | 6 | 16 | 14 | 7 | 25.0 |
-| TV4 | Huỳnh Viễn Thông | 6/6 | 45 | 7 | 21 | 15 | 7 | 25.0 |
-| Tổng |  | 28/28 | 204 | 29 | 86 | 56 | 28 | 100.0 |
+| TV3 | Võ Hoàng Bảo | 7/7 | 55 | 7 | 16 | 14 | 7 | 25.0 |
+| TV4 | Huỳnh Viễn Thông | 6/6 | 47 | 7 | 21 | 15 | 7 | 25.0 |
+| Tổng |  | 28/28 | 209 | 30 | 86 | 56 | 28 | 100.0 |
 <!-- END T25_contribution -->
 
 Lưu ý khi đọc các chỉ số phụ trong Bảng 1.2: một commit lớn và một commit nhỏ được đếm như nhau, một run 100 epoch và một run dừng sớm cũng vậy, nên các cột số đếm được trình bày kèm để đối chiếu minh bạch tiến độ thực làm chứ không làm lệch đánh giá đóng góp đều giữa bốn thành viên.

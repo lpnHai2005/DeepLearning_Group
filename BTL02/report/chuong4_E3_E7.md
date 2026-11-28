@@ -31,7 +31,7 @@
    - **Accuracy tổng thể (Val / Test Accuracy):** Tỷ lệ dự đoán đúng trên toàn bộ 3,589 ảnh. Đây là tiêu chí chọn checkpoint `best.pt` và đối chiếu trực tiếp với hai mốc cuộc thi (**69% Public / 71% Private**).
    - **Macro-F1:** Trung bình cộng không trọng số của $F_1$ trên cả 7 lớp cảm xúc:
      $$\text{Macro-F1} = \frac{1}{7}\sum_{c=0}^{6} \frac{2 \cdot \text{Precision}_c \cdot \text{Recall}_c}{\text{Precision}_c + \text{Recall}_c}$$
-     Do lớp `Happy` (`7,215` ảnh train, `895` ảnh val) nhiều gấp **16.5×** lớp `Disgust` (`436` ảnh train, `56` ảnh val), Macro-F1 giúp phát hiện mô hình chỉ đoán tốt lớp đông mà bỏ rơi lớp thiểu số.
+     Do lớp `Happy` (`7,215` ảnh train, `895` ảnh val) nhiều gấp **16.55×** lớp `Disgust` (`436` ảnh train, `56` ảnh val), Macro-F1 giúp phát hiện mô hình chỉ đoán tốt lớp đông mà bỏ rơi lớp thiểu số.
    - **Precision, Recall theo từng lớp và Ma trận nhầm lẫn chuẩn hóa theo hàng:** Đo trực tiếp độ nhạy trên các lớp khó (`Disgust`, `Fear`, `Sad`) và xác định các cặp cảm xúc dễ nhầm (`plot_confusion_matrix`, `plot_error_histogram`).
    - **Best validation loss & khoảng cách Train − Val (epoch cuối):** `best_val_loss` phản ánh mức hiệu chỉnh xác suất (calibration), còn `Train − Val` (`train_acc_cuoi − val_acc`, cùng định nghĩa với Chương 3, khác chỉ số tại best epoch của E4 ở mục 2.6) chỉ dùng so sánh xu hướng quá khớp giữa các cấu hình (vì `train_acc_cuoi` đo khi bật augmentation và dropout).
 
@@ -232,7 +232,7 @@ Dựa trên Bảng 4.5 và Hình 4.4, 7 lớp cảm xúc tách thành 2 nhóm hi
 
 ### 3. Ca sai điển hình có độ tự tin cao và liên kết với phân tích Grad-CAM (`T20`)
 
-Trích xuất từ lưới sai trên PrivateTest (`figures/e7_test_wrong_grid.png` và `figures/e7_test_wrong_grid.csv`) cho thấy nhiều ca sai không phải do mô hình do dự (`confidence ≈ 0.40`), mà có độ tự tin rất cao (`0.70–0.97`):
+Trích xuất từ lưới sai trên PrivateTest (`figures/e7_test_wrong_grid.png` và `figures/e7_test_wrong_grid.csv`) cho thấy nhiều ca sai không phải do mô hình do dự (`confidence ≈ 0.40`), mà có độ tự tin rất cao (`0.63–0.97`):
 - **Nhóm ranh giới nhãn mờ / nhiễu nhãn FER-2013:** Mẫu `#6` (`Sad → Neutral`, `conf = 97.18%`), mẫu `#41` (`Sad → Neutral`, `conf = 91.79%`) và mẫu `#12` (`Sad → Neutral`, `conf = 63.42%`) có tư thế gương mặt gần như trung tính không lộ nếp buồn rõ; mẫu `#10` (`Surprise → Happy`, `conf = 73.50%`) có miệng mở giống cười vui; mẫu `#44` (`Fear → Neutral`, `conf = 67.04%`).
 - **Nhóm nhầm cấu trúc cơ mặt cục bộ:** Mẫu `#33` (`Angry → Fear`, `conf = 81.93%`), mẫu `#8` (`Angry → Fear`, `conf = 75.54%`), mẫu `#2` (`Neutral → Fear`, `conf = 70.48%`) và mẫu `#14` (`Angry → Sad`, `conf = 63.31%`) thường rơi vào ảnh chụp góc nghiêng, che khuất một phần khuôn mặt, độ tương phản kém hoặc vùng mắt/miệng bị mờ ở kích thước `48×48`.
 - **Liên kết kiểm chứng định tính qua Grad-CAM (`T20`):** Để tránh sử dụng dữ liệu PrivateTest cho việc phân tích nội bộ lặp lại, nhiệm vụ `T18` đã xuất sẵn danh sách 30 ca điển hình trên `PublicTest` tại `results/E7/e7_gradcam_cases.csv` (gồm 14 ca dự đoán đúng trải đều cả 7 lớp và 16 ca dự đoán sai độ tự tin cao thuộc đúng các cặp lỗi trên, như `#2930` `Fear → Surprise`, `#441` `Sad → Angry`, `#1202` `Fear → Sad`, `#1892` `Disgust → Angry`) để Chương 5 (`T20` – Grad-CAM & trực quan hóa bản đồ đặc trưng của TV4) giải thích trực tiếp vùng khuôn mặt mà mô hình `large_bn` tập trung khi đoán đúng và khi nhầm lẫn.
