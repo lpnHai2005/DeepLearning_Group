@@ -1,7 +1,5 @@
 # Chương 3. Mô hình CNN và quá trình huấn luyện
 
-> Người viết: TV2 – Lê Phan Nguyên Hải (nhiệm vụ T22). Review chéo: TV3 (mục 3.1–3.5), TV4 (mục 3.6–3.8). Kiểm thử: TV1.
->
 > **Xác nhận review chéo mục 3.1–3.5 (TV3 – Võ Hoàng Bảo, 2026-11-27):** Đã đối chiếu toàn bộ số liệu và mô tả mã nguồn trong mục 3.1–3.5 về đúng file sinh từ code — `figures/arch_cnn_baseline.csv` (64×24×24 / 128×12×12 / 256×6×6; `cls1_Linear` = `4,719,104` / `5,867,847` = `80.42%`), `figures/arch_cnn_comparison.csv` & `results/model_summary.csv` (`small` FC1 = `37,749,760` / `38,901,191` = `97.04%`), `report/tables/E6_summary.csv` (ResNet18 `11,180,103`, VGG16 `134,289,223`), `report/tables/baseline_summary.csv` & `results/baseline/baseline_summary.json` (`0.6815 ± 0.0075`, macro-F1 `0.6408 ± 0.0195`, best_val_loss `0.9109`, Train−Val `0.0397`), `src/models/cnn.py` (`bias=not bn`), `src/engine/trainer.py` (`ReduceLROnPlateau(mode="max", factor=0.5, patience=5)`, early stopping patience 15 theo `val_acc`), `tracking/experiments.csv` (`E5-003_s0` trùng sha256 `021c02e6…` với `baseline-002_s0`) và `tracking/test_log.csv` (`KT-016` lệch `0.0022`, `KT-019` lệch `0.0053`). Tất cả khớp 100% nguồn, văn phong rõ ràng, đạt yêu cầu chuẩn bị ghép báo cáo.
 >
 > **Xác nhận review chéo mục 3.6–3.8 (TV4 – Huỳnh Viễn Thông, 2026-11-27):** Đã đối chiếu độc lập toàn bộ số liệu, bảng và lập luận ở mục `3.6` (E1), `3.7` (E2) và `3.8` (E6) về các file sinh từ code: (1) **E1**: đủ 14/14 biến thể Bảng 3.4 và 8 cấu hình tách nguyên nhân Bảng 3.5 khớp 100% `report/tables/E1_summary.csv` (`large_bn = 0.7060 ± 0.0023`, F1 `0.6922 ± 0.0027`, `baseline_no_bn = 0.6941 ± 0.0033`, `baseline_gap = 0.6839 ± 0.0013` với `1,280,327` tham số, `baseline_w0.5 = 0.6747`, `baseline_w2 = 0.6654`, `large_adam1e-4` Aborted ep 4); (2) **E2**: đủ 9/9 biến thể Bảng 3.6 khớp `report/tables/E2_summary.csv` (`sigmoid = 0.4765 ± 0.0220` 4 run, `sigmoid_no_bn = 0.2494`), Bảng 3.7 và chuỗi gradient 8 lớp của `sigmoid_no_bn` (`fc2 8.07e-1 → fc1 6.52e-1 → conv3_2 4.60e-2 → conv3_1 4.90e-3 → conv2_2 6.95e-4 → conv2_1 7.91e-5 → conv1_2 1.09e-5 → conv1_1 3.21e-7`, tỉ lệ `3.97e-7`) khớp 100% `figures/e2_grad_norms.csv`; (3) **E6**: đủ 5/5 biến thể Bảng 3.8 khớp `report/tables/E6_summary.csv` và toàn bộ số đo VGG16 48 px (`48→24→12→6→3→1`, `4/9` ô conv5, FC1 `102,764,544` vs hiệu dụng `2,101,248`, ~`100.7M` dư thừa, `512.3 MB`) cùng tốc độ hội tụ ResNet18 (`ep 1: 0.5612 vs 0.2862`, `val ≥ 0.65: ep 14 vs 45`, `best ep 42 vs 60`) khớp 100% `report/tables/E6_analysis.md`. Không phát hiện sai lệch số liệu; đạt yêu cầu bàn giao kiểm thử `T22` và ghép báo cáo `T25`.
@@ -74,17 +72,17 @@ Nhận xét: lớp `Linear(9216, 512)` có 4,719,104 tham số, chiếm **80.4%*
 - **Chọn mô hình theo val_acc.** `best.pt` được lưu khi val_acc tăng. `ReduceLROnPlateau` theo dõi **val_acc**: không tăng 5 epoch thì lr nhân 0.5. **Early stopping** dừng khi val_acc không tăng 15 epoch. Do đó `best_epoch` là epoch có val_acc cao nhất, và run có thể train thêm khi val_loss đã bắt đầu tăng (thấy rõ ở `large_bn`, mục 3.6).
 - **Ghi vết.** Mỗi run sinh `run.log`, `history.csv` (loss/acc/F1/lr/thời gian từng epoch), `metrics.json`, `config.json`, `curves.png`. Toàn bộ siêu tham số, git commit, máy, GPU và sha256 dữ liệu được ghi một dòng vào `tracking/experiments.csv`. Lệnh chạy: `python src/run_experiment.py --config configs/<nhóm>.json --member TVx [--only <biến thể>] [--seeds 0 1 2]`.
 - **Ghi chuẩn gradient** (chỉ E2): `log_grad_norms = true` ghi `grad_norms.csv`, chứa chuẩn L2 trung bình của gradient từng lớp có trọng số ở mỗi epoch. Giá trị lấy sau khi bỏ hệ số scale của AMP, nên là gradient thật.
-- **Tái lập.** Cùng máy, cùng seed thì run trùng tới từng chữ số: `E5-003_s0` trùng `baseline-002_s0` tới sha256 của `best.pt`. Khác GPU thì số học dấu phẩy động lệch từ epoch đầu. Với cấu hình ổn định, độ lệch nằm trong std của baseline: ví dụ `bs_64` lệch 0.0022 (KT-016), `aug_none` lệch 0.0053 (KT-019). Với cấu hình bất ổn như Sigmoid có BN, độ lệch lớn hơn nhiều (mục 3.7).
+- **Tái lập.** Cùng máy, cùng seed thì run trùng tới từng chữ số: `E5-003_s0` trùng `baseline-002_s0` tới sha256 của `best.pt`. Khác GPU thì số học dấu phẩy động lệch từ epoch đầu. Với cấu hình ổn định, độ lệch nằm trong std của baseline: ví dụ khi chạy lại trên máy khác, `bs_64` lệch 0.0022 và `aug_none` lệch 0.0053. Với cấu hình bất ổn như Sigmoid có BN, độ lệch lớn hơn nhiều (mục 3.7).
 
 ## 3.5. Mốc so sánh: baseline 3 seed
 
 **Bảng 3.3.** Baseline (`report/tables/baseline_summary.csv`, cấu hình đóng băng `configs/baseline.json`).
 
-| Mô hình | Số run | Tham số | Val acc | Val macro-F1 | Best val loss | Train − Val |
+| Mô hình | Số run | Tham số | Val acc | Val macro-F1 | Best val loss | Train − Val (epoch cuối) |
 |---|---|---|---|---|---|---|
 | `baseline` | 3/3 | 5,867,847 | 0.6815 ± 0.0075 | 0.6408 ± 0.0195 | 0.9109 | 0.0397 |
 
-Quy ước cho E1–E6: mỗi thí nghiệm đổi **một yếu tố** so với baseline. Chênh lệch val_acc nhỏ hơn std baseline (0.0075) coi là **chưa phân biệt được**. Biến thể có 1 seed chỉ dùng để định hướng; muốn kết luận cần 3 seed. Cột "Train − Val" là `train_acc_cuoi − val_acc`. `train_acc_cuoi` đo trong chế độ train (có augmentation và dropout), nên cột này chỉ dùng để so xu hướng quá khớp giữa các cấu hình.
+Quy ước cho E1–E6: mỗi thí nghiệm đổi **một yếu tố** so với baseline. Chênh lệch val_acc nhỏ hơn std baseline (0.0075) coi là **chưa phân biệt được**. Biến thể có 1 seed chỉ dùng để định hướng; muốn kết luận cần 3 seed. Cột "Train − Val (epoch cuối)" là `train_acc_cuoi − val_acc`: accuracy train ở epoch cuối trừ val accuracy tại best epoch. `train_acc_cuoi` đo trong chế độ train (có augmentation và dropout), nên cột này chỉ dùng để so xu hướng quá khớp giữa các cấu hình. Chỉ số này khác "khoảng cách train/val tại best epoch" của E4 (mục 2.6), vốn lấy cả hai accuracy tại cùng best epoch.
 
 ## 3.6. Thực nghiệm E1 – Kiến trúc
 
@@ -92,7 +90,7 @@ Quy ước cho E1–E6: mỗi thí nghiệm đổi **một yếu tố** so với
 
 **Bảng 3.4.** Kết quả E1 (rút từ `report/tables/E1_summary.csv`; cột "Số run" là số run Completed trên tổng số run).
 
-| Biến thể | Số run | Tham số | Val acc | Val macro-F1 | Best val loss | Train − Val | So với baseline |
+| Biến thể | Số run | Tham số | Val acc | Val macro-F1 | Best val loss | Train − Val (epoch cuối) | So với baseline |
 |---|---|---|---|---|---|---|---|
 | `small` | 3/4 | 38,901,191 | 0.6934 ± 0.0027 | 0.6773 ± 0.0045 | 0.9143 | 0.1227 | +0.0119 (cao hơn) |
 | `medium` | 3/3 | 11,327,303 | 0.6919 ± 0.0031 | 0.6730 ± 0.0059 | 0.9119 | 0.101 | +0.0104 (cao hơn) |
@@ -151,7 +149,7 @@ Quy ước cho E1–E6: mỗi thí nghiệm đổi **một yếu tố** so với
 
 **Bảng 3.6.** Kết quả E2 (rút từ `report/tables/E2_summary.csv`). `relu` trùng cấu hình baseline, chỉ thêm việc ghi gradient.
 
-| Biến thể | Số run | Tham số | Val acc | Val macro-F1 | Best val loss | Train − Val | So với baseline |
+| Biến thể | Số run | Tham số | Val acc | Val macro-F1 | Best val loss | Train − Val (epoch cuối) | So với baseline |
 |---|---|---|---|---|---|---|---|
 | `relu` | 1/1 | 5,867,847 | 0.6863 | 0.6542 | 0.9033 | 0.05 | +0.0047 (< std baseline) |
 | `leaky_relu` | 1/1 | 5,867,847 | 0.6935 | 0.6664 | 0.9016 | 0.0661 | +0.0120 (cao hơn) |
@@ -183,7 +181,7 @@ Quy ước cho E1–E6: mỗi thí nghiệm đổi **một yếu tố** so với
 
 **3.7.2. BN sửa được gradient nhưng không sửa được độ chính xác của Sigmoid.** Có BN, gradient lớp đầu của sigmoid ở epoch 1 vẫn nhỏ hơn ReLU khoảng 33 lần (1.8e-3 so với 5.9e-2). Nhưng tới epoch 10 nó hồi phục ngang ReLU, vì BN giữ đầu vào mỗi lớp quanh 0, vùng đạo hàm sigmoid lớn nhất. Dù vậy val_acc chỉ đạt 0.4765 ± 0.0220 (4 run), `train_acc_cuoi` 0.41–0.44, tức thiếu khớp nặng. Ở bản có BN, nút thắt không còn là vanishing gradient mà là sigmoid học rất chậm với SGD lr 0.01, khiến plateau cắt lr 3–8 lần và early stopping dừng ở epoch 44–84.
 
-**3.7.3. Độ ổn định của Sigmoid có BN và tái lập.** Sigmoid có 4 run: seed 0, 1, 2, và một lần chạy lại seed 0 trên GPU khác (`E2-010_s0`) cho kiểm thử KT-017. Đường val_acc dao động trung bình 0.02–0.03 mỗi epoch, có lần nhảy 0.10–0.18. Cùng seed 0, run gốc trên RTX 3060 đạt 0.4511, còn trên RTX 4060 đạt 0.4890. Ba seed trên cùng một máy chênh nhau 0.034. Vì vậy dung sai 0.0075 (std của baseline, cấu hình ổn định) không áp dụng được cho biến thể này. Phần định tính thì tái lập ở mọi run: gradient `conv1_1` epoch 1 trong khoảng 1.8–2.1×10⁻³, hồi phục khoảng 0.23–0.31 ở epoch 10. Chi tiết ở nhật ký, Kết luận E2 mục 6.
+**3.7.3. Độ ổn định của Sigmoid có BN và tái lập.** Sigmoid có 4 run: seed 0, 1, 2, và một lần chạy lại seed 0 trên GPU khác (`E2-010_s0`) để kiểm tra tái lập. Đường val_acc dao động trung bình 0.02–0.03 mỗi epoch, có lần nhảy 0.10–0.18. Cùng seed 0, run gốc trên RTX 3060 đạt 0.4511, còn trên RTX 4060 đạt 0.4890. Ba seed trên cùng một máy chênh nhau 0.034. Vì vậy dung sai 0.0075 (std của baseline, cấu hình ổn định) không áp dụng được cho biến thể này. Phần định tính thì tái lập ở mọi run: gradient `conv1_1` epoch 1 trong khoảng 1.8–2.1×10⁻³, hồi phục khoảng 0.23–0.31 ở epoch 10. Chi tiết ở nhật ký, Kết luận E2 mục 6.
 
 **3.7.4. Các hàm còn lại.**
 - `leaky_relu` (0.6935) và `gelu` (0.6918, best_val_loss thấp nhất E2 là 0.8807) vượt std baseline, nhưng mới 1 seed và chỉ nhỉnh hơn ngưỡng.
@@ -201,7 +199,7 @@ Quy ước cho E1–E6: mỗi thí nghiệm đổi **một yếu tố** so với
 
 **Bảng 3.8.** Kết quả E6 (rút từ `report/tables/E6_summary.csv`; chi tiết ở `report/tables/E6_analysis.md`, Bảng E6.1).
 
-| Biến thể | Số run | Tham số | Val acc | Val macro-F1 | Best val loss | Train − Val | So với baseline |
+| Biến thể | Số run | Tham số | Val acc | Val macro-F1 | Best val loss | Train − Val (epoch cuối) | So với baseline |
 |---|---|---|---|---|---|---|---|
 | `vgg16_48_ft` | 1/3 | 134,289,223 | 0.6938 | 0.6812 | 0.9373 | 0.2571 | +0.0123 (cao hơn) |
 | `vgg16_96_ft` (30 epoch) | 1/1 | 134,289,223 | 0.6977 | 0.6818 | 0.922 | 0.1876 | +0.0162 (cao hơn) |

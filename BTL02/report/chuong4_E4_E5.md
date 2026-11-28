@@ -10,9 +10,9 @@
 
 E4 khảo sát mức thay đổi của khoảng cách Train–Validation khi thay augmentation, dropout, weight decay hoặc label smoothing. Cấu hình được khai báo ở `configs/E4_aug_reg.json`; mỗi biến thể có một run seed 0, dùng cùng SHA-256 FER2013 `3b8d9617…f871b`. Có 10/10 run `Completed`; kết quả validation lấy từ `tracking/experiments.csv` và các `metrics.json`, lịch sử từng epoch ở `results/E4/E4-*_s0/history.csv`.
 
-Bảng E4-1 tổng hợp accuracy, macro-F1 và best validation loss từ `report/tables/E4_summary.csv`. Cột “Train–Val tại best epoch” được tính từ `figures/e4_overfit_summary.csv` theo `train_acc_at_best − best_val_acc`, cùng một epoch; giá trị được đổi sang điểm phần trăm. Đây là chỉ số khoảng cách accuracy tại epoch có validation accuracy tốt nhất, không phải khoảng cách giữa accuracy train cuối và validation accuracy tốt nhất.
+Bảng E4-1 tổng hợp accuracy, macro-F1 và best validation loss từ `report/tables/E4_summary.csv`. Cột “Khoảng cách train/val tại best epoch” được tính từ `figures/e4_overfit_summary.csv` theo `train_acc_at_best − best_val_acc`, cùng một epoch, và đổi sang điểm phần trăm. Chỉ số này khác cột “Train − Val (epoch cuối)” ở Chương 3 và 4, vốn lấy accuracy train ở epoch cuối trừ val accuracy: cùng là baseline `baseline-002_s0` nhưng chỉ số của E4 là 4,72 điểm %, còn cột ở Chương 3 cho baseline ba seed là 0,0397.
 
-| Nhóm | Biến thể | Val accuracy | Val macro-F1 | Best val loss | Train–Val tại best epoch (điểm %) |
+| Nhóm | Biến thể | Val accuracy | Val macro-F1 | Best val loss | Khoảng cách train/val tại best epoch (điểm %) |
 |---|---|---:|---:|---:|---:|
 | Augmentation | `aug_none` | 0,6656 | 0,6495 | 1,0512 | 28,09 |
 | Augmentation | `aug_flip` | 0,6693 | 0,6470 | 1,0016 | 22,04 |
@@ -35,7 +35,7 @@ Mốc baseline ba seed đạt val accuracy `0,6815 ± 0,0075` và macro-F1 `0,64
 
 ![Đường cong Train/Validation và khoảng cách accuracy E4](../figures/e4_overfit.png)
 
-**Hình E4-1.** Đường cong được tạo từ `history.csv` của baseline và 10 run E4. CSV chứa toàn bộ điểm từng epoch nằm tại `figures/e4_overfit.csv`; bảng tóm tắt epoch tốt nhất và epoch cuối tại `figures/e4_overfit_summary.csv`. Script tạo hình là `src/visual/e4_overfit.py`.
+**Hình E4-1.** Đường cong được tạo từ `history.csv` của baseline và 10 run E4. CSV chứa toàn bộ điểm từng epoch nằm tại `figures/e4_overfit.csv`; bảng tóm tắt epoch tốt nhất và epoch cuối tại `figures/e4_overfit_summary.csv`. Script tạo hình là `src/visual/e4_overfit.py`. Hình nằm ở /figures/e4_overfit.png
 
 ### Kết luận E4
 
@@ -55,28 +55,29 @@ E5 so sánh cross-entropy thường (CE), cross-entropy có trọng số lớp v
 
 ### Recall lớp hiếm và đánh đổi accuracy
 
-`src/visual/e5_recall.py` đã tính lại chỉ số theo lớp cho run `E5-001_s0` trên PublicTest từ dự đoán lưu trong `results/E5/E5-001_s0/val_predictions.npz`. Bảng E5-2 trích từ `results/E5/E5-001_s0/per_class_recall.csv`; support đối chiếu với `figures/eda_class_distribution.csv`.
+`src/visual/e5_recall.py` nạp `best.pt` của từng run, dự đoán lại toàn bộ PublicTest và tính recall từng lớp; accuracy và macro-F1 tính lại trùng với `metrics.json` của cả ba run. Bảng E5-2 trích từ `results/E5/<run>/per_class_recall.csv`; support đối chiếu với `figures/eda_class_distribution.csv`.
 
-| Phương pháp | Recall Disgust | Recall Fear | Nguồn tái tính |
-|---|---:|---:|---|
-| CE | **chưa thực hiện** | **chưa thực hiện** | Checkout này không có `val_predictions.npz` hoặc `per_class_recall.csv` của `E5-003_s0` |
-| Class weight | **chưa thực hiện** | **chưa thực hiện** | Checkout này không có `val_predictions.npz` hoặc `per_class_recall.csv` của `E5-002_s0` |
-| WeightedRandomSampler | 67,86% (38/56) | 44,96% (223/496) | `results/E5/E5-001_s0/per_class_recall.csv` |
+| Phương pháp | Run | Recall Disgust | Recall Fear |
+|---|---|---:|---:|
+| CE | `E5-003_s0` | 37,50% (21/56) | 42,14% (209/496) |
+| Class weight | `E5-002_s0` | 73,21% (41/56) | 35,48% (176/496) |
+| WeightedRandomSampler | `E5-001_s0` | 67,86% (38/56) | 44,96% (223/496) |
 
-Các run CE và class weight đã hoàn thành và có chỉ số tổng thể trong `metrics.json`; phần **tái tính recall từ dự đoán đã lưu** chưa thực hiện được trong checkout hiện tại vì thiếu hai prediction artifact tương ứng. Nhật ký thực nghiệm có ghi recall do người chạy báo cáo, nhưng báo cáo này không dùng các con số đó để thay cho CSV/NPZ có thể kiểm tra độc lập. Cần bổ sung hai file dự đoán và chạy lại phép tính PublicTest trước khi đưa ra kết luận định lượng về thay đổi recall CE/class weight.
+Cả hai cách xử lý mất cân bằng đều kéo recall Disgust lên gần gấp đôi so với CE: trọng số lớp tăng 35,71 điểm %, sampler tăng 30,36 điểm %. Khác biệt nằm ở lớp Fear: trọng số lớp làm recall Fear giảm 6,65 điểm %, trong khi sampler tăng 2,82 điểm %. Điều này khớp với kết quả tổng thể ở Bảng E5-1: trọng số lớp đổi lớp hiếm lấy accuracy của các lớp khác, còn sampler giữ được accuracy.
 
 ![Recall và tỷ lệ sai theo lớp của WeightedRandomSampler](../figures/e5_wrs_recall.png)
 
-**Hình E5-1.** Chỉ số theo lớp cho `E5-001_s0`, sinh bởi `src/visual/e5_recall.py`; dữ liệu nguồn là `figures/e5_wrs_recall.csv` và `results/E5/E5-001_s0/per_class_recall.csv`. Chỉ hình này có kết quả recall được tái tính từ artifact đang có trong checkout.
+**Hình E5-1.** Chỉ số theo lớp cho `E5-001_s0` (WeightedRandomSampler), sinh bởi `src/visual/e5_recall.py`; dữ liệu nguồn là `figures/e5_wrs_recall.csv` và `results/E5/E5-001_s0/per_class_recall.csv`.
 
 ### Kết luận E5
 
-Với seed 0, `WeightedRandomSampler` giữ val accuracy gần CE (+0,08 điểm %) và tăng macro-F1 từ 0,6416 lên 0,6717 (+3,01 điểm %). Class weight giảm accuracy 2,03 điểm % và macro-F1 còn 0,6397. Dữ liệu dự đoán đang có xác nhận recall Disgust 67,86% và Fear 44,96% cho sampler. **Chưa thực hiện** đối chiếu recall của CE và class weight từ prediction artifact tại checkout này, nên chưa thể khẳng định mức tăng/giảm recall giữa ba phương pháp. Kết quả tổng thể là mô tả một run mỗi biến thể; CE và class weight chạy trên RTX 4060, còn sampler chạy trên RTX 3060.
+Với seed 0, `WeightedRandomSampler` giữ val accuracy gần CE (+0,08 điểm %), tăng macro-F1 từ 0,6416 lên 0,6717 (+3,01 điểm %) và tăng recall của cả Disgust (37,50% lên 67,86%) lẫn Fear (42,14% lên 44,96%). Trọng số lớp cho recall Disgust cao nhất (73,21%) nhưng giảm accuracy 2,03 điểm %, giảm recall Fear và macro-F1 còn 0,6397. Vì vậy sampler là lựa chọn cân bằng hơn. Kết quả là một run mỗi biến thể; CE và class weight chạy trên RTX 4060, còn sampler chạy trên RTX 3060.
 
 ## Nguồn và lệnh tái lập
 
 - Bảng E4/E5 từ `tracking/experiments.csv`: `python src/make_tables.py`.
 - Biểu đồ khoảng cách E4: `python src/visual/e4_overfit.py`.
-- Recall E5 sampler trên PublicTest: `python src/visual/e5_recall.py --run-dir results/E5/E5-001_s0`.
+- Recall E5 sampler trên PublicTest (kèm hình): `python src/visual/e5_recall.py --run-dir results/E5/E5-001_s0`.
+- Recall E5 của CE và class weight (không vẽ hình): `python src/visual/e5_recall.py --run-dir results/E5/E5-003_s0 --no-figure` và `--run-dir results/E5/E5-002_s0 --no-figure`.
 - Nguồn run E4: `results/E4/E4-001_s0/` … `results/E4/E4-010_s0/`, gồm `config.json`, `metrics.json`, `history.csv` và `run.log`.
 - Nguồn run E5: `results/E5/E5-001_s0/` … `results/E5/E5-003_s0/`; CSV tổng hợp: `report/tables/E5_summary.csv`; log theo từng run: `run.log`.

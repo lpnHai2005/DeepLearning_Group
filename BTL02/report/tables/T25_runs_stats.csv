@@ -1,0 +1,18 @@
+muc,chi_so,gia_tri
+tong,so_dong_experiments,92
+tong,so_run_chinh_thuc,86
+trang_thai,Aborted,4
+trang_thai,Completed,80
+trang_thai,Failed,2
+gio_gpu,NVIDIA GeForce RTX 3050 Laptop GPU,20.2
+gio_gpu,NVIDIA GeForce RTX 3060 Laptop GPU,16.5
+gio_gpu,NVIDIA GeForce RTX 4060 Laptop GPU,15.1
+gio_gpu,tong,51.8
+so_run_theo_nhom,E1,30
+so_run_theo_nhom,E2,12
+so_run_theo_nhom,E3,16
+so_run_theo_nhom,E4,10
+so_run_theo_nhom,E5,3
+so_run_theo_nhom,E6,7
+so_run_theo_nhom,E7,4
+so_run_theo_nhom,baseline,4

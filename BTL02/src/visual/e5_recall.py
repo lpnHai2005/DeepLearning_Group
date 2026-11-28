@@ -90,6 +90,9 @@ def main():
     parser.add_argument("--data-csv", type=Path, default=ROOT / "data/fer2013.csv")
     parser.add_argument("--out-png", type=Path, default=ROOT / "figures/e5_wrs_recall.png")
     parser.add_argument("--manifest", type=Path, default=ROOT / "tracking/figures_manifest.csv")
+    parser.add_argument("--no-figure", action="store_true",
+                        help="chỉ ghi val_predictions.npz và per_class_recall.csv (dùng cho run CE, class weight), "
+                             "không vẽ và không đăng ký hình e5_wrs_recall")
     args = parser.parse_args()
 
     cfg, res, rows, y_true, y_pred, pred_path, per_class_csv = evaluate_run_per_class(args.run_dir, args.data_csv)
@@ -100,6 +103,14 @@ def main():
     metrics_json = json.loads((args.run_dir / "metrics.json").read_text(encoding="utf-8"))
     acc_diff = abs(res["acc"] - float(metrics_json["best_val_acc"]))
     f1_diff = abs(res["macro_f1"] - float(metrics_json["best_val_macro_f1"]))
+
+    if args.no_figure:
+        print(f"=== {exp_id} ({variant}) - PublicTest ===")
+        print(f"Acc={res['acc']:.6f} (diff={acc_diff:.2e}) | Macro-F1={res['macro_f1']:.6f} (diff={f1_diff:.2e})")
+        for r in rows:
+            print(f"  {r['label']:8s} | support={r['support']:3d} | tp={r['tp']:3d} | recall={r['recall']*100:5.2f}%")
+        print(f"Saved: {pred_path}, {per_class_csv}")
+        return
 
     png_path, fig_csv = plot_error_histogram(
         y_true,

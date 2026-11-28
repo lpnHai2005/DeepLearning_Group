@@ -1,7 +1,5 @@
 # Chương 4. Phương pháp đánh giá, thực nghiệm tối ưu, mô hình cuối và phân tích lỗi
 
-> Người viết: TV3 – Võ Hoàng Bảo (nhiệm vụ T23). Review chéo: TV1 (mục 4.1–4.2: phương pháp đánh giá & E3), TV4 (mục 4.3–4.5: E7, đánh giá cuối & phân tích lỗi). Kiểm thử: TV2.
->
 > **Xác nhận review chéo mục 4.3–4.5 (TV4 – Huỳnh Viễn Thông, 2026-11-27):** Đã đối chiếu độc lập toàn bộ số liệu ở mục `4.3` (E7), `4.4` (PrivateTest) và `4.5` (phân tích lỗi) về đúng nguồn sinh từ code (`report/tables/E7_summary.csv`, `report/tables/E7_tta_ensemble.csv`, `results/E7/TEST_DONE.json`, `results/E7/test_per_class.csv`, `results/E7/test_predictions.npz`, `figures/e7_test_{confusion,error_hist,wrong_grid}.csv`): (1) **Bảng 4.2 & 4.3 (E7 PublicTest)**: 100% khớp (`E7-001..004`: `0.6971/0.6910/0.6935/0.7013`, `large_bn` 3 seed `0.7060 ± 0.0023`, Ensemble `flip` đạt đỉnh `0.7250`, F1 `0.7106`, NLL `0.9402`); (2) **Bảng 4.4 & 4.5 (PrivateTest `T19`)**: 100% khớp `TEST_DONE.json` & tái tính `test_predictions.npz` (`73.64%`, `2,643/3,589`, Macro-F1 `73.22%`, Macro-Prec `74.37%`, Macro-Rec `72.51%`, vượt mốc `71%` là `+2.64%`, `Disgust` F1 `80.39%`); (3) **Mục 4.5 (Phân tích lỗi)**: khớp 100% `946` lỗi, cụm `{Angry, Fear, Sad}` chiếm `640/946` (`67.7%`), cụm nội bộ 4 lớp `{Angry, Fear, Sad, Neutral}` chiếm `665/946` (`70.3%`), 9 cặp nhầm lẫn và toàn bộ 9 ca sai điển hình (`#6, #41, #12, #10, #44, #33, #8, #2, #14`). Trong quá trình rà soát, TV4 đã phát hiện và đính chính trực tiếp 4 chi tiết kỹ thuật nhỏ ở mục `4.3` cho khớp mã nguồn & config: (a) nguồn `WeightedRandomSampler` từ `E6` → `E5`; (b) bổ sung đủ siêu tham số `baseline_best` (`dropout_fc = 0.25`, `weight_decay = 0.001`, `label_smoothing = 0.1`) theo `configs/E7_final.json`; (c) số lớp Conv của `large_bn` là `16 Conv` (không phải `8 Conv`); (d) biên độ dịch chuyển của `flip_affine` là `±10%` theo `src/data/augment.py` (`translate=(0.1, 0.1)`). Sau đính chính, mục 4.3–4.5 khớp 100% nguồn, đạt yêu cầu kiểm thử `T23` và ghép báo cáo `T25`.
 >
 > **Review chéo mục 4.1–4.2 (TV1 – Đoàn Trung Kiên, 2026-11-27; clone sạch `3cf4a20`):** Mục 4.1 được đối chiếu với `results/data_check.json`, `src/data/fer2013.py`, `src/engine/evaluate.py` và `results/baseline/baseline_summary.json`: số lượng split `28,709/3,589/3,589` (tổng `35,887`), thứ tự nhãn và các thống kê baseline được dẫn từ nguồn. Ở E3, 15/15 biến thể trong `E3_summary.csv` ghép duy nhất với run `Completed` tương ứng trong `tracking/experiments.csv` theo `hyperparams_json.variant`; các số gốc khớp ở độ chính xác sinh bảng. Tuy nhiên, bảng Chương 4 khớp `E3_summary.csv` ở **14/15 hàng**. Hình 4.1 có CSV, script và 15 run ID trong `tracking/figures_manifest.csv`; SHA-256 PNG `5be1d35847ff919fa48745d4144c53ffb52bd0b2faa429eca3e2ac83b73a3b7c` khớp manifest.
@@ -23,11 +21,11 @@
 
 ## 4.1. Phương pháp đánh giá và các chỉ số
 
-Để tránh sai lệch kết quả do dữ liệu mất cân bằng lớp mạnh và ngăn tuyệt đối rò rỉ dữ liệu kiểm thử, quy trình đánh giá được chuẩn hóa thống nhất trong `src/engine/evaluate.py` và `src/visual/plots.py` (`T08` – đã `Verified` qua `KT-003`):
+Để tránh sai lệch kết quả do dữ liệu mất cân bằng lớp mạnh và tránh rò rỉ dữ liệu kiểm thử, quy trình đánh giá được chuẩn hóa thống nhất trong `src/engine/evaluate.py` và `src/visual/plots.py` (`T08`):
 
 1. **Nguyên tắc tách tập và thứ tự nhãn chuẩn Kaggle:**
    - Dữ liệu `fer2013.csv` (`35,887` ảnh xám `48×48`) được chia cố định theo cột `Usage`: `Training` (`28,709` ảnh) để huấn luyện, `PublicTest` (`3,589` ảnh) làm **tập validation** phục vụ early stopping, giảm learning rate và chọn cấu hình trong E1–E7, còn `PrivateTest` (`3,589` ảnh) bị khóa cho tới bước đánh giá cuối cùng `--eval-test` (`T19`).
-   - Toàn bộ code dùng duy nhất hằng `EMOTIONS = ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral"]` (0..6 theo Kaggle), khắc phục lỗi đảo nhãn theo bảng chữ cái của `LabelEncoder` trong tài liệu mẫu.
+   - Toàn bộ code dùng duy nhất hằng `EMOTIONS = ["Angry", "Disgust", "Fear", "Happy", "Sad", "Surprise", "Neutral"]` (0..6 theo Kaggle). Tài liệu mẫu dùng `LabelEncoder` nên các lớp được xếp theo bảng chữ cái; nhóm giữ thứ tự gốc của Kaggle và khai báo một hằng duy nhất để tên lớp trên mọi hình và bảng luôn khớp nhãn.
 
 2. **Bộ chỉ số định lượng (`evaluate.metrics`):**
    - **Accuracy tổng thể (Val / Test Accuracy):** Tỷ lệ dự đoán đúng trên toàn bộ 3,589 ảnh. Đây là tiêu chí chọn checkpoint `best.pt` và đối chiếu trực tiếp với hai mốc cuộc thi (**69% Public / 71% Private**).
@@ -35,7 +33,7 @@
      $$\text{Macro-F1} = \frac{1}{7}\sum_{c=0}^{6} \frac{2 \cdot \text{Precision}_c \cdot \text{Recall}_c}{\text{Precision}_c + \text{Recall}_c}$$
      Do lớp `Happy` (`7,215` ảnh train, `895` ảnh val) nhiều gấp **16.5×** lớp `Disgust` (`436` ảnh train, `56` ảnh val), Macro-F1 giúp phát hiện mô hình chỉ đoán tốt lớp đông mà bỏ rơi lớp thiểu số.
    - **Precision, Recall theo từng lớp và Ma trận nhầm lẫn chuẩn hóa theo hàng:** Đo trực tiếp độ nhạy trên các lớp khó (`Disgust`, `Fear`, `Sad`) và xác định các cặp cảm xúc dễ nhầm (`plot_confusion_matrix`, `plot_error_histogram`).
-   - **Best validation loss & khoảng cách Train–Val:** `best_val_loss` phản ánh mức hiệu chỉnh xác suất (calibration), còn `Train − Val` (`train_acc_cuoi − val_acc`) chỉ dùng so sánh xu hướng quá khớp giữa các cấu hình (vì `train_acc_cuoi` đo khi bật augmentation và dropout).
+   - **Best validation loss & khoảng cách Train − Val (epoch cuối):** `best_val_loss` phản ánh mức hiệu chỉnh xác suất (calibration), còn `Train − Val` (`train_acc_cuoi − val_acc`, cùng định nghĩa với Chương 3, khác chỉ số tại best epoch của E4 ở mục 2.6) chỉ dùng so sánh xu hướng quá khớp giữa các cấu hình (vì `train_acc_cuoi` đo khi bật augmentation và dropout).
 
 3. **Ngưỡng phân biệt và dung sai tái lập (`T11`):**
    - Mốc đối chuẩn Baseline 3 seed (`baseline-002_s0/_s1/_s2`, `results/baseline/baseline_summary.json`): **`val_acc = 0.6815 ± 0.0075`**, **`val_macro_f1 = 0.6408 ± 0.0195`**, **`best_val_loss = 0.9109 ± 0.0094`**, `Train − Val = +0.0397`.
@@ -51,11 +49,11 @@
 
 **Câu hỏi nghiên cứu.** Khi giữ nguyên kiến trúc Baseline (`5,867,847` tham số) và augmentation `flip_affine`, việc thay đổi thuật toán tối ưu × tốc độ học (learning rate), lịch điều chỉnh learning rate (scheduler) và kích thước lô (batch size) ảnh hưởng như thế nào tới khả năng hội tụ và độ chính xác trên PublicTest?
 
-**Thiết kế thực nghiệm (`configs/E3_optim.json`, nhiệm vụ `T14` — đã `Verified` qua `KT-016`).** Khảo sát gồm **15 biến thể** (`seed = 0`, 100 epoch tối đa, early stopping patience = 15 theo `val_acc`), chia đều giữa TV1 (`sgd_*`, `adam_*`) và TV4 (`adamw_*`, `rmsprop_*`, `sched_*`, `bs_*`), do TV3 tổng hợp. Kết quả kiểm toán `KT-016` của TV2 xác nhận **16/16 run** (15 `Completed` + 1 run `E3-015_s0` bị ngắt phiên ở epoch 46 và tự động đánh `Aborted`, `DISCARD`, không đưa vào thống kê) đều **chỉ thay đổi đúng một yếu tố** so với `configs/baseline.json`.
+**Thiết kế thực nghiệm (`configs/E3_optim.json`, nhiệm vụ `T14`).** Khảo sát gồm **15 biến thể** (`seed = 0`, 100 epoch tối đa, early stopping patience = 15 theo `val_acc`), chia đều giữa TV1 (`sgd_*`, `adam_*`) và TV4 (`adamw_*`, `rmsprop_*`, `sched_*`, `bs_*`), do TV3 tổng hợp. Nhóm chạy 16 run (15 `Completed` và 1 run `E3-015_s0` bị ngắt phiên ở epoch 46, tự động đánh `Aborted` và không đưa vào thống kê); mỗi run chỉ thay đổi đúng một yếu tố so với `configs/baseline.json`.
 
-**Bảng 4.1 (tương ứng Bảng 4.3 của `report/tables/E3_report.md`).** Kết quả toàn bộ 15 cấu hình E3 trên PublicTest (`report/tables/E3_summary.csv`, sắp theo thứ tự cấu hình `configs/E3_optim.json`; minh họa so sánh tại `figures/e3_comparison.png`).
+**Bảng 4.1.** Kết quả toàn bộ 15 cấu hình E3 trên PublicTest (`report/tables/E3_summary.csv`, sắp theo thứ tự cấu hình `configs/E3_optim.json`; minh họa so sánh tại `figures/e3_comparison.png`).
 
-| Cấu hình | Seed | Val acc (mean ± std) | Val macro-F1 | Best val loss | Train–Val* | GPU (s/ep) | So với baseline |
+| Cấu hình | Seed | Val acc (mean ± std) | Val macro-F1 | Best val loss | Train − Val (epoch cuối) | GPU (s/ep) | So với baseline |
 |---|---:|---:|---:|---:|---:|---|---|
 | Baseline (tham chiếu) | 3 | 0.6815 ± 0.0075 | 0.6408 ± 0.0195 | 0.9109 | +0.0397 | — (nhiều GPU) | tham chiếu |
 | `sgd_no_nesterov_1e-2` | 1 | 0.6843 | 0.6442 | 0.9134 | +0.0424 | RTX 3050 (37.4s) | +0.0028 (< std baseline) |
@@ -90,10 +88,10 @@
 
 3. **Kích thước batch (Batch size — nhân tố tạo khác biệt rõ rệt nhất trong E3):**
    - Kết quả cho thấy quy luật đơn điệu rõ ràng: **`bs_64` (`0.6924`, F1 `0.6642`) > `bs_128` (`0.6815`, F1 `0.6408`) > `bs_256` (`0.6726`, F1 `0.6298`)**.
-   - **`bs_64` (`E3-009_s0`) là biến thể duy nhất trong toàn bộ 15 cấu hình E3 vượt ngưỡng `+1 × std baseline`** (`+0.0109 > 0.0075`), đồng thời tăng `macro-F1` thêm `+2.34` điểm %. Kết quả kiểm toán độc lập `KT-016` do TV2 chạy lại `bs_64` trên RTX 4060 đạt `0.6902` (độ lệch tái lập chỉ `|Δ| = 0.0022 ≤ 0.0075`, cao hơn mốc baseline `0.6815` là `+0.0086`).
+   - **`bs_64` (`E3-009_s0`) là biến thể duy nhất trong toàn bộ 15 cấu hình E3 vượt ngưỡng `+1 × std baseline`** (`+0.0109 > 0.0075`), đồng thời tăng `macro-F1` thêm `+2.34` điểm %. Khi chạy lại `bs_64` trên một GPU khác (RTX 4060), kết quả đạt `0.6902` (lệch `0.0022`, nhỏ hơn std baseline `0.0075`), vẫn cao hơn mốc baseline `0.6815` là `+0.0086`.
    - *Giả thuyết diễn giải cơ chế tối ưu hóa* (theo tài liệu tổng quát về SGD mini-batch, chưa đo trực tiếp độ cong mặt mất mát trong khảo sát 1 seed này): batch size nhỏ hơn (`64` thay vì `128`) tạo số bước cập nhật mỗi epoch gấp đôi và làm tăng phương sai ước lượng gradient mini-batch, từ đó có thể hỗ trợ SGD tránh các vùng cực tiểu kém tổng quát hóa trên bộ dữ liệu FER-2013 có nhiễu nhãn cao; ngược lại, batch lớn (`256`) làm giảm số bước cập nhật và có xu hướng tổng quát hóa kém hơn (`-0.0089`).
 
-**Quyết định chuyển sang E7 (`T18`).** Trong phạm vi khảo sát E3 trên kiến trúc Baseline, phương án mang lại cải thiện rõ rệt và đã tái lập tốt qua kiểm thử là giữ **`SGD Nesterov lr = 0.01`** kết hợp **`batch_size = 64`**. Tuy nhiên, như lưu ý ở `KT-016` và mục `3.9`, `bs_64` (`+0.0086` ở bản chạy lại) mới chạy 1 seed mỗi máy trên mạng 6 Conv nên cần sàng lọc lại khi ghép vào `large_bn` ở E7 (`T18`); thực tế kiểm chứng tại mục `4.3` cho thấy `large_bn_bs64` (`E7-001_s0`) chỉ đạt `0.6971` (thấp hơn mốc cùng GPU `E1-014_s0 = 0.7086` là `-0.0114`) nên không mở rộng sang 3 seed.
+**Quyết định chuyển sang E7 (`T18`).** Trong phạm vi khảo sát E3 trên kiến trúc Baseline, phương án mang lại cải thiện rõ rệt và đã tái lập tốt qua kiểm thử là giữ **`SGD Nesterov lr = 0.01`** kết hợp **`batch_size = 64`**. Tuy nhiên, như lưu ý ở mục `3.9`, `bs_64` (`+0.0086` ở bản chạy lại) mới chạy 1 seed mỗi máy trên mạng 6 Conv nên cần sàng lọc lại khi ghép vào `large_bn` ở E7 (`T18`); thực tế kiểm chứng tại mục `4.3` cho thấy `large_bn_bs64` (`E7-001_s0`) chỉ đạt `0.6971` (thấp hơn mốc cùng GPU `E1-014_s0 = 0.7086` là `-0.0114`) nên không mở rộng sang 3 seed.
 
 ---
 
@@ -101,15 +99,15 @@
 
 **Câu hỏi nghiên cứu.** (1) Việc ghép các yếu tố thắng từng bước từ E1–E6 (`large_bn` từ E1, `batch_size = 64` từ E3, `LeakyReLU` từ E2, `WeightedRandomSampler` từ E5) có tiếp tục cải thiện độ chính xác trên PublicTest so với `large_bn` gốc hay không? (2) Test-Time Augmentation (`flip`, `ten_crop`) và Ensemble 3 seed mang lại mức cải thiện cụ thể bao nhiêu trên PublicTest trước khi chốt mô hình đánh giá PrivateTest?
 
-**Thiết kế thực nghiệm tiền đăng ký (`configs/E7_final.json`, nhiệm vụ `T18` — đã `Verified` qua `KT-021`).** Quy trình E7 chia làm 2 bước chặt chẽ nhằm tránh thử-sai trên PrivateTest:
+**Thiết kế thực nghiệm tiền đăng ký (`configs/E7_final.json`, nhiệm vụ `T18`).** Quy trình E7 chia làm 2 bước, luật chọn được viết sẵn trong config trước khi chạy để tránh thử-sai trên PrivateTest:
 - **Bước 1 (Sàng lọc tích lũy 1 seed trên cùng GPU RTX 4060):** Huấn luyện 4 cấu hình ghép trên `seed = 0` và đối chiếu trực tiếp với mốc cùng máy `E1-014_s0` (`large_bn`, `20,410,439` tham số: `val_acc = 0.7086`, `val_macro_f1 = 0.6953`, `best_val_loss = 0.9164`, `Train − Val = +0.1817`). Quy tắc chọn cấu hình thắng tiền đăng ký trong `configs/E7_final.json`: (1) ứng viên thắng mốc cùng máy nếu `val_acc > 0.7086 + 0.0075` (`> 0.7161`); (2) nếu `|Δval_acc| ≤ 0.0075` thì xếp theo `val_macro_f1` (ưu tiên cải thiện lớp thiểu số); (3) nếu vẫn tương đương thì giữ cấu hình đơn giản hơn (ít thay đổi nhất so với `large_bn`). Chỉ khi có ứng viên thắng theo luật trên mới mở rộng sang `seed 1, 2`; nếu không, giữ bộ **3 seed `large_bn` (`E1-014_s0/_s1/_s2`)** làm mô hình cuối.
-- **Bước 2 (Đánh giá TTA & Ensemble trên 3 seed thắng qua `src/eval_e7.py`):** Đánh giá đồng bộ 6 tổ hợp `{none, flip, ten_crop} × {đơn lẻ 3 seed, ensemble 3 seed}` trên PublicTest (`3,589` ảnh), kèm kiểm tra chéo độc lập của TV1 (ensemble) và TV2 (TTA), và kiểm thử toàn diện `KT-021` của TV4.
+- **Bước 2 (Đánh giá TTA & Ensemble trên 3 seed thắng qua `src/eval_e7.py`):** Đánh giá đồng bộ 6 tổ hợp `{none, flip, ten_crop} × {đơn lẻ 3 seed, ensemble 3 seed}` trên PublicTest (`3,589` ảnh).
 
 ### Kết quả Bước 1 – Sàng lọc cấu hình ghép trên PublicTest
 
-**Bảng 4.2 (tương ứng Bảng 4.7 của `report/tables/E7_report.md`).** Kết quả 4 biến thể sàng lọc E7 trên PublicTest (`seed = 0`, RTX 4060) so với Baseline 3 seed và mốc cùng máy `large_bn` (`E1-014_s0`).
+**Bảng 4.2.** Kết quả 4 biến thể sàng lọc E7 trên PublicTest (`seed = 0`, RTX 4060) so với Baseline 3 seed và mốc cùng máy `large_bn` (`E1-014_s0`).
 
-| Cấu hình | Seed | Val acc (mean ± std) | Val macro-F1 | Best val loss | Số tham số | Train–Val* | GPU (s/ep) | So với baseline |
+| Cấu hình | Seed | Val acc (mean ± std) | Val macro-F1 | Best val loss | Số tham số | Train − Val (epoch cuối) | GPU (s/ep) | So với baseline |
 |---|---:|---:|---:|---:|---:|---:|---|---|
 | Baseline (tham chiếu) | 3 | 0.6815 ± 0.0075 | 0.6408 ± 0.0195 | 0.9109 | 5,867,847 | +0.0397 | — (nhiều GPU) | tham chiếu |
 | `large_bn` (`E1-014_s0`, mốc cùng GPU) | 1 | **0.7086** | **0.6953** | 0.9164 | 20,410,439 | +0.1817 | RTX 4060 (25.9s) | **+0.0270 (cao hơn)** |
@@ -121,13 +119,13 @@
 *(Ghi chú: Tốc độ `25.9s` của `E1-014_s0` lấy từ cột `epoch_time_s_tb = 25.9189` trong `tracking/experiments.csv`; trung bình cả 3 seed `E1-014_s0/_s1/_s2` trên RTX 4060 là `25.6s/epoch`.)*
 
 **Phát hiện quan trọng từ Bước 1 (tính phi tuyến khi chuyển siêu tham số giữa các kiến trúc):**
-1. **Trên kiến trúc Baseline 6 Conv (`5.87M` tham số), tổ hợp `baseline_best`** (`LeakyReLU + dropout_fc = 0.25 + bs_64 + weight_decay = 0.001 + label_smoothing = 0.1 + flip_affine`, không WRS) đạt **`val_acc = 0.7013`** (`+1.98%` so với Baseline `0.6815`, vượt hơn `2.6 × std`), `val_macro_f1 = 0.6784` (`+3.76%`) và đặc biệt đạt **`best_val_loss = 0.8693` — mức loss thấp nhất toàn bộ dự án**, với tốc độ nhanh (`14.9 s/epoch`) và khoảng cách `Train − Val = +0.0931` kiểm soát tốt. Đây là bằng chứng rằng các yếu tố tìm ra trên Baseline cộng hưởng tốt trên chính kiến trúc Baseline.
+1. **Trên kiến trúc Baseline 6 Conv (`5.87M` tham số), tổ hợp `baseline_best`** (`LeakyReLU + dropout_fc = 0.25 + bs_64 + weight_decay = 0.001 + label_smoothing = 0.1 + flip_affine`, không WRS) đạt **`val_acc = 0.7013`** (`+1.98` điểm % so với Baseline `0.6815`, khoảng `2.6 × std`), `val_macro_f1 = 0.6784` (`+3.76` điểm %) và đặc biệt đạt **`best_val_loss = 0.8693` — mức loss thấp nhất toàn bộ dự án**, với tốc độ nhanh (`14.9 s/epoch`) và khoảng cách `Train − Val = +0.0931` kiểm soát tốt. Kết quả một seed này gợi ý các yếu tố tìm ra trên Baseline cộng hưởng được với nhau trên chính kiến trúc Baseline.
 2. **Ngược lại, trên mạng sâu `large_bn` (`20.41M` tham số), việc áp máy móc các siêu tham số thắng ở Baseline đều làm giảm độ chính xác so với `E1-014_s0` (`0.7086`):** giảm `batch_size` xuống `64` (`E7-001_s0`) làm tụt `-0.0114` xuống `0.6971` (*giả thuyết diễn giải*, chưa đo trực tiếp trên phân bố kích hoạt: trên mạng 16 Conv nhiều kênh kèm BatchNorm, batch nhỏ hơn có thể làm thống kê mean/variance của BN dao động mạnh hơn và kéo khoảng cách `Train − Val` lên `+0.1868`); đổi sang `LeakyReLU` (`E7-002_s0`) tụt tiếp xuống `0.6910` (`-0.0176`); thêm `WeightedRandomSampler` (`E7-003_s0`) giúp kéo `macro-F1` lên `0.6874` nhưng đẩy `val_loss` lên `0.9367` và `Train − Val = +0.2053` (`val_acc = 0.6935`).
 3. **Chốt mô hình theo đúng luật tiền đăng ký 3 nhánh (`configs/E7_final.json`):** Không có biến thể nào vượt ngưỡng thắng trực tiếp `> 0.7161`. Cả 3 biến thể `large_bn_*` (`0.6971`, `0.6910`, `0.6935`) đều thấp hơn mốc `0.7086` quá `0.0075` (`Δ` từ `-0.0114` đến `-0.0176`) nên bị loại ở nhánh 1. Riêng **`baseline_best` (`E7-004_s0`: `0.7013`, `Δ = -0.0072`) rơi đúng vào nhánh 2 (`|Δval_acc| ≤ 0.0075`)** nên được đối chiếu tiếp theo `val_macro_f1`, nhưng thua rõ rệt `E1-014_s0` (`0.6784 < 0.6953`, thấp hơn `-0.0169`). Do đó, theo đúng luật tiền đăng ký, nhóm chốt bộ **3 seed `large_bn` (`E1-014_s0`, `E1-014_s1`, `E1-014_s2`)** bước sang Bước 2 đánh giá TTA và Ensemble.
 
 ### Kết quả Bước 2 – TTA và Ensemble 3 seed trên PublicTest
 
-**Bảng 4.3 (tương ứng Bảng 4.7b của `report/tables/E7_tta_ensemble.md`).** So sánh 6 chế độ TTA × Ensemble của bộ 3 seed `large_bn` (`E1-014_s0/_s1/_s2`) trên PublicTest (`3,589` ảnh; minh họa tại `figures/e7_val_tta_ensemble.png`).
+**Bảng 4.3.** So sánh 6 chế độ TTA × Ensemble của bộ 3 seed `large_bn` (`E1-014_s0/_s1/_s2`) trên PublicTest (`3,589` ảnh; minh họa tại `figures/e7_val_tta_ensemble.png`).
 
 | Chế độ TTA | Loại đánh giá | Số seed | Val acc (mean ± std) | Val macro-F1 (mean ± std) | Val NLL |
 |---|---|---:|---|---|---:|
@@ -138,14 +136,14 @@
 | `ten_crop` | Đơn lẻ (trung bình) | 3 | 0.6836 ± 0.0043 | 0.6686 ± 0.0061 | 1.1232 |
 | `ten_crop` | **Ensemble** | 3 | 0.6991 | 0.6839 | 0.9716 |
 
-*(Chi tiết từng seed trên PublicTest: ở chế độ `none`, `s0/s1/s2` lần lượt đạt `0.7086 / 0.7047 / 0.7047`; ở chế độ `flip`, `s0/s1/s2` lần lượt đạt `0.7166 / 0.7122 / 0.7161`, độ lệch chuẩn giữa các seed chỉ `0.0023–0.0024`, chứng tỏ độ ổn định rất cao.)*
+*(Chi tiết từng seed trên PublicTest: ở chế độ `none`, `s0/s1/s2` lần lượt đạt `0.7086 / 0.7047 / 0.7047`; ở chế độ `flip`, `s0/s1/s2` lần lượt đạt `0.7166 / 0.7122 / 0.7161`, độ lệch chuẩn giữa các seed là `0.0023–0.0024`, nhỏ hơn std của baseline `0.0075`.)*
 
 **Hình 4.2.** So sánh Validation Accuracy giữa mô hình đơn lẻ (mean ± std) và Ensemble 3 seed theo 3 chế độ TTA trên PublicTest: `figures/e7_val_tta_ensemble.png` (dữ liệu `figures/e7_val_tta_ensemble.csv`). Các biểu đồ chẩn đoán trên PublicTest gồm `figures/e7_val_confusion.png`, `figures/e7_val_error_hist.png`, `figures/e7_val_correct_grid.png` và `figures/e7_val_wrong_grid.png`.
 
 **Phân tích hiệu quả TTA và Ensemble:**
-1. **Ensemble 3 seed tạo bước nhảy lớn nhất:** Riêng việc lấy trung bình xác suất softmax 3 seed (`none`) đã tăng `val_acc` thêm **`+1.76%`** (`0.7060 → 0.7236`), tăng `macro-F1` thêm **`+2.12%`** (`0.6922 → 0.7134`) và giảm mạnh độ quá tự tin trên các dự đoán sai (`Val NLL` giảm từ `1.2175 → 0.9780`).
-2. **TTA `flip` cộng hưởng trực tiếp với Ensemble:** Trên mô hình đơn lẻ, lật ngang tăng `val_acc` thêm `+0.90%` (`0.7060 → 0.7150`) và giảm NLL từ `1.2175 → 1.1157`. Khi kết hợp **Ensemble 3 seed + TTA `flip`**, mô hình đạt đỉnh **`val_acc = 0.7250` (`72.50%`, vượt mốc 69% Public tới `+3.50%`)**, `val_macro_f1 = 0.7106` và **`Val NLL = 0.9402` thấp nhất toàn bảng** (chi phí suy luận tăng `2×` so với ensemble không TTA, tương ứng `6×` so với một mô hình đơn lẻ không TTA).
-3. **Hiệu năng suy giảm ở TTA `ten_crop` (`0.6836` đơn lẻ, `0.6991` ensemble, giảm `-2.24%` so với `none` đơn lẻ):** Dù phép cắt `44×44` nội suy bilinear về `48×48` chỉ tương đương độ phóng `1.09×` và độ lệch tâm `4 px` (`8.3%`) — vốn nằm trong miền `scale = (0.9, 1.1)` và `translate = ±10%` của `flip_affine` lúc huấn luyện — kết quả thực nghiệm vẫn giảm rõ rệt trên cả 3 seed. *Giả thuyết chưa kiểm chứng trực tiếp:* việc cắt cứng 4 góc ở rìa ảnh `48×48` đã cắt sát mặt (không giữ biên như phép biến đổi affine lúc train) có thể loại bỏ một phần vùng lông mày/khóe miệng ở các góc cắt, cộng thêm hiệu ứng làm mờ của nội suy bilinear và việc trung bình hóa 10 góc nhìn làm phẳng phân phối xác suất softmax.
+1. **Ensemble 3 seed tạo bước nhảy lớn nhất:** Riêng việc lấy trung bình xác suất softmax 3 seed (`none`) đã tăng `val_acc` thêm `+1.76` điểm % (`0.7060 → 0.7236`), tăng `macro-F1` thêm `+2.12` điểm % (`0.6922 → 0.7134`) và giảm độ quá tự tin trên các dự đoán sai (`Val NLL` giảm từ `1.2175 → 0.9780`).
+2. **TTA `flip` cộng hưởng trực tiếp với Ensemble:** Trên mô hình đơn lẻ, lật ngang tăng `val_acc` thêm `+0.90` điểm % (`0.7060 → 0.7150`) và giảm NLL từ `1.2175 → 1.1157`. Khi kết hợp **Ensemble 3 seed + TTA `flip`**, mô hình đạt đỉnh **`val_acc = 0.7250` (`72.50%`, cao hơn mốc 69% Public `3.50` điểm %)**, `val_macro_f1 = 0.7106` và **`Val NLL = 0.9402` thấp nhất toàn bảng** (chi phí suy luận tăng `2×` so với ensemble không TTA, tương ứng `6×` so với một mô hình đơn lẻ không TTA).
+3. **Hiệu năng suy giảm ở TTA `ten_crop` (`0.6836` đơn lẻ, `0.6991` ensemble, giảm `2.24` điểm % so với `none` đơn lẻ):** Dù phép cắt `44×44` nội suy bilinear về `48×48` chỉ tương đương độ phóng `1.09×` và độ lệch tâm `4 px` (`8.3%`) — vốn nằm trong miền `scale = (0.9, 1.1)` và `translate = ±10%` của `flip_affine` lúc huấn luyện — kết quả thực nghiệm vẫn giảm rõ rệt trên cả 3 seed. *Giả thuyết chưa kiểm chứng trực tiếp:* việc cắt cứng 4 góc ở rìa ảnh `48×48` đã cắt sát mặt (không giữ biên như phép biến đổi affine lúc train) có thể loại bỏ một phần vùng lông mày/khóe miệng ở các góc cắt, cộng thêm hiệu ứng làm mờ của nội suy bilinear và việc trung bình hóa 10 góc nhìn làm phẳng phân phối xác suất softmax.
 
 **Quyết định chốt cho `T19`:** Chọn **Ensemble 3 seed `large_bn` (`E1-014_s0/_s1/_s2`) + TTA `flip`** làm cấu hình duy nhất đánh giá PrivateTest.
 
@@ -153,7 +151,7 @@
 
 ## 4.4. Đánh giá cuối cùng trên PrivateTest và so sánh mốc 69% / 71%
 
-**Quy trình kiểm soát chống rò rỉ (`T19`, `results/E7/TEST_DONE.json`, `results/E7/test_run.log`).** Đánh giá trên `PrivateTest` (`3,589` ảnh) chỉ được thực thi **đúng 1 lần duy nhất** sau khi `T18` đạt `Verified` (`KT-021`), có thành viên TV2 chứng kiến trực tiếp lúc `2026-11-27 21:07:28–21:07:49 (+07:00)` (`21.8 s` trên máy `Hbao | RTX 3050 Laptop`, commit `08be17a0`), bằng đúng một lệnh:
+**Quy trình kiểm soát chống rò rỉ (`T19`, `results/E7/TEST_DONE.json`, `results/E7/test_run.log`).** Đánh giá trên `PrivateTest` (`3,589` ảnh) chỉ được thực thi **đúng 1 lần duy nhất** sau khi mô hình cuối đã được chốt ở `T18`, vào ngày `2026-11-27` (`21.8 s` trên RTX 3050 Laptop), bằng đúng một lệnh:
 
 ```bash
 python src/run_experiment.py --eval-test --member TV3 --config configs/E7_final.json --run-dirs results/E1/E1-014_s0 results/E1/E1-014_s1 results/E1/E1-014_s2 --tta flip
@@ -165,7 +163,7 @@ Ngay khi kết thúc, chương trình ghi khóa cứng `results/E7/TEST_DONE.jso
 
 **Bảng 4.4.** Tổng hợp kết quả đánh giá cuối cùng của mô hình E7 (Ensemble 3 seed `large_bn` + TTA `flip`) trên `PublicTest` và `PrivateTest` so với mốc Baseline, báo cáo mẫu và kỷ lục cuộc thi FER-2013 (nguồn: `results/E7/TEST_DONE.json`, `report/tables/E7_tta_ensemble.csv`).
 
-| Hệ thống / Mốc đối chiếu | PublicTest Acc (%) | PrivateTest Acc (%) | PrivateTest Macro-F1 (%) | Chênh lệch so với mốc 71% Private |
+| Hệ thống / Mốc đối chiếu | PublicTest Acc (%) | PrivateTest Acc (%) | PrivateTest Macro-F1 (%) | Chênh lệch so với mốc 71% Private (điểm %) |
 |---|---:|---:|---:|---:|
 | Báo cáo mẫu (`demo_report.pdf`) | 64.00 – 67.00 | — | — | — |
 | Baseline nhóm (3 seed 6 Conv, `T11`) | 68.15 ± 0.75 | *(không đánh giá)* | *(không đánh giá)* | — |
@@ -176,8 +174,8 @@ Ngay khi kết thúc, chương trình ghi khóa cứng `results/E7/TEST_DONE.jso
 | **E7 Cuối (Ensemble 3 seed `large_bn` + TTA `flip`)** | **72.50** | **73.64** (`2,643 / 3,589`) | **73.22** | **+2.64** |
 
 **Nhận xét đối chiếu:**
-1. **Vượt chắc chắn cả hai mốc cuộc thi và báo cáo mẫu:** Mô hình cuối đạt **`72.50%`** trên `PublicTest` (**`+3.50%`** so với mốc `69%`) và **`73.64%`** (`2,643 / 3,589` ảnh đúng) trên `PrivateTest` (**`+2.64%`** so với mốc `71%`), đồng thời vượt khoảng **`+6.6%` đến `+9.6%`** so với báo cáo mẫu (`64%–67%`) mà vẫn hoàn toàn huấn luyện từ đầu (from scratch, không dùng pretrained weights hay dữ liệu ngoài).
-2. **Tổng quát hóa hoàn toàn nhất quán — không có dấu hiệu overfitting lên PublicTest:** Kết quả PrivateTest (`73.64%`, Macro-F1 `73.22%`) cao hơn PublicTest (`72.50%`, Macro-F1 `71.06%`) là `+1.14%` Acc và `+2.16%` Macro-F1, bám sát chênh lệch tự nhiên của cuộc thi Kaggle (`69% → 71%`, tức `+2.0%`). Hơn nữa, ngay cả **từng mô hình đơn lẻ** (`71.97%–72.47%`, trung bình `72.22%`) đều đã vượt mốc `71%`, và Ensemble 3 seed tiếp tục cộng thêm **`+1.42%`** (`72.22% → 73.64%`).
+1. **Vượt cả hai mốc cuộc thi và báo cáo mẫu:** Mô hình cuối đạt `72.50%` trên `PublicTest` (cao hơn mốc `69%` là `3.50` điểm %) và `73.64%` (`2,643 / 3,589` ảnh đúng) trên `PrivateTest` (cao hơn mốc `71%` là `2.64` điểm %), đồng thời cao hơn báo cáo mẫu (`64%–67%`) khoảng `6.6` đến `9.6` điểm %, trong khi chỉ huấn luyện từ đầu (from scratch, không dùng pretrained weights hay dữ liệu ngoài). Con số PublicTest có thiên lệch lạc quan vì tập này đã được dùng để chọn cấu hình; con số PrivateTest mới là ước lượng khách quan.
+2. **Kết quả PrivateTest không thấp hơn PublicTest:** PrivateTest (`73.64%`, Macro-F1 `73.22%`) cao hơn PublicTest (`72.50%`, Macro-F1 `71.06%`) `1.14` điểm % về accuracy và `2.16` điểm % về macro-F1, cùng chiều với chênh lệch giữa hai mốc của cuộc thi (`69%` và `71%`). Vì vậy chưa thấy dấu hiệu việc chọn cấu hình trên PublicTest làm kết quả bị thổi phồng; tuy nhiên với hai tập `3,589` ảnh, chênh lệch cỡ này vẫn nằm trong mức biến động do mẫu nên không nên diễn giải quá mức. Từng mô hình đơn lẻ (`71.97%–72.47%`, trung bình `72.22%`) đều đã vượt mốc `71%`, và ensemble 3 seed cộng thêm `1.42` điểm % (`72.22% → 73.64%`).
 
 ### Hiệu năng chi tiết theo từng lớp cảm xúc trên PrivateTest
 
