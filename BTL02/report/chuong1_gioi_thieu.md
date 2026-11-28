@@ -54,10 +54,10 @@ Bảng 1.2 tổng hợp các chỉ số thực làm được sinh tự động b
 | Mã | Họ và tên | Nhiệm vụ R (xong/tổng) | Commit có mã | Lần kiểm thử | Run chính thức | Lượt C | Lượt T | Đóng góp (%) |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
 | TV1 | Đoàn Trung Kiên | 7/7 | 47 | 9 | 17 | 14 | 7 | 25.0 |
-| TV2 | Lê Phan Nguyên Hải | 8/8 | 60 | 7 | 32 | 13 | 7 | 25.0 |
+| TV2 | Lê Phan Nguyên Hải | 8/8 | 62 | 8 | 32 | 13 | 7 | 25.0 |
 | TV3 | Võ Hoàng Bảo | 7/7 | 55 | 7 | 16 | 14 | 7 | 25.0 |
-| TV4 | Huỳnh Viễn Thông | 6/6 | 47 | 7 | 21 | 15 | 7 | 25.0 |
-| Tổng |  | 28/28 | 209 | 30 | 86 | 56 | 28 | 100.0 |
+| TV4 | Huỳnh Viễn Thông | 6/6 | 50 | 7 | 21 | 15 | 7 | 25.0 |
+| Tổng |  | 28/28 | 214 | 31 | 86 | 56 | 28 | 100.0 |
 <!-- END T25_contribution -->
 
 Lưu ý khi đọc các chỉ số phụ trong Bảng 1.2: một commit lớn và một commit nhỏ được đếm như nhau, một run 100 epoch và một run dừng sớm cũng vậy, nên các cột số đếm được trình bày kèm để đối chiếu minh bạch tiến độ thực làm chứ không làm lệch đánh giá đóng góp đều giữa bốn thành viên.

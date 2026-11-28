@@ -2,7 +2,7 @@
 
 Nhóm đã xây dựng bằng PyTorch toàn bộ quy trình nhận dạng bảy cảm xúc trên FER2013, từ kiểm tra dữ liệu, huấn luyện, đánh giá đến trực quan hóa, và đáp ứng bốn yêu cầu của đề bài như sau.
 
-1. Tóm tắt mã nguồn: Chương 5 mô tả các module, người phụ trách và các đoạn code cốt lõi; mọi file code ghi rõ người phụ trách, và 127 test tự động đạt trên bản clone sạch.
+1. Tóm tắt mã nguồn: Chương 5 mô tả các module, người phụ trách và các đoạn code cốt lõi; mọi file code ghi rõ người phụ trách, và 128 test tự động đạt trên bản clone sạch theo biên bản QA cuối (`report/QA_T27_report.md`, commit `830bb2c`).
 2. Nhiều thực nghiệm với nhiều bộ tham số: 86 run huấn luyện chính thức chia thành baseline và bảy nhóm E1 đến E7, mỗi biến thể chỉ đổi một yếu tố so với baseline; baseline và mô hình cuối có ba seed để báo cáo mean ± std.
 3. Trực quan hóa bộ lọc tích chập cuối: Chương 6 trình bày trọng số, bản đồ đặc trưng, activation maximization và Grad-CAM của lớp `conv4_4`, cho thấy mô hình dựa vào vùng mắt, lông mày, mũi và miệng.
 4. Phân tích và giải thích: mỗi nhóm thực nghiệm có phần phân tích riêng, Chương 7 tổng hợp cách hiểu của nhóm, các trường hợp không như kỳ vọng và hạn chế.
