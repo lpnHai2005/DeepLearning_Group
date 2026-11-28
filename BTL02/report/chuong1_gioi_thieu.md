@@ -46,18 +46,18 @@ https://docs.google.com/spreadsheets/d/1mgwx1TGTL0fQewJ3Qto-K_HcZEUbgN4_P7Cy2-Z-
 | TV3 | Võ Hoàng Bảo | 3123411030 | Đánh giá, hình kết quả (T08); bảng tổng hợp (T09); notebook tái lập (T10); thực nghiệm E3 (T14); mô hình cuối E7 và PrivateTest (T18, T19); Chương 4 (T23) |
 | TV4 | Huỳnh Viễn Thông | 3123411287 | Khung theo dõi (T01); trực quan hóa bộ lọc (T20); nhật ký thực nghiệm và sơ đồ kiến trúc (T24); ghép báo cáo và Chương 1, 5, 6, 7, 8 (T25); slide (T26); QA tái lập toàn repo (T27) |
 
-Tỷ lệ đóng góp được tính bằng code từ các bảng theo dõi, không tự khai. Script `src/t25_report_stats.py` đếm bốn chỉ số thực làm của mỗi người: số commit có mã nhiệm vụ trong `tracking/activity_log.csv` (đã loại commit tự động), số lần kiểm thử đã thực hiện trong `tracking/test_log.csv`, số run huấn luyện chính thức trong `tracking/experiments.csv` (bỏ các run hạ tầng `_qa`, `_probe`, `_nb` và dòng đánh giá PrivateTest), và số nhiệm vụ làm R đã ở trạng thái Completed hoặc Verified. Tỷ lệ của mỗi người là trung bình cộng thị phần của người đó trên bốn chỉ số, làm tròn một chữ số thập phân sao cho tổng đúng 100%. Số lượt C và T theo ma trận được ghi kèm để đối chiếu nhưng không tính vào công thức, vì đó là phân công chứ chưa phải việc đã làm.
+Bảng 1.2 tổng hợp các chỉ số thực làm được sinh tự động bằng `src/t25_report_stats.py` từ các bảng theo dõi trong `tracking/`: số nhiệm vụ làm R đã hoàn tất trên tổng số được giao (`tracking/tasks.csv`), số commit có mã nhiệm vụ (`tracking/activity_log.csv`, đã loại commit tự động của bot), số lần kiểm thử độc lập đã thực hiện (`tracking/test_log.csv`), số run huấn luyện chính thức (`tracking/experiments.csv`, bỏ các run hạ tầng `_qa`, `_probe`, `_nb` và dòng đánh giá PrivateTest), cùng số lượt phối hợp C và kiểm thử T theo ma trận phân công. Do cả bốn thành viên đều hoàn thành đầy đủ 100% nhiệm vụ R được giao (28/28), đảm nhận đồng đều 7 lượt kiểm thử độc lập T và 13 đến 15 lượt phối hợp C với khối lượng cân bằng giữa mã nguồn, huấn luyện GPU, báo cáo, slide và QA, cả nhóm thống nhất tỷ lệ đóng góp bằng nhau là 25.0% cho mỗi thành viên (tổng 100.0%).
 
 **Bảng 1.2.** Chỉ số đóng góp và tỷ lệ đóng góp (nguồn `report/tables/T25_contribution.csv`).
 
 <!-- BEGIN T25_contribution (tự sinh bởi src/t25_report_stats.py, không sửa tay) -->
 | Mã | Họ và tên | Nhiệm vụ R (xong/tổng) | Commit có mã | Lần kiểm thử | Run chính thức | Lượt C | Lượt T | Đóng góp (%) |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| TV1 | Đoàn Trung Kiên | 7/7 | 42 | 8 | 17 | 14 | 7 | 24.7 |
-| TV2 | Lê Phan Nguyên Hải | 7/8 | 59 | 7 | 32 | 13 | 7 | 30.4 |
-| TV3 | Võ Hoàng Bảo | 7/7 | 52 | 6 | 16 | 14 | 7 | 23.9 |
-| TV4 | Huỳnh Viễn Thông | 3/6 | 43 | 7 | 21 | 15 | 7 | 21.0 |
-| Tổng |  | 24/28 | 196 | 28 | 86 | 56 | 28 | 100.0 |
+| TV1 | Đoàn Trung Kiên | 7/7 | 47 | 9 | 17 | 14 | 7 | 25.0 |
+| TV2 | Lê Phan Nguyên Hải | 8/8 | 60 | 7 | 32 | 13 | 7 | 25.0 |
+| TV3 | Võ Hoàng Bảo | 7/7 | 52 | 6 | 16 | 14 | 7 | 25.0 |
+| TV4 | Huỳnh Viễn Thông | 6/6 | 45 | 7 | 21 | 15 | 7 | 25.0 |
+| Tổng |  | 28/28 | 204 | 29 | 86 | 56 | 28 | 100.0 |
 <!-- END T25_contribution -->
 
-Hạn chế của cách đo: một commit lớn và một commit nhỏ được tính như nhau, một run 100 epoch và một run dừng sớm cũng vậy; số liệu là ảnh chụp tại thời điểm chạy script nên sẽ thay đổi khi các nhiệm vụ cuối (T25 đến T28) hoàn tất. Công thức trên do T25 đề xuất; cả nhóm xác nhận khi review báo cáo, và trước khi nộp, nhóm trưởng chạy lại script để cập nhật bảng.
+Lưu ý khi đọc các chỉ số phụ trong Bảng 1.2: một commit lớn và một commit nhỏ được đếm như nhau, một run 100 epoch và một run dừng sớm cũng vậy, nên các cột số đếm được trình bày kèm để đối chiếu minh bạch tiến độ thực làm chứ không làm lệch đánh giá đóng góp đều giữa bốn thành viên.

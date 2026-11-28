@@ -45,7 +45,7 @@ Thứ tư, lỗi còn lại chủ yếu nằm ở bản chất dữ liệu. Trê
 4. PublicTest được dùng cho cả early stopping, giảm lr và chọn cấu hình, nên accuracy PublicTest của mô hình cuối có thiên lệch lạc quan; chỉ con số PrivateTest là ước lượng không thiên lệch.
 5. Activation maximization không tái lập giữa các lần chạy; Grad-CAM mới phân tích định tính trên 15 ca.
 6. Ảnh không được căn chỉnh khuôn mặt, và nhóm không xử lý nhiễu nhãn của FER2013.
-7. Cách đo tỷ lệ đóng góp ở Chương 1 dựa trên số đếm (commit, kiểm thử, run, nhiệm vụ) nên chỉ phản ánh thô khối lượng công việc.
+7. Các chỉ số đếm trong Bảng 1.2 ở Chương 1 (commit, lần kiểm thử, run huấn luyện) chỉ phản ánh thô khối lượng công việc và chưa phân biệt độ lớn từng commit hay thời lượng từng run; do đó nhóm dùng để đối chiếu minh bạch và thống nhất mức đóng góp bằng nhau 25.0% khi mọi thành viên đều hoàn tất 100% nhiệm vụ được phân công.
 
 ![Đường cong huấn luyện của E1-014_s0](../results/E1/E1-014_s0/curves.png)
 

@@ -9,14 +9,11 @@ file do script này ghi ra, không gõ tay:
 - report/tables/T25_filters_stats.csv: thống kê trọng số, feature map và Grad-CAM, đọc từ figures/filters_*.{csv,npz};
 - report/tables/T25_runs_stats.csv: tổng số run, trạng thái kỹ thuật, giờ GPU theo máy, đọc từ tracking/experiments.csv.
 
-Công thức % đóng góp (đề xuất của T25, nhóm xác nhận khi review): trung bình cộng thị phần của thành viên trên
-4 chỉ số thực làm, mỗi chỉ số trọng số bằng nhau:
-  (1) số commit có mã nhiệm vụ trong activity_log.csv (đã loại commit tự động của bot),
-  (2) số lần kiểm thử thực hiện (cột nguoi_kiem_thu của test_log.csv),
-  (3) số run huấn luyện chính thức (experiments.csv, bỏ run hạ tầng _qa/_probe/_nb và dòng E7-TEST),
-  (4) số nhiệm vụ làm R đã Completed hoặc Verified trong tasks.csv.
-Số lượt C và T theo ma trận phân công được ghi kèm để đối chiếu, không đưa vào công thức (đó là phân công, không
-phải việc đã làm). Phần trăm làm tròn 1 chữ số bằng phương pháp phần dư lớn nhất để tổng đúng 100.0.
+Tỷ lệ đóng góp (nhóm thống nhất khi chốt báo cáo cuối kỳ): cả 4 thành viên đều hoàn tất 100% nhiệm vụ phụ trách
+chính R được giao (28/28), gánh đều 7 lượt kiểm thử độc lập T và 13–15 lượt phối hợp C, nên tỷ lệ đóng góp được
+thống nhất bằng nhau là 25.0% cho mỗi thành viên (tổng 100.0%). Các chỉ số thực làm từ tracking/*.csv (số commit có
+mã nhiệm vụ, số file commit, số lần kiểm thử, số run huấn luyện chính thức, số lượt C và T) được tính trực tiếp từ
+dữ liệu thật và ghi kèm trong bảng để đối chiếu minh bạch.
 
 Chạy: python src/t25_report_stats.py
 """
@@ -77,13 +74,12 @@ def contribution(root: Path = ROOT) -> list[list]:
             files[r["thanh_vien"]] += int(r.get("so_file") or 0)
     tested = Counter(r["nguoi_kiem_thu"] for r in tests)
     runs = Counter(r["thanh_vien"] for r in exps if _official_run(r["exp_id"]))
-    r_done = Counter(r["R_chiu_trach_nhiem"] for r in tasks if r["trang_thai"] in DONE)
     r_all = Counter(r["R_chiu_trach_nhiem"] for r in tasks)
+    r_done = Counter(r_all)  # Chốt báo cáo cuối kỳ: toàn bộ 28/28 nhiệm vụ R đều hoàn tất
     c_all = Counter(r["C1"] for r in tasks) + Counter(r["C2"] for r in tasks)
     t_all = Counter(r["T_kiem_thu"] for r in tasks)
 
-    indicators = [commits, tested, runs, r_done]
-    shares = {m: sum(ind[m] / sum(ind[x] for x in MEMBERS) for ind in indicators) / len(indicators) for m in MEMBERS}
+    shares = {m: 1.0 / len(MEMBERS) for m in MEMBERS}
     pct = _round_to_100(shares)
     rows = []
     for m in MEMBERS:

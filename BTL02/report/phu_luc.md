@@ -66,14 +66,12 @@ python src/visualize_filters.py --run-dir results/E1/E1-014_s0 --data-csv data/f
 python src/visualize_filters.py --run-dir results/E1/E1-014_s0 --data-csv data/fer2013.csv --sample-idx 1623 --cases-csv results/E7/e7_gradcam_cases.csv --method gradcam
 ```
 
-### A.6. Số liệu Chương 1, 6, 7 và dựng báo cáo
+### A.6. Số liệu Chương 1, 6, 7 và kiểm thử tự động
 
 ```bash
 # Bảng đóng góp, thống kê bộ lọc, thống kê run; tự điền Bảng 1.2
 python src/t25_report_stats.py
-# Ghép các chương thành BaoCao_BTL02.docx và xuất PDF (cần Microsoft Word trên Windows)
-python report/build_report.py --pdf
-# Kiểm thử tự động
+# Kiểm thử tự động toàn kho mã nguồn
 python -m pytest -q
 ```
 
