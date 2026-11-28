@@ -1,4 +1,5 @@
 commit,thoi_gian,tac_gia_git,thanh_vien,task_id,thong_diep,so_file,files
+d2d02e9a,2026-11-28T18:28:24+07:00,TrungKien2005,TV1,T28,"docs(T28): TV1 rà preflight README, cập nhật hiện trạng 2026-11-28, tên thư mục gốc và kết quả cài đặt độc lập KT-030",1,BTL02/README.md
 3f568c53,2026-11-28T18:22:34+07:00,TrungKien2005,TV1,(không có mã nhiệm vụ),Merge branch 'main' of https://github.com/lpnHai2005/DeepLearning_Group,0,
 b8aaaa5b,2026-11-28T18:22:11+07:00,TrungKien2005,TV1,T25,"test(T25): kiểm thử độc lập báo cáo ghép trên bản clone sạch d6104af, 12/12 mẫu số liệu, 3/3 trang PDF, 2/2 hình khớp nguồn, Pass (KT-032, TV1)",2,BTL02/report/QA_T25_TV1.md; BTL02/tracking/test_log.csv
 d74a6c13,2026-11-28T18:21:32+07:00,HiCyclone,TV2,T28,chore(T28): ghi người phụ trách cho test_baseline_summary.py và test_e6_analysis.py,2,BTL02/tests/test_baseline_summary.py; BTL02/tests/test_e6_analysis.py
