@@ -1,4 +1,7 @@
-"""Test luật chọn run và công thức của src/baseline_summary.py (T11). Dữ liệu giả lập chỉ nằm trong test."""
+"""Test luật chọn run và công thức của src/baseline_summary.py (T11). Dữ liệu giả lập chỉ nằm trong test.
+
+Phụ trách: TV2 – Lê Phan Nguyên Hải. Nhiệm vụ T11.
+"""
 import json
 import statistics
 
