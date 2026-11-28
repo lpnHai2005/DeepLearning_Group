@@ -2,7 +2,7 @@
 
 Kế hoạch, phân công và quy chuẩn: [`PHAN_CONG_NHIEM_VU.md`](PHAN_CONG_NHIEM_VU.md). Bảng theo dõi: `tracking/` và Google Sheets (link ở mục 10 của file kế hoạch).
 
-**Hiện trạng (2026-11-24):** repo có loader/augmentation và kiểm tra dữ liệu (`src/data/`), model (`src/models/`), trainer/evaluate/plots (`src/engine/`, `src/visual/`), bảng (`src/make_tables.py`), trực quan hóa bộ lọc (`src/visual/filters.py`) và pytest. `configs/baseline.json` dùng cho T11; `configs/qa_T07.json` dùng để chạy QA ngắn. Trạng thái nhiệm vụ mới nhất xem trong `tracking/tasks.csv` vì file này được workflow cập nhật. FER2013 gốc chỉ lưu cục bộ và bị Git bỏ qua; mỗi clone cần tự đặt file tại `data/fer2013.csv` trước khi chạy kiểm tra dữ liệu, EDA hoặc huấn luyện. Không commit file dữ liệu gốc.
+**Hiện trạng (2026-11-28):** đã chạy xong E1–E7; PrivateTest đánh giá đúng 1 lần ở mô hình cuối (`results/E7/TEST_DONE.json`); báo cáo `report/BaoCao_BTL02.docx/.pdf` và slide `report/Slide_BTL02.pptx/.pdf` đã hoàn tất. Repo có loader/augmentation và kiểm tra dữ liệu (`src/data/`), model (`src/models/`), trainer/evaluate/plots (`src/engine/`, `src/visual/`), bảng (`src/make_tables.py`), trực quan hóa bộ lọc (`src/visual/filters.py`) và pytest. `configs/baseline.json` dùng cho T11; `configs/qa_T07.json` dùng để chạy QA ngắn. Trạng thái nhiệm vụ mới nhất xem trong `tracking/tasks.csv` vì file này được workflow cập nhật. FER2013 gốc chỉ lưu cục bộ và bị Git bỏ qua; mỗi clone cần tự đặt file tại `data/fer2013.csv` trước khi chạy kiểm tra dữ liệu, EDA hoặc huấn luyện. Không commit file dữ liệu gốc.
 
 ## Cấu trúc thư mục
 
@@ -89,7 +89,7 @@ Cả nhóm thống nhất mỗi thành viên đóng góp 25.0%, tổng 100.0%. C
 
 ## Cài đặt
 
-Các lệnh trong README giả định terminal đang ở thư mục `BTL02/`. Nếu PowerShell đang ở thư mục gốc repo `DeepLearning_Group-1/`, chạy trước:
+Các lệnh trong README giả định terminal đang ở thư mục `BTL02/`. Nếu PowerShell đang ở thư mục gốc repo (`DeepLearning_Group/` khi clone từ GitHub), chạy trước:
 
 ```powershell
 Set-Location .\BTL02
@@ -104,7 +104,7 @@ py -3.12 -m venv .venv
 .\.venv\Scripts\python.exe -X utf8 -m pip install -r requirements.txt
 ```
 
-Các lệnh gọi thẳng Python trong `.venv` để không vô tình dùng một Python khác trên PATH. `-X utf8` giúp pip đọc các chú thích tiếng Việt trong `requirements.txt` trên Windows. Nếu `.venv` đã được tạo và cài thư viện, bỏ qua phần cài đặt. Danh sách thư viện và phiên bản giữ tại [`requirements.txt`](requirements.txt). Chưa có kết quả cài đặt độc lập từ TV2/TV4; họ cần báo lỗi nếu lệnh không chạy trên máy riêng.
+Các lệnh gọi thẳng Python trong `.venv` để không vô tình dùng một Python khác trên PATH. `-X utf8` giúp pip đọc các chú thích tiếng Việt trong `requirements.txt` trên Windows. Nếu `.venv` đã được tạo và cài thư viện, bỏ qua phần cài đặt. Danh sách thư viện và phiên bản giữ tại [`requirements.txt`](requirements.txt). Các lệnh này đã được cài độc lập trên bản clone sạch ở KT-030 (T27, TV3): `pip check` sạch, `pytest` đạt 128 passed. `numpy` trong `requirements.txt` cần Python 3.12 trở lên.
 
 Kiểm tra cài đặt (chạy từ thư mục `BTL02/`, dùng Python trong `.venv`):
 
